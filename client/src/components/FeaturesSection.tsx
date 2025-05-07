@@ -1,33 +1,33 @@
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Bolt, Lock, RefreshCw, Headphones } from 'lucide-react';
+import { Bolt, BookOpen, Users, Calendar } from 'lucide-react';
 
 const FeaturesSection = () => {
   const features = [
     {
       icon: <Bolt className="h-5 w-5" />,
-      title: 'Fast Implementation',
-      description: 'Our agile approach ensures rapid development and deployment of solutions to meet your timeline requirements.'
+      title: 'Extensive Anime Database',
+      description: 'Access our comprehensive collection of anime titles, complete with detailed information, ratings, and reviews.'
     },
     {
-      icon: <Lock className="h-5 w-5" />,
-      title: 'Enterprise-Grade Security',
-      description: 'Advanced security measures integrated throughout our development process to protect your data and systems.'
+      icon: <BookOpen className="h-5 w-5" />,
+      title: 'Exclusive News & Updates',
+      description: 'Get the latest news about upcoming releases, events, and exclusive content directly from Japan and Indian anime communities.'
     },
     {
-      icon: <RefreshCw className="h-5 w-5" />,
-      title: 'Scalable Solutions',
-      description: 'Future-proof architecture designed to grow with your business and adapt to changing requirements.'
+      icon: <Users className="h-5 w-5" />,
+      title: 'Community Discussion Forums',
+      description: 'Connect with fellow anime enthusiasts to discuss your favorite series, characters, and theories in our active community.'
     },
     {
-      icon: <Headphones className="h-5 w-5" />,
-      title: '24/7 Support',
-      description: 'Dedicated support team available around the clock to address any issues and ensure smooth operation.'
+      icon: <Calendar className="h-5 w-5" />,
+      title: 'Anime Conventions & Meetups',
+      description: 'Stay informed about upcoming anime conventions, cosplay events, and fan meetups happening across India.'
     }
   ];
 
   return (
-    <section id="features" className="py-20 bg-[#1E1E1E] relative">
+    <section id="features" className="py-20 bg-[#1E1E1E] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           variants={staggerContainer}
@@ -40,19 +40,19 @@ const FeaturesSection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
-            Our Features
+            Platform Features
           </motion.span>
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            Why Choose Nakutaro
+            Why Choose Anime India
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Discover the advantages that set us apart and make us the partner of choice for your digital journey.
+            Experience the ultimate anime platform designed specifically for Indian fans and enthusiasts.
           </motion.p>
         </motion.div>
         
@@ -67,9 +67,9 @@ const FeaturesSection = () => {
             variants={fadeIn('right', 'tween', 0.2, 1)}
           >
             <img 
-              src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
-              alt="Technology innovation interface" 
-              className="rounded-xl shadow-2xl w-full" 
+              src="https://images.unsplash.com/photo-1595535873420-a599195b3f4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
+              alt="Anime collectibles and artwork" 
+              className="rounded-xl shadow-2xl w-full border-2 border-[#FF3B30]/20 transform transition-all duration-500 hover:scale-[1.02] hover:border-[#FF3B30]/40" 
             />
           </motion.div>
           
@@ -102,6 +102,17 @@ const FeaturesSection = () => {
           </motion.div>
         </motion.div>
       </div>
+      
+      {/* Anime-inspired decorative elements */}
+      <div className="absolute top-20 right-10 w-24 h-24 bg-[#FF3B30] rounded-full filter blur-3xl opacity-10 animate-pulse"></div>
+      <div className="absolute bottom-20 left-10 w-32 h-32 bg-[#FF3B30] rounded-full filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping"></div>
+      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+      
+      {/* Stylized anime-inspired shape */}
+      <div className="absolute -top-10 -right-10 w-40 h-40 border-8 border-[#FF3B30]/10 rounded-full"></div>
+      <div className="absolute -bottom-10 -left-10 w-60 h-60 border-8 border-[#FF3B30]/5 rounded-full"></div>
     </section>
   );
 };
