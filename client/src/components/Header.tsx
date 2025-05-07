@@ -29,7 +29,7 @@ const Header = () => {
         <div className="flex justify-between items-center py-4">
           <a href="#" className="flex items-center space-x-2">
             <span className="font-bold text-2xl text-white">
-              Naku<span className="text-[#FF3B30]">taro</span>
+              Anime<span className="text-[#FF3B30]">India</span>
             </span>
           </a>
           
