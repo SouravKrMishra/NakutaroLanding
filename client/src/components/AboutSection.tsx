@@ -4,16 +4,17 @@ import { Check } from 'lucide-react';
 
 const AboutSection = () => {
   const missionPoints = [
-    'Delivering cutting-edge technology solutions tailored to your unique needs',
-    'Fostering innovation through strategic partnerships and continuous learning',
-    'Building long-term relationships based on trust and exceptional results'
+    'Bringing the best anime content and news to Indian fans',
+    'Creating a vibrant community for anime lovers across the country',
+    'Promoting Japanese culture and artistry through anime and manga',
+    'Supporting local artists and cosplayers in the anime community'
   ];
 
   const stats = [
-    { value: '10+', label: 'Years Experience' },
-    { value: '200+', label: 'Projects Completed' },
-    { value: '50+', label: 'Team Members' },
-    { value: '98%', label: 'Client Satisfaction' }
+    { value: '1000+', label: 'Anime Reviews' },
+    { value: '50K+', label: 'Community Members' },
+    { value: '100+', label: 'Events Hosted' },
+    { value: '5K+', label: 'Articles Published' }
   ];
 
   return (
@@ -42,7 +43,7 @@ const AboutSection = () => {
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Founded with a vision to transform the digital landscape, Nakutaro brings innovative solutions to businesses worldwide.
+            Founded by passionate anime fans, Anime India has grown into the country's premier community for anime enthusiasts, creators, and collectors.
           </motion.p>
         </motion.div>
         
@@ -59,7 +60,7 @@ const AboutSection = () => {
           >
             <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
             <p className="text-gray-400 mb-6">
-              At Nakutaro, we're committed to helping businesses navigate the complex digital landscape through innovative solutions that drive growth and success.
+              At Anime India, we're dedicated to connecting fans with the anime they love and building an inclusive community that celebrates Japanese animation and culture in all its forms.
             </p>
             
             <div className="space-y-4">
@@ -85,7 +86,7 @@ const AboutSection = () => {
                 href="#services" 
                 className="text-[#FF3B30] font-medium flex items-center hover:text-[#FF6B61] transition duration-300"
               >
-                Discover Our Services
+                Explore Anime Categories
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   className="h-4 w-4 ml-2" 
@@ -104,9 +105,9 @@ const AboutSection = () => {
             className="order-1 md:order-2"
           >
             <img 
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
-              alt="Nakutaro team collaboration" 
-              className="rounded-lg shadow-xl w-full h-auto" 
+              src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
+              alt="Anime fans at convention" 
+              className="rounded-lg shadow-xl w-full h-auto border-2 border-[#FF3B30]/20" 
             />
           </motion.div>
         </motion.div>

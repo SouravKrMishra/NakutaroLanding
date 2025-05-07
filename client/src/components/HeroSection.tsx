@@ -16,23 +16,24 @@ const HeroSection = () => {
             className="text-center lg:text-left"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6">
-              Innovative <span className="text-gradient">Solutions</span> for Tomorrow's Challenges
+              Your Ultimate <span className="text-gradient">Anime</span> Destination in India
             </h1>
             <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Nakutaro helps businesses transform their digital presence with cutting-edge technology and strategic innovation.
+              Discover the latest news, reviews, and discussions about your favorite anime series, manga, and Japanese culture.
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <a
                 href="#contact"
                 className="px-8 py-3 bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium rounded-md transition duration-300 text-lg shadow-lg hover:shadow-xl"
               >
-                Get Started
+                Join Community
               </a>
               <a
                 href="#about"
-                className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700"
+                className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700 relative overflow-hidden group"
               >
-                Learn More
+                <span className="relative z-10">Explore Anime</span>
+                <span className="absolute w-0 h-full bg-[#FF3B30]/20 left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>
           </motion.div>
@@ -42,9 +43,9 @@ const HeroSection = () => {
             className="hidden lg:block"
           >
             <img
-              src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
-              alt="Innovative technology visualization"
-              className="rounded-lg shadow-2xl w-full h-auto transform hover:scale-105 transition duration-700"
+              src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+              alt="Anime illustration"
+              className="rounded-lg shadow-2xl w-full h-auto transform hover:scale-105 transition duration-700 border-2 border-[#FF3B30]/20"
             />
           </motion.div>
         </motion.div>

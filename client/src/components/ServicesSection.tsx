@@ -14,33 +14,33 @@ const ServicesSection = () => {
   const services = [
     {
       icon: <Code className="h-8 w-8" />,
-      title: 'Custom Software Development',
-      description: "Bespoke software solutions built to address your specific business challenges and requirements.",
+      title: 'Shonen Anime',
+      description: "Action-packed anime typically aimed at teenage boys featuring protagonists with extraordinary abilities and epic battles.",
     },
     {
       icon: <Smartphone className="h-8 w-8" />,
-      title: 'Mobile App Development',
-      description: "Powerful, intuitive mobile applications designed for both iOS and Android platforms.",
+      title: 'Shojo Anime',
+      description: "Romance-focused anime aimed primarily at young women, featuring emotional storylines and character development.",
     },
     {
       icon: <BarChart2 className="h-8 w-8" />,
-      title: 'Digital Strategy',
-      description: "Comprehensive digital strategies to position your business for long-term success and growth.",
+      title: 'Seinen Anime',
+      description: "Mature anime targeting adult men with complex storylines, realistic characters, and often darker themes.",
     },
     {
       icon: <Cloud className="h-8 w-8" />,
-      title: 'Cloud Solutions',
-      description: "Scalable, secure cloud infrastructure and migration services to enhance your operational efficiency.",
+      title: 'Isekai Anime',
+      description: "Stories where protagonists are transported to, reborn, or trapped in a parallel universe, alternate world, or virtual reality.",
     },
     {
       icon: <Shield className="h-8 w-8" />,
-      title: 'Cybersecurity',
-      description: "Robust security solutions to protect your data, systems, and reputation from evolving threats.",
+      title: 'Mecha Anime',
+      description: "Features giant robots or machines controlled by people, with epic battles and advanced technology.",
     },
     {
       icon: <Bot className="h-8 w-8" />,
-      title: 'AI & Machine Learning',
-      description: "Advanced AI solutions to automate processes, gain insights, and drive intelligent decision-making.",
+      title: 'Slice of Life Anime',
+      description: "Portrays mundane everyday experiences, focusing on the ordinary lives of characters rather than fantastic adventures.",
     }
   ];
 
@@ -58,19 +58,19 @@ const ServicesSection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
-            Our Services
+            Anime Categories
           </motion.span>
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            What We Offer
+            Explore Anime Genres
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Comprehensive solutions designed to help your business thrive in the digital world.
+            Discover the diverse world of anime through these popular genres and find your next favorite series.
           </motion.p>
         </motion.div>
         
@@ -98,7 +98,7 @@ const ServicesSection = () => {
                 href="#contact" 
                 className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
               >
-                Learn More
+                Browse This Genre
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </motion.div>
