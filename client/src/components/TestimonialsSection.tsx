@@ -5,24 +5,24 @@ import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 
 const testimonials = [
   {
-    content: "Nakutaro transformed our outdated systems into a streamlined digital solution that has significantly improved our operational efficiency. Their team was professional, responsive, and delivered exactly what we needed.",
-    author: "Sarah Mitchell",
-    position: "CTO, TechGrowth Inc.",
-    initials: "SM",
+    content: "Anime India has become my go-to source for everything anime in India. The community discussions are amazing, and I've found so many new series to watch through their recommendations. Their event listings also helped me attend my first cosplay convention!",
+    author: "Priya Sharma",
+    position: "Anime Enthusiast, Mumbai",
+    initials: "PS",
     rating: 5
   },
   {
-    content: "The mobile application developed by Nakutaro exceeded our expectations in terms of both functionality and user experience. Our customers love it, and we've seen a 40% increase in engagement since launch.",
-    author: "James Davidson",
-    position: "Product Director, InnovateRetail",
-    initials: "JD",
+    content: "What sets Anime India apart is their detailed coverage of both popular and niche anime series. Their analysis of themes and cultural context has deepened my appreciation for anime as an art form. The forums are filled with passionate fans who are welcoming to newcomers.",
+    author: "Arjun Kapoor",
+    position: "Manga Artist, Delhi",
+    initials: "AK",
     rating: 5
   },
   {
-    content: "Nakutaro's cybersecurity services have given us peace of mind knowing our sensitive data is protected. Their team identified vulnerabilities we weren't even aware of and implemented robust solutions.",
-    author: "Elena Lockhart",
-    position: "Security Manager, FinSecure",
-    initials: "EL",
+    content: "Being part of the Anime India community has connected me with fellow anime lovers across the country. The exclusive news and updates keep me informed about releases even before they're widely announced. Their anime meetups are always well-organized and fun!",
+    author: "Nisha Patel",
+    position: "Cosplayer, Bangalore",
+    initials: "NP",
     rating: 4.5
   }
 ];
@@ -108,7 +108,7 @@ const TestimonialsSection = () => {
   };
   
   return (
-    <section id="testimonials" className="py-20 bg-[#121212] relative">
+    <section id="testimonials" className="py-20 bg-[#121212] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           variants={staggerContainer}
@@ -121,19 +121,19 @@ const TestimonialsSection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
-            Testimonials
+            Community Voices
           </motion.span>
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            What Our Clients Say
+            What Our Members Say
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Don't just take our word for it - hear from some of our satisfied clients.
+            Hear from passionate anime fans who are part of our growing community across India.
           </motion.p>
         </motion.div>
         
@@ -152,7 +152,8 @@ const TestimonialsSection = () => {
                 viewport={{ once: true, amount: 0.25 }}
                 className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full">
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative overflow-hidden group">
+                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                   <div className="flex items-center mb-4">
                     <div className="text-[#FF3B30] flex">
                       {renderStars(testimonial.rating)}
@@ -162,7 +163,7 @@ const TestimonialsSection = () => {
                     "{testimonial.content}"
                   </blockquote>
                   <div className="flex items-center">
-                    <div className="h-12 w-12 rounded-full bg-[#333333] flex items-center justify-center mr-4">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF3B30]/30 to-[#FF3B30]/10 flex items-center justify-center mr-4 border-2 border-[#FF3B30]/20">
                       <span className="text-xl font-bold text-[#FF3B30]">{testimonial.initials}</span>
                     </div>
                     <div>
@@ -204,6 +205,20 @@ const TestimonialsSection = () => {
           </button>
         </div>
       </div>
+      
+      {/* Anime-inspired decorative elements */}
+      <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#FF3B30] opacity-5 rounded-full"></div>
+      <div className="absolute top-1/4 right-10 w-40 h-40 bg-[#FF3B30] opacity-5 rounded-full"></div>
+      <div className="absolute bottom-20 left-1/3 w-32 h-32 bg-[#FF3B30] opacity-5 rounded-full"></div>
+      
+      {/* Animated stars */}
+      <div className="absolute top-10 right-1/4 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '1.5s' }}></div>
+      <div className="absolute top-1/3 left-10 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }}></div>
+      <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '1s' }}></div>
+      
+      {/* Anime-style accent shapes */}
+      <div className="absolute top-0 right-0 h-40 w-40 border-t-4 border-r-4 border-[#FF3B30]/20 rounded-tr-3xl"></div>
+      <div className="absolute bottom-0 left-0 h-40 w-40 border-b-4 border-l-4 border-[#FF3B30]/20 rounded-bl-3xl"></div>
     </section>
   );
 };
