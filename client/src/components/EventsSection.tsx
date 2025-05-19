@@ -28,8 +28,8 @@ const EventsSection = () => {
     location: 'NCUI Auditorium, Hauz Khas, New Delhi',
     time: '10:00 AM - 6:00 PM',
     description: "Self-organized premier cosplay event featuring a prize pool of ₹50,000, attracting numerous cosplay enthusiasts to showcase their talents.",
-    image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-    featured_image: 'https://images.unsplash.com/photo-1575900239752-13e5ef40c924?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
+    image: 'https://i.imgur.com/uoQAA1j.jpeg',
+    featured_image: 'https://i.imgur.com/uoQAA1j.jpeg',
     featured: true,
     prizePool: '₹50,000',
     attendees: '300+'
