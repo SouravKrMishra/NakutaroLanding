@@ -329,7 +329,7 @@ const ContactSection = () => {
             <div className="bg-[#121212] p-8 rounded-xl border border-[#2D2D2D] h-full">
               <h3 className="text-2xl font-bold mb-6 flex items-center">
                 <span>Contact Information</span>
-                <span className="inline-block ml-2 relative">
+                <span className="inline-block ml-4 relative">
                   <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full animate-ping opacity-75"></span>
                   <span className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full"></span>
                 </span>
