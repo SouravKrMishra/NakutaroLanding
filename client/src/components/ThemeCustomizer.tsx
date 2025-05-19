@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../lib/ThemeContext';
 import { Button } from '../components/ui/button';
-import { Settings, Check, ChevronDown } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface ThemeOption {
   id: string;
@@ -20,6 +20,7 @@ const themeOptions: ThemeOption[] = [
 export const ThemeCustomizer: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const customizerRef = useRef<HTMLDivElement>(null);
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
@@ -28,11 +29,28 @@ export const ThemeCustomizer: React.FC = () => {
     setIsOpen(false);
   };
 
+  // Close customizer when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (customizerRef.current && !customizerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const currentTheme = themeOptions.find(t => t.id === theme) || themeOptions[0];
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="relative">
+      <div className="relative" ref={customizerRef}>
         <Button
           variant="outline"
           size="sm"
@@ -52,16 +70,8 @@ export const ThemeCustomizer: React.FC = () => {
               borderStyle: 'solid'
             }}
           >
-            <div className="flex justify-between items-center mb-3">
+            <div className="mb-3">
               <h3 className="font-bold text-sm" style={{ color: 'white' }}>Customize Appearance</h3>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-full"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
             </div>
             
             <div className="space-y-3">
