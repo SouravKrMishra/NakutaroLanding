@@ -88,7 +88,7 @@ const allProducts: Product[] = [
     rating: 4.6,
     reviews: 212,
     category: "T-Shirts",
-    image: "https://images.unsplash.com/photo-1627237072130-a5f9d7e391c9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/71u8aYESSaL._AC_UY1000_.jpg"
   },
   {
     id: 6,
@@ -97,7 +97,7 @@ const allProducts: Product[] = [
     rating: 4.3,
     reviews: 178,
     category: "T-Shirts",
-    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    image: "https://m.media-amazon.com/images/I/61p0rF7UBQL._AC_UY1000_.jpg",
     onSale: true
   },
   {
@@ -107,7 +107,7 @@ const allProducts: Product[] = [
     rating: 4.4,
     reviews: 89,
     category: "T-Shirts",
-    image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/61HFwbhI8VL._AC_UF1000,1000_QL80_.jpg"
   },
   
   // Accessories
@@ -118,7 +118,7 @@ const allProducts: Product[] = [
     rating: 4.2,
     reviews: 124,
     category: "Accessories",
-    image: "https://images.unsplash.com/photo-1519238359922-333183840e32?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/71OArRQ4siL._AC_UF1000,1000_QL80_.jpg"
   },
   {
     id: 9,
@@ -127,7 +127,7 @@ const allProducts: Product[] = [
     rating: 4.1,
     reviews: 67,
     category: "Accessories",
-    image: "https://images.unsplash.com/photo-1628340814848-33bad6f2c031?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/81QcuA+hIWL._AC_UF1000,1000_QL80_.jpg"
   },
   {
     id: 10,
@@ -136,7 +136,7 @@ const allProducts: Product[] = [
     rating: 3.9,
     reviews: 152,
     category: "Accessories",
-    image: "https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    image: "https://m.media-amazon.com/images/I/71UVN9SfK2L._AC_UF1000,1000_QL80_.jpg",
     isNew: true
   },
   
@@ -148,7 +148,7 @@ const allProducts: Product[] = [
     rating: 4.7,
     reviews: 203,
     category: "Hoodies",
-    image: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    image: "https://m.media-amazon.com/images/I/61A1ZQZ9meL._AC_UY1000_.jpg",
     onSale: true
   },
   {
@@ -158,7 +158,7 @@ const allProducts: Product[] = [
     rating: 4.5,
     reviews: 156,
     category: "Hoodies",
-    image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/616-UqjytDL._AC_UF1000,1000_QL80_.jpg"
   }
 ];
 
@@ -328,11 +328,11 @@ const ProductsPage = () => {
                 key={product.id}
                 className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
               >
-                <div className="h-48 overflow-hidden relative">
+                <div className="h-36 sm:h-40 md:h-48 overflow-hidden relative">
                   <img 
                     src={product.image} 
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                    className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                   />
                   {product.isNew && (
                     <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
@@ -345,14 +345,14 @@ const ProductsPage = () => {
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-white group-hover:text-[#FF3B30] transition-colors duration-300">
+                <div className="p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
+                    <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#FF3B30] transition-colors duration-300 mb-1 sm:mb-0">
                       {product.name}
                     </h3>
                     <span className="font-bold text-[#FF3B30]">{product.price}</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-400 mb-4">
+                  <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                     <div className="flex items-center">
                       <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
                       <span>{product.rating}</span>
@@ -360,8 +360,8 @@ const ProductsPage = () => {
                     <span className="mx-2">•</span>
                     <span>{product.reviews} reviews</span>
                   </div>
-                  <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-2 rounded flex items-center justify-center transition-colors duration-300">
-                    <ShoppingBag className="h-4 w-4 mr-2" />
+                  <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
+                    <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     Add to Cart
                   </button>
                 </div>
@@ -527,11 +527,11 @@ const ProductsPage = () => {
                         key={product.id}
                         className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
                       >
-                        <div className="h-48 overflow-hidden relative">
+                        <div className="h-36 sm:h-40 md:h-48 overflow-hidden relative">
                           <img 
                             src={product.image} 
                             alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                            className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                           />
                           {product.isNew && (
                             <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
@@ -544,14 +544,14 @@ const ProductsPage = () => {
                             </div>
                           )}
                         </div>
-                        <div className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-semibold text-white group-hover:text-[#FF3B30] transition-colors duration-300">
+                        <div className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
+                            <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#FF3B30] transition-colors duration-300 mb-1 sm:mb-0">
                               {product.name}
                             </h3>
                             <span className="font-bold text-[#FF3B30]">{product.price}</span>
                           </div>
-                          <div className="flex items-center text-sm text-gray-400 mb-4">
+                          <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                             <div className="flex items-center">
                               <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
                               <span>{product.rating}</span>
@@ -559,8 +559,8 @@ const ProductsPage = () => {
                             <span className="mx-2">•</span>
                             <span>{product.reviews} reviews</span>
                           </div>
-                          <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-2 rounded flex items-center justify-center transition-colors duration-300">
-                            <ShoppingBag className="h-4 w-4 mr-2" />
+                          <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
+                            <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                             Add to Cart
                           </button>
                         </div>
