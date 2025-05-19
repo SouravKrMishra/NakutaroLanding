@@ -107,3 +107,34 @@ body::before {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px -5px rgba(255, 59, 48, 0.1);
 }
+
+/* Filter sidebar animations */
+.filter-sidebar-animate-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.filter-sidebar-animate-out {
+  animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}

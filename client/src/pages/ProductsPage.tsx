@@ -373,7 +373,7 @@ const ProductsPage = () => {
         {/* Categories & All Products */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
           {/* Left Sidebar - Categories */}
-          <div className={`lg:col-span-1 ${filterSidebarOpen ? 'block' : 'hidden lg:block'}`}>
+          <div className={`lg:col-span-1 ${filterSidebarOpen ? 'block filter-sidebar-animate-in' : 'hidden lg:block'}`}>
             <div className="bg-[#1E1E1E] rounded-lg p-4 sm:p-5 md:p-6 border border-[#2D2D2D] sticky top-20 md:top-24">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">Product Categories</h3>
@@ -494,11 +494,12 @@ const ProductsPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex items-center lg:hidden"
+                    className="flex items-center justify-center lg:hidden bg-[#2D2D2D] hover:bg-[#3D3D3D] py-2 px-3"
                     onClick={toggleFilterSidebar}
                   >
                     <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    {filterSidebarOpen ? 'Hide Filters' : 'Show Filters'}
+                    <span>{filterSidebarOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                    <ChevronDown className={`h-3 w-3 ml-1 transition-transform duration-300 ${filterSidebarOpen ? 'rotate-180' : 'rotate-0'}`} />
                   </Button>
                   <div className="relative">
                     <select 
