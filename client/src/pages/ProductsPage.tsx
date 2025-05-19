@@ -48,7 +48,7 @@ const allProducts: Product[] = [
     rating: 4.8,
     reviews: 124,
     category: "Action Figures",
-    image: "https://m.media-amazon.com/images/I/71jvD4JoRIL._AC_UF1000,1000_QL80_.jpg",
+    image: "https://i.imgur.com/1mQWQdB.jpg",
     isNew: true
   },
   {
@@ -58,7 +58,7 @@ const allProducts: Product[] = [
     rating: 4.9,
     reviews: 87,
     category: "Action Figures",
-    image: "https://i5.walmartimages.com/asr/e92409a7-9466-403d-998d-b180fb380917.72ca97f9c4a31c6a53f9d6e38f992512.jpeg"
+    image: "https://i.imgur.com/0N0xC6p.jpg"
   },
   {
     id: 3,
@@ -67,7 +67,7 @@ const allProducts: Product[] = [
     rating: 4.7,
     reviews: 92,
     category: "Action Figures",
-    image: "https://m.media-amazon.com/images/I/61TUy2PUadL._AC_UF1000,1000_QL80_.jpg"
+    image: "https://i.imgur.com/zCPXQl9.jpg"
   },
   {
     id: 4,
@@ -76,7 +76,7 @@ const allProducts: Product[] = [
     rating: 4.9,
     reviews: 156,
     category: "Action Figures",
-    image: "https://m.media-amazon.com/images/I/71Zr6e+6CYL._AC_UF1000,1000_QL80_.jpg",
+    image: "https://i.imgur.com/q8VaLQK.jpg",
     isNew: true
   },
   
@@ -88,7 +88,7 @@ const allProducts: Product[] = [
     rating: 4.6,
     reviews: 212,
     category: "T-Shirts",
-    image: "https://m.media-amazon.com/images/I/71u8aYESSaL._AC_UY1000_.jpg"
+    image: "https://i.imgur.com/pBbwJqK.jpg"
   },
   {
     id: 6,
@@ -97,7 +97,7 @@ const allProducts: Product[] = [
     rating: 4.3,
     reviews: 178,
     category: "T-Shirts",
-    image: "https://m.media-amazon.com/images/I/61p0rF7UBQL._AC_UY1000_.jpg",
+    image: "https://i.imgur.com/s6M8PQf.jpg",
     onSale: true
   },
   {
@@ -107,7 +107,7 @@ const allProducts: Product[] = [
     rating: 4.4,
     reviews: 89,
     category: "T-Shirts",
-    image: "https://m.media-amazon.com/images/I/61HFwbhI8VL._AC_UF1000,1000_QL80_.jpg"
+    image: "https://i.imgur.com/mOGGYQY.jpg"
   },
   
   // Accessories
@@ -118,7 +118,7 @@ const allProducts: Product[] = [
     rating: 4.2,
     reviews: 124,
     category: "Accessories",
-    image: "https://m.media-amazon.com/images/I/71OArRQ4siL._AC_UF1000,1000_QL80_.jpg"
+    image: "https://i.imgur.com/A8a3QWR.jpg"
   },
   {
     id: 9,
@@ -127,7 +127,7 @@ const allProducts: Product[] = [
     rating: 4.1,
     reviews: 67,
     category: "Accessories",
-    image: "https://m.media-amazon.com/images/I/81QcuA+hIWL._AC_UF1000,1000_QL80_.jpg"
+    image: "https://i.imgur.com/eMhCgYX.jpg"
   },
   {
     id: 10,
@@ -136,7 +136,7 @@ const allProducts: Product[] = [
     rating: 3.9,
     reviews: 152,
     category: "Accessories",
-    image: "https://m.media-amazon.com/images/I/71UVN9SfK2L._AC_UF1000,1000_QL80_.jpg",
+    image: "https://i.imgur.com/MaQFDZF.jpg",
     isNew: true
   },
   
