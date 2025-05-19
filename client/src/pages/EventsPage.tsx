@@ -166,12 +166,11 @@ const EventsPage = () => {
                 className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
               >
                 <div className="inline-block">
-                  <span className="text-accent">Anime India Events</span>
+                  <span className="text-accent persistent-color">Anime India Events</span>
                   <motion.span 
-                    className="block h-1 bg-accent/30 rounded-full mt-1"
-                    initial={{ width: 0 }}
+                    className="block h-1 bg-accent/30 rounded-full mt-1 persistent-underline"
+                    initial={{ width: "100%" }}
                     animate={{ width: "100%" }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
                   />
                 </div>
                 <div className="text-white block mt-2">&amp; Conventions</div>

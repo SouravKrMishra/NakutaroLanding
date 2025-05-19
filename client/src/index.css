@@ -185,6 +185,15 @@ body::before {
   color: hsl(var(--accent-primary)) !important;
 }
 
+.persistent-color {
+  color: var(--theme-color-hex) !important;
+}
+
+.persistent-underline {
+  background-color: var(--theme-color-hex) !important;
+  opacity: 0.3;
+}
+
 .bg-accent {
   background-color: hsl(var(--accent-primary)) !important;
 }
