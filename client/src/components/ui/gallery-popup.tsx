@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface GalleryImage {
@@ -17,28 +17,6 @@ interface GalleryPopupProps {
 }
 
 export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
-      
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowRight') {
-        nextImage();
-      } else if (e.key === 'ArrowLeft') {
-        prevImage();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, currentIndex]);
-  
   // Lock scroll when gallery is open
   useEffect(() => {
     if (isOpen) {
@@ -51,13 +29,43 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
     };
   }, [isOpen]);
   
-  const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+  // Calculate layout columns for masonry grid based on screen size
+  const getColumnCount = () => {
+    if (window.innerWidth < 640) return 1;
+    if (window.innerWidth < 768) return 2;
+    if (window.innerWidth < 1024) return 3;
+    return 4;
   };
   
-  const prevImage = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  const [columnCount, setColumnCount] = useState(getColumnCount());
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setColumnCount(getColumnCount());
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Function to organize images into masonry columns
+  const organizeImagesIntoColumns = (images: GalleryImage[], columnCount: number) => {
+    const columns: GalleryImage[][] = Array.from({ length: columnCount }, () => []);
+    
+    // Distribute images to columns based on heights to maintain balance
+    images.forEach((image, index) => {
+      // Find the column with the least height
+      const columnHeights = columns.map(column => 
+        column.reduce((total, img) => total + (img.height / img.width), 0)
+      );
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      columns[shortestColumnIndex].push(image);
+    });
+    
+    return columns;
   };
+  
+  const imageColumns = organizeImagesIntoColumns(images, columnCount);
   
   if (!isOpen) return null;
   
@@ -68,99 +76,62 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm overflow-y-auto"
           onClick={onClose}
         >
           <div 
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full h-full flex flex-col"
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with close button */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-black/50 backdrop-blur-sm py-2 px-4 rounded-lg">
               {title && (
                 <h3 className="text-xl font-bold text-white">{title}</h3>
               )}
               <button 
                 onClick={onClose}
-                className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white"
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white"
                 aria-label="Close gallery"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
             
-            {/* Main gallery container */}
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
-              {/* Navigation buttons for mobile and desktop */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    className="absolute left-0 z-10 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      prevImage();
-                    }}
-                    aria-label="Previous image"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                  <button
-                    className="absolute right-0 z-10 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      nextImage();
-                    }}
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </button>
-                </>
-              )}
-              
-              {/* Current image */}
-              <div className="flex-1 flex items-center justify-center">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentIndex}
-                    src={images[currentIndex].src}
-                    alt={images[currentIndex].alt}
-                    className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-2xl"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </AnimatePresence>
-              </div>
-            </div>
-            
-            {/* Thumbnail strip */}
-            {images.length > 1 && (
-              <div className="mt-4 overflow-x-auto pb-2">
-                <div className="flex space-x-2 w-max min-w-full">
-                  {images.map((image, index) => (
-                    <button
-                      key={index}
-                      className={`flex-shrink-0 h-16 w-24 overflow-hidden rounded border-2 transition-all duration-200 ${
-                        index === currentIndex 
-                          ? 'border-accent' 
-                          : 'border-transparent opacity-60 hover:opacity-100'
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentIndex(index);
+            {/* Masonry Gallery */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="grid gap-4"
+              style={{ 
+                gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`
+              }}
+            >
+              {imageColumns.map((column, columnIndex) => (
+                <div key={columnIndex} className="flex flex-col gap-4">
+                  {column.map((image, imageIndex) => (
+                    <motion.div
+                      key={`${columnIndex}-${imageIndex}`}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ 
+                        duration: 0.3,
+                        delay: 0.05 * (columnIndex + imageIndex) 
                       }}
+                      className="overflow-hidden rounded-lg bg-accent/5 hover:bg-accent/10 transition-all duration-300"
                     >
-                      <img 
+                      <img
                         src={image.src}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="h-full w-full object-cover"
+                        alt={image.alt}
+                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
+                        style={{ aspectRatio: `${image.width}/${image.height}` }}
                       />
-                    </button>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
-            )}
+              ))}
+            </motion.div>
           </div>
         </motion.div>
       )}
