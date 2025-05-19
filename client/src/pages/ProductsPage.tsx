@@ -252,55 +252,136 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className="products-page pt-28 pb-16">
-      {/* Hero Banner */}
-      <div className="w-full bg-[#121212] relative overflow-hidden mb-12">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#000000] to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 h-full w-1/2 bg-accent/20"></div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-20">
+    <div className="products-page pt-28 pb-16 overflow-hidden">
+      {/* Hero Section with Animated Background */}
+      <div className="relative h-[70vh] min-h-[500px] mb-20 overflow-hidden bg-[#121212]">
+        <div className="absolute inset-0 opacity-20">
+          {/* Animated Grid Pattern */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
+          
+          {/* Anime-inspired decorative elements */}
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[80px]"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.3, 0.2]
+            }}
+            transition={{ 
+              duration: 6, 
+              repeat: Infinity,
+              ease: "easeInOut" 
+            }}
+          />
+          
+          <motion.div 
+            className="absolute bottom-1/3 right-1/4 w-60 h-60 bg-accent rounded-full filter blur-[100px]"
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.15, 0.25, 0.15]
+            }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+          
+          {/* Flying elements */}
           <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="max-w-2xl"
+            className="absolute -top-10 -left-10 w-20 h-20 text-accent/20"
+            animate={{
+              x: [0, window.innerWidth + 20],
+              y: [0, window.innerHeight + 20],
+              rotate: [0, 360]
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
           >
-            <motion.span
-              variants={fadeIn("up", "tween", 0.1, 1)}
-              className="text-accent font-semibold text-sm uppercase tracking-wider mb-2 block"
-            >
-              Best Collection
-            </motion.span>
-            <motion.h1
-              variants={fadeIn("up", "tween", 0.2, 1)}
-              className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
-            >
-              Premium Anime <br />
-              <span className="text-accent">Collectibles & Merchandise</span>
-            </motion.h1>
-            <motion.p
-              variants={fadeIn("up", "tween", 0.3, 1)}
-              className="text-gray-400 text-lg mb-8"
-            >
-              Discover authentic anime merchandise from your favorite series. 
-              From action figures to apparel, we have everything an anime fan could want.
-            </motion.p>
-            <motion.div
-              variants={fadeIn("up", "tween", 0.4, 1)}
-              className="flex space-x-4"
-            >
-              <Button 
-                className="bg-accent hover:bg-accent/90 text-white"
-              >
-                Featured Items
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-accent text-accent hover:bg-accent/10"
-              >
-                View Categories
-              </Button>
-            </motion.div>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.41,11.58l-9-9C12.04,2.21,11.53,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.53,0.21,1.04,0.59,1.41l9,9C12.13,21.8,12.84,22,13.54,22s1.41-0.2,1.98-0.76l5.89-5.89c1.07-1.07,1.07-2.82,0-3.89L21.41,11.58z M13,20.01L4,11V4h7l9,9L13,20.01z M6.5,6.5C7.33,6.5,8,7.17,8,8s-0.67,1.5-1.5,1.5S5,8.83,5,8S5.67,6.5,6.5,6.5z"></path></svg>
           </motion.div>
+          
+          <motion.div
+            className="absolute -bottom-10 -right-10 w-16 h-16 text-accent/15"
+            animate={{
+              x: [window.innerWidth, -20],
+              y: [window.innerHeight, -20],
+              rotate: [0, -360]
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17,15l1.55,1.55c-0.96,1.69-3.33,3.04-5.55,3.37V11h3V9h-3V7.82C14.16,7.4,15,6.3,15,5c0-1.65-1.35-3-3-3S9,3.35,9,5c0,1.3,0.84,2.4,2,2.82V9H8v2h3v8.92c-2.22-0.33-4.59-1.68-5.55-3.37L7,15l-4-3v3c0,3.88,4.92,7,9,7s9-3.12,9-7v-3L17,15z M12,4c0.55,0,1,0.45,1,1s-0.45,1-1,1s-1-0.45-1-1S11.45,4,12,4z"></path></svg>
+          </motion.div>
+        </div>
+        
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="text-center max-w-4xl mx-auto"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, ease: "backOut" }}
+                className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6"
+              >
+                <span className="text-accent font-medium text-sm">Premium Anime Collection</span>
+              </motion.div>
+              
+              <motion.h1
+                variants={fadeIn("up", "tween", 0.1, 1)}
+                className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
+              >
+                <div className="inline-block">
+                  <span className="text-accent">Anime India Products</span>
+                  <motion.span 
+                    className="block h-1 bg-accent/30 rounded-full mt-1"
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  />
+                </div>
+                <div className="text-white block mt-2">&amp; Merchandise</div>
+              </motion.h1>
+              
+              <motion.p
+                variants={fadeIn("up", "tween", 0.2, 1)}
+                className="text-gray-400 text-xl mb-8 max-w-3xl mx-auto"
+              >
+                Discover authentic anime merchandise from your favorite series. 
+                From action figures to apparel, we have everything an anime fan could want.
+              </motion.p>
+              
+              <motion.div
+                variants={fadeIn("up", "tween", 0.4, 1)}
+                className="flex flex-wrap justify-center gap-4"
+              >
+                <Button 
+                  className="bg-accent hover:bg-accent/90 text-white"
+                >
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                  Featured Items
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-accent text-accent hover:bg-accent/10"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Browse Categories
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
         </div>
       </div>
 
