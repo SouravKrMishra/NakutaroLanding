@@ -89,6 +89,60 @@ const EventsSection = () => {
       alt: 'Anime cosplay event 6',
       width: 800,
       height: 1000
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1565799284935-da1e913a72a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200&q=80',
+      alt: 'Anime cosplay event 7',
+      width: 800,
+      height: 1200
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1615524140580-5b1331d86c85?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=1500&q=80',
+      alt: 'Anime cosplay event 8',
+      width: 1000,
+      height: 1500
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1626379616459-b2ce1d9decbc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
+      alt: 'Anime cosplay event 9',
+      width: 800,
+      height: 600
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1570462621100-763a8dc3f0b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=900&q=80',
+      alt: 'Anime cosplay event 10',
+      width: 1200,
+      height: 900
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1100&q=80',
+      alt: 'Anime cosplay event 11',
+      width: 800,
+      height: 1100
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1613561125090-255dc241a456?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=800&q=80',
+      alt: 'Anime cosplay event 12',
+      width: 1000,
+      height: 800
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1560932833-01678178a032?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800&q=80',
+      alt: 'Anime cosplay event 13',
+      width: 1200,
+      height: 800
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1615367136042-965d9268e6be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1100&q=80',
+      alt: 'Anime cosplay event 14',
+      width: 800,
+      height: 1100
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&h=700&q=80',
+      alt: 'Anime cosplay event 15',
+      width: 900,
+      height: 700
     }
   ];
 

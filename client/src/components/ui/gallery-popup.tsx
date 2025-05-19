@@ -80,7 +80,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
           onClick={onClose}
         >
           <div 
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"
+            className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full h-full flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with close button */}
@@ -97,41 +97,57 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
               </button>
             </div>
             
-            {/* Masonry Gallery */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="grid gap-4"
-              style={{ 
-                gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`
-              }}
-            >
-              {imageColumns.map((column, columnIndex) => (
-                <div key={columnIndex} className="flex flex-col gap-4">
-                  {column.map((image, imageIndex) => (
-                    <motion.div
-                      key={`${columnIndex}-${imageIndex}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ 
-                        duration: 0.3,
-                        delay: 0.05 * (columnIndex + imageIndex) 
-                      }}
-                      className="overflow-hidden rounded-lg bg-accent/5 hover:bg-accent/10 transition-all duration-300"
-                    >
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
-                        style={{ aspectRatio: `${image.width}/${image.height}` }}
-                      />
-                    </motion.div>
+            {/* Container with horizontal scroll */}
+            <div className="flex-1 overflow-x-auto pb-4 hide-scrollbar">
+              <div className="min-w-max">
+                {/* Masonry Gallery */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid gap-4"
+                  style={{ 
+                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 250px))`,
+                    width: `${columnCount * 266}px` // 250px column + 16px gap
+                  }}
+                >
+                  {imageColumns.map((column, columnIndex) => (
+                    <div key={columnIndex} className="flex flex-col gap-4">
+                      {column.map((image, imageIndex) => (
+                        <motion.div
+                          key={`${columnIndex}-${imageIndex}`}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ 
+                            duration: 0.3,
+                            delay: 0.05 * (columnIndex + imageIndex) 
+                          }}
+                          className="overflow-hidden rounded-lg bg-accent/5 hover:bg-accent/10 transition-all duration-300"
+                        >
+                          <img
+                            src={image.src}
+                            alt={image.alt}
+                            className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
+                            style={{ aspectRatio: `${image.width}/${image.height}` }}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
                   ))}
-                </div>
-              ))}
-            </motion.div>
+                </motion.div>
+              </div>
+            </div>
+            
+            {/* Visual indicator for horizontal scrolling */}
+            <div className="mt-4 flex justify-center items-center">
+              <div className="flex space-x-1">
+                <span className="text-white text-xs">Scroll horizontally to see more images</span>
+                <svg className="w-4 h-4 text-accent animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}
