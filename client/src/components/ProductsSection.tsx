@@ -112,7 +112,6 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
     <section id="products" className="py-20 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#0A0A0A] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
         
         {/* Animated background elements */}
         <motion.div 
