@@ -51,16 +51,18 @@ export const zoomIn = (delay: number, duration: number) => {
 export const slideIn = (direction: string, type: string, delay: number, duration: number) => {
   return {
     hidden: {
-      x: direction === 'left' ? '-100%' : direction === 'right' ? '100%' : 0,
-      y: direction === 'up' ? '100%' : direction === 'down' ? '100%' : 0,
+      x: direction === 'left' ? '-50%' : direction === 'right' ? '50%' : 0,
+      y: direction === 'up' ? '50%' : direction === 'down' ? '50%' : 0,
+      opacity: 0,
     },
     show: {
       x: 0,
       y: 0,
+      opacity: 1,
       transition: {
         type,
-        delay,
-        duration,
+        delay: Math.min(0.2, delay * 0.6),
+        duration: Math.min(0.5, duration * 0.7),
         ease: 'easeOut',
       },
     },
@@ -70,16 +72,17 @@ export const slideIn = (direction: string, type: string, delay: number, duration
 export const textVariant = (delay: number) => {
   return {
     hidden: {
-      y: 50,
+      y: 20,
       opacity: 0,
     },
     show: {
       y: 0,
       opacity: 1,
       transition: {
-        type: 'spring',
-        duration: 1.25,
-        delay,
+        type: 'tween',
+        duration: 0.6,
+        delay: Math.min(0.2, delay * 0.6),
+        ease: 'easeOut',
       },
     },
   };
