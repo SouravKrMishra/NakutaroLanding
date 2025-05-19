@@ -147,13 +147,13 @@ const ContactPage = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`relative flex items-center py-2 px-4 rounded-md transition-all duration-300 ${
-                        activeTab === tab.id 
-                          ? "bg-accent text-white font-medium" 
-                          : "bg-transparent text-gray-300 hover:text-white hover:bg-[#252525]"
-                      }`}
+                      className="relative flex items-center py-2 px-4 rounded-md transition-all duration-300"
                     >
-                      <span className="relative z-10 flex items-center">
+                      <span className={`relative z-10 flex items-center ${
+                        activeTab === tab.id 
+                          ? "text-white font-medium" 
+                          : "text-gray-300 hover:text-white"
+                      }`}>
                         {tab.icon}
                         {tab.label}
                       </span>
