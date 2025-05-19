@@ -85,25 +85,28 @@ const ContactPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex justify-center mt-8 mb-4 relative"
+            className="flex justify-center mt-8 mb-4 relative z-10"
           >
-            <div className="inline-flex bg-[#1E1E1E] p-1 rounded-lg">
+            <div className="inline-flex bg-[#1E1E1E] p-1 rounded-lg shadow-md">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-2 px-4 rounded-md transition-all duration-300 ${
+                  className={`relative flex items-center py-2 px-4 rounded-md transition-all duration-300 ${
                     activeTab === tab.id 
-                      ? "bg-accent text-white shadow-lg" 
-                      : "bg-transparent text-gray-300 hover:text-white"
+                      ? "bg-accent text-white font-medium" 
+                      : "bg-transparent text-gray-300 hover:text-white hover:bg-[#252525]"
                   }`}
                 >
-                  {tab.icon}
-                  {tab.label}
+                  <span className="relative z-10 flex items-center">
+                    {tab.icon}
+                    {tab.label}
+                  </span>
                   {activeTab === tab.id && (
                     <motion.span
                       layoutId="bubble"
-                      className="absolute inset-0 z-0 rounded-md"
+                      className="absolute inset-0 bg-accent rounded-md"
+                      style={{ zIndex: 1 }}
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
@@ -114,31 +117,35 @@ const ContactPage = () => {
         </motion.div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {activeTab === "contact" && (
-          <motion.div
-            key="contact-section"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
-            <ContactSection />
-          </motion.div>
-        )}
-
-        {activeTab === "faq" && (
-          <motion.div
-            key="faq-section"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-          >
-            <FAQSection />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="relative">
+        <AnimatePresence mode="wait">
+          {activeTab === "contact" && (
+            <motion.div
+              key="contact-section"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <ContactSection />
+            </motion.div>
+          )}
+  
+          {activeTab === "faq" && (
+            <motion.div
+              key="faq-section"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <FAQSection />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
