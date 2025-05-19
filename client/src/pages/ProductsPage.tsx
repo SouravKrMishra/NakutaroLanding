@@ -252,9 +252,9 @@ const ProductsPage = () => {
   };
 
   return (
-    <div className="products-page pt-28 pb-16 overflow-hidden">
-      {/* Hero Section with Animated Background */}
-      <div className="relative h-[60vh] sm:h-[65vh] md:h-[70vh] min-h-[400px] sm:min-h-[450px] md:min-h-[500px] mb-12 sm:mb-16 md:mb-20 overflow-hidden bg-[#121212]">
+    <div className="products-page pb-16 overflow-hidden">
+      {/* Hero Section with new design */}
+      <section className="relative min-h-[75vh] flex items-center pt-28 pb-16 overflow-hidden bg-[#0A0A0A]">
         <div className="absolute inset-0 opacity-20">
           {/* Animated Grid Pattern */}
           <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
@@ -363,7 +363,7 @@ const ProductsPage = () => {
             </motion.div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
