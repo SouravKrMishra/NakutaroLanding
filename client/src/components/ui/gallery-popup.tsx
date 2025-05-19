@@ -74,7 +74,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
             transition={{ duration: 0.2 }}
           >
             {/* Full image at top */}
-            <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
+            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
               <img 
                 src={selectedImage.src}
                 alt={selectedImage.alt}
@@ -118,45 +118,68 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
                 <h3 className="text-xl font-bold mb-4 text-white">{title}</h3>
               )}
               
-              {/* Image counter */}
-              <div className="text-sm text-gray-400 mb-4">
-                Image {selectedImageIndex + 1} of {images.length}
-              </div>
-              
-              {/* Thumbnail navigation */}
-              <div className="mt-2 mb-3">
-                <div className="bg-black/40 rounded-lg p-3">
-                  <div className="overflow-x-auto hide-scrollbar pb-1">
-                    <div className="flex gap-3 min-w-max">
+              {/* Slider navigation */}
+              <div className="relative mt-2 mb-4">
+                <div className="flex items-center">
+                  {/* Previous button */}
+                  <button
+                    className="absolute left-0 z-10 p-1 bg-black/30 hover:bg-black/50 rounded-full"
+                    onClick={handlePrevious}
+                    aria-label="Previous"
+                  >
+                    <ChevronLeft className="h-4 w-4 text-white" />
+                  </button>
+                  
+                  {/* Slider with thumbnails */}
+                  <div className="w-full overflow-hidden mx-6">
+                    <div 
+                      className="flex transition-transform duration-300 ease-out space-x-1"
+                      style={{
+                        transform: `translateX(${Math.min(0, -selectedImageIndex * 56 + (images.length > 8 ? (window.innerWidth > 768 ? 200 : 100) : 0))}px)`
+                      }}
+                    >
                       {images.map((image, index) => (
                         <div
                           key={index}
                           onClick={() => handleThumbnailClick(index)}
-                          className={`cursor-pointer relative rounded-lg overflow-hidden transition-all duration-200 
-                            ${index === selectedImageIndex 
-                              ? 'ring-2 ring-accent scale-105 z-10' 
-                              : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-accent/50 hover:scale-105'}`}
+                          className={`shrink-0 cursor-pointer text-center transition-opacity duration-200
+                            ${index === selectedImageIndex ? 'opacity-100' : 'opacity-50 hover:opacity-80'}`}
+                          style={{ width: '55px' }}
                         >
-                          <img
-                            src={image.src}
-                            alt={`Thumbnail ${index + 1}`}
-                            className="w-20 h-16 object-cover"
-                          />
-                          <div className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent ${index === selectedImageIndex ? 'opacity-0' : 'opacity-50'}`}></div>
+                          <div 
+                            className={`relative overflow-hidden rounded mb-1 border-2
+                              ${index === selectedImageIndex ? 'border-accent' : 'border-transparent'}`}
+                          >
+                            <img
+                              src={image.src}
+                              alt={`Thumbnail ${index + 1}`}
+                              className="w-full h-10 object-cover"
+                            />
+                          </div>
+                          <span className="text-[10px] text-gray-400 block truncate">
+                            {index + 1}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                   
-                  {/* Thumbnail navigation indicator */}
-                  <div className="mt-2 flex justify-between items-center">
-                    <div className="h-1 bg-white/20 rounded-full flex-1 overflow-hidden">
-                      <div 
-                        className="h-full bg-accent rounded-full transition-all duration-300"
-                        style={{ width: `${((selectedImageIndex + 1) / images.length) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
+                  {/* Next button */}
+                  <button
+                    className="absolute right-0 z-10 p-1 bg-black/30 hover:bg-black/50 rounded-full"
+                    onClick={handleNext}
+                    aria-label="Next"
+                  >
+                    <ChevronRight className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="mt-2 h-1 bg-gray-800 rounded-full w-full overflow-hidden">
+                  <div 
+                    className="h-full bg-accent transition-all duration-300"
+                    style={{ width: `${((selectedImageIndex + 1) / images.length) * 100}%` }}
+                  ></div>
                 </div>
               </div>
               
