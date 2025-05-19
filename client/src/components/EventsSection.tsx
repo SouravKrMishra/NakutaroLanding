@@ -369,7 +369,7 @@ const EventsSection = () => {
                   key={index}
                   variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-lg"
+                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-xl"
                 >
                   <div className="h-56 relative overflow-hidden">
                     <img 
@@ -391,59 +391,64 @@ const EventsSection = () => {
                     <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
                       {event.prizePool}
                     </div>
+                    
+                    {/* Event date pill - positioned at bottom */}
+                    <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full flex items-center gap-2">
+                      <Calendar className="h-3 w-3 text-accent" />
+                      <span>{event.date}</span>
+                    </div>
                   </div>
                   
                   <div className="p-6">
-                    <h4 className="text-xl font-bold mb-3 group-hover:text-accent transition-colors duration-300">{event.title}</h4>
+                    <h4 className="text-xl font-bold mb-3 group-hover:text-accent transition-colors duration-300">
+                      {event.title}
+                    </h4>
                     
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <div className="flex items-center text-gray-400 text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-accent/70" />
-                        <span>{event.date}</span>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <div className="bg-[#191919] px-2 py-1 rounded flex items-center text-sm">
+                        <Clock className="h-3.5 w-3.5 text-accent mr-1.5" />
+                        <span className="text-gray-300">{event.time}</span>
                       </div>
-                      <div className="flex items-center text-gray-400 text-sm">
-                        <Clock className="h-4 w-4 mr-2 text-accent/70" />
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center text-gray-400 text-sm col-span-2">
-                        <MapPin className="h-4 w-4 mr-2 text-accent/70" />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-300 mb-6 line-clamp-3 text-sm">
-                      {event.description}
-                    </p>
-                    
-                    <div className="flex items-center justify-between">
+                      
                       {event.attendees && (
-                        <div className="text-sm text-gray-400 flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-accent/70" />
-                          {event.attendees} Attendees
+                        <div className="bg-[#191919] px-2 py-1 rounded flex items-center text-sm">
+                          <Users className="h-3.5 w-3.5 text-accent mr-1.5" />
+                          <span className="text-gray-300">{event.attendees}</span>
                         </div>
                       )}
+                    </div>
+                    
+                    <div className="flex items-start gap-2 mb-4">
+                      <MapPin className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-400 text-sm line-clamp-1">{event.location}</span>
+                    </div>
+                    
+                    <div className="bg-[#141414] p-3 rounded border border-[#252525] mb-5">
+                      <p className="text-gray-300 line-clamp-2 text-sm leading-relaxed">
+                        {event.description}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <button 
+                        onClick={(e) => openEventDetails(event, e)}
+                        className="inline-flex items-center text-accent hover:text-white transition-colors duration-300 font-medium text-sm"
+                      >
+                        View Details
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </button>
                       
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={(e) => openEventDetails(event, e)}
-                          className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
-                          aria-label="View event details"
+                      {event.registrationUrl && (
+                        <a 
+                          href={event.registrationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+                          aria-label="Register for event"
                         >
-                          <ArrowRight className="h-5 w-5" />
-                        </button>
-                        
-                        {event.registrationUrl && (
-                          <a 
-                            href={event.registrationUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
-                            aria-label="Register for event"
-                          >
-                            <ExternalLink className="h-5 w-5" />
-                          </a>
-                        )}
-                      </div>
+                          <Ticket className="h-4 w-4" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 </motion.div>
