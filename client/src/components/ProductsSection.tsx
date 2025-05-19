@@ -95,10 +95,12 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         >
           {/* Collection Header */}
           <motion.div variants={fadeIn('up', 'tween', 0.1, 1)} className="mb-8">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">
-              BEST COLLECTION
-            </span>
-            <div className="mt-1">
+            <div className="inline-block bg-accent/10 px-3 py-1 rounded-sm border-l-2 border-accent">
+              <span className="text-accent font-bold text-sm uppercase tracking-widest">
+                BEST COLLECTION
+              </span>
+            </div>
+            <div className="mt-2">
               <h2 className="text-3xl md:text-4xl font-bold text-white">
                 Premium Anime
               </h2>
