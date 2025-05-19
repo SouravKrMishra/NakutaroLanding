@@ -142,7 +142,7 @@ const ContactPage = () => {
                 variants={fadeIn("up", "tween", 0.3, 1)}
                 className="flex justify-center mt-8 mb-4 relative z-10"
               >
-                <div className="inline-flex bg-[#1E1E1E] p-1 rounded-lg shadow-md">
+                <div className="inline-flex bg-[#1A1A1A] p-1.5 rounded-lg shadow-md">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
