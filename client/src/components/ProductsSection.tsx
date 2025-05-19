@@ -85,13 +85,13 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
 
   return (
     <section id="products" className="py-20 bg-[#121212] relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.25 }}
-          className="max-w-3xl mx-auto mb-16"
+          className="mb-16"
         >
           {/* Collection Header */}
           <motion.div variants={fadeIn('up', 'tween', 0.1, 1)} className="mb-8">
