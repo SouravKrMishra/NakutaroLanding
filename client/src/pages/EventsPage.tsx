@@ -46,13 +46,32 @@ const EventsPage = () => {
     return () => clearInterval(interval);
   }, [upcomingEvents.length]);
 
-  // Event timeline data
+  // Event timeline data - focusing on 2023-2025 only
   const timelineEvents = [
-    { year: "2020", title: "First Anime India Convention", description: "Our journey began with a small gathering of 500 anime enthusiasts in Delhi" },
-    { year: "2021", title: "Expanded to Online Events", description: "During the pandemic, we took our events virtual, connecting fans across India" },
-    { year: "2022", title: "Multi-City Tour", description: "Hosted events in Delhi, Mumbai, Bangalore, and Kolkata with over 10,000 total attendees" },
-    { year: "2023", title: "International Guests Program", description: "Featured voice actors and animators from Japan for the first time" },
-    { year: "2024", title: "Largest Event Yet", description: "Our Summer Convention broke records with 15,000+ attendees and 100+ exhibitors" }
+    { 
+      year: "2023", 
+      title: "International Guests Program", 
+      description: "Featured voice actors and animators from Japan for the first time",
+      date: "August 2023",
+      highlight: "5,000+ attendees",
+      image: "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+    },
+    { 
+      year: "2024", 
+      title: "Summer Anime Expo", 
+      description: "Our Summer Convention broke records with massive attendance and exhibitor participation",
+      date: "June 2024",
+      highlight: "15,000+ attendees",
+      image: "https://images.unsplash.com/photo-1578632767115-351597cf2477?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+    },
+    { 
+      year: "2025", 
+      title: "Global Anime Summit", 
+      description: "Planned international expansion with partner events in Japan, USA and Europe",
+      date: "March 2025",
+      highlight: "Coming soon",
+      image: "https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+    }
   ];
 
   return (
@@ -146,17 +165,19 @@ const EventsPage = () => {
                 variants={fadeIn("up", "tween", 0.1, 1)}
                 className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
               >
-                Anime India{" "}
-                <span className="text-accent relative">
-                  Events
-                  <motion.span 
-                    className="absolute -bottom-2 left-0 w-full h-1 bg-accent/30 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                  />
-                </span>{" "}
-                & Conventions
+                <div className="flex flex-col md:flex-row items-center justify-center">
+                  <span className="mr-2">Anime India</span>
+                  <span className="text-accent relative">
+                    Events
+                    <motion.span 
+                      className="absolute -bottom-2 left-0 w-full h-1 bg-accent/30 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 0.8, delay: 0.4 }}
+                    />
+                  </span>
+                </div>
+                <span className="block mt-2">&amp; Conventions</span>
               </motion.h1>
               
               <motion.p
@@ -256,11 +277,7 @@ const EventsPage = () => {
           </motion.p>
         </motion.div>
         
-        <div className="relative flex flex-col items-center max-w-4xl mx-auto">
-          {/* Timeline line */}
-          <div className="absolute h-full w-0.5 bg-[#333] left-1/2 transform -translate-x-1/2 z-0"></div>
-          
-          {/* Timeline events */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {timelineEvents.map((event, index) => (
             <motion.div
               key={index}
@@ -268,35 +285,45 @@ const EventsPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
-              className={`relative z-10 flex w-full items-center justify-between mb-12 ${
-                index % 2 === 0 ? "flex-row" : "flex-row-reverse"
-              }`}
+              className="relative z-10 bg-[#1A1A1A] rounded-xl overflow-hidden border border-[#333] shadow-xl group"
             >
-              {/* Year bubble */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 bg-accent text-white w-12 h-12 rounded-full flex items-center justify-center font-bold shadow-lg">
-                {event.year}
+              {/* Image */}
+              <div className="h-48 relative overflow-hidden">
+                <img 
+                  src={event.image}
+                  alt={event.title}
+                  className="w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#121212] to-transparent opacity-60"></div>
+                
+                {/* Year badge */}
+                <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full font-bold shadow-lg">
+                  {event.year}
+                </div>
               </div>
               
               {/* Content */}
-              <div className={`w-5/12 ${index % 2 === 0 ? "text-right pr-8" : "text-left pl-8"}`}>
-                <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                <p className="text-gray-400">{event.description}</p>
+              <div className="p-6 relative">
+                {/* Date ribbon */}
+                <div className="absolute -top-4 left-6 bg-[#222] px-4 py-1 rounded-full text-sm font-medium text-gray-300 border border-[#333]">
+                  {event.date}
+                </div>
+                
+                <h3 className="text-xl font-bold mb-3 mt-3">{event.title}</h3>
+                <p className="text-gray-400 mb-4">{event.description}</p>
+                
+                <div className="flex items-center mt-auto">
+                  <div className="flex items-center text-accent/80 bg-accent/5 px-3 py-1 rounded-full text-sm">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    <span>{event.highlight}</span>
+                  </div>
+                </div>
               </div>
               
-              <div className="w-5/12"></div>
+              {/* Decorative elements */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
             </motion.div>
           ))}
-          
-          {/* Trophy at the end */}
-          <motion.div
-            initial={{ scale: 0 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, type: "spring" }}
-            className="bg-accent/10 w-16 h-16 rounded-full flex items-center justify-center text-accent border border-accent/30 z-10"
-          >
-            <Trophy className="w-8 h-8" />
-          </motion.div>
         </div>
       </div>
 
