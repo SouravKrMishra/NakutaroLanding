@@ -3,7 +3,7 @@ import { fadeIn, staggerContainer } from '@/lib/animations';
 
 const HeroSection = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-20 hero-gradient overflow-hidden">
+    <section id="home" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-16 md:pt-20 hero-gradient overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
@@ -15,11 +15,11 @@ const HeroSection = () => {
             variants={fadeIn('right', 'tween', 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4">
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4">
               <span className="text-gradient">ANIME INDIA</span>
             </h1>
-            <h2 className="text-2xl sm:text-3xl font-medium mb-6 text-gray-300">Celebrating the Fandom!</h2>
-            <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-gray-300">Celebrating the Fandom!</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
               India's #1 Anime Store Bringing You the Best Anime Merch Without the Hassle!
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
@@ -27,7 +27,7 @@ const HeroSection = () => {
                 href="https://shop.animeindia.org"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-3 bg-accent hover:bg-accent/80 text-white font-medium rounded-md transition duration-300 text-lg shadow-lg hover:shadow-xl inline-flex items-center justify-center"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-accent hover:bg-accent/80 text-white font-medium rounded-md transition duration-300 text-base sm:text-lg shadow-lg hover:shadow-xl inline-flex items-center justify-center w-full sm:w-auto"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -36,7 +36,7 @@ const HeroSection = () => {
               </a>
               <a
                 href="#services"
-                className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700 relative overflow-hidden group"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-base sm:text-lg border border-gray-700 relative overflow-hidden group w-full sm:w-auto"
               >
                 <span className="relative z-10">Explore Collections</span>
                 <span className="absolute w-0 h-full theme-hover-effect left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
