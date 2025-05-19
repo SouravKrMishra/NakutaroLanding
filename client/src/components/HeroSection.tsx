@@ -98,7 +98,7 @@ const HeroSection = () => {
               </div>
             </h1>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6">
-              <span className="inline-block border-l-4 border-accent pl-3 text-accent">Celebrating the Fandom!</span>
+              <span className="inline-block border-l-4 border-accent pl-3 text-white">Celebrating the Fandom!</span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0 leading-relaxed relative z-10">
               <span className="relative">
