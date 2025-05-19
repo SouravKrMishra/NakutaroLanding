@@ -95,7 +95,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             {showFullCatalog ? 'Anime India Store' : 'Our Collection'}
           </motion.span>
@@ -126,7 +126,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
             <motion.div
               key={index}
               variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-[#FF3B30]/30 transition-all duration-300"
+              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-accent/30 transition-all duration-300"
             >
               <div className="relative h-60 overflow-hidden">
                 <img 

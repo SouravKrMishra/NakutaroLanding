@@ -29,7 +29,7 @@ const AboutSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             About Us
           </motion.span>
@@ -110,7 +110,7 @@ const AboutSection = () => {
             <img 
               src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
               alt="Anime fans at convention" 
-              className="rounded-lg shadow-xl w-full h-auto border-2 border-[#FF3B30]/20" 
+              className="rounded-lg shadow-xl w-full h-auto border-2 border-accent/20" 
             />
           </motion.div>
         </motion.div>
