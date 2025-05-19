@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AppearanceSettings } from './AppearanceSettings';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,8 +28,8 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <a href="#" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl dark:text-white text-gray-900">
-              Anime<span className="text-[#FF3B30]"> India</span>
+            <span className="font-bold text-2xl text-white">
+              Anime<span className="text-[#FF3B30]">India</span>
             </span>
           </a>
           
@@ -40,18 +39,17 @@ const Header = () => {
               <a 
                 key={link.href}
                 href={link.href} 
-                className="text-gray-800 dark:text-gray-200 hover:text-[#FF3B30] dark:hover:text-[#FF3B30] transition duration-200"
+                className="text-gray-300 hover:text-white transition duration-200"
               >
                 {link.label}
               </a>
             ))}
           </nav>
           
-          <div className="hidden md:flex items-center space-x-6">
-            <AppearanceSettings />
+          <div className="hidden md:block">
             <a 
               href="#contact" 
-              className="bg-[#FF3B30] hover:bg-opacity-90 text-white px-6 py-2 rounded-md transition duration-300 inline-block"
+              className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-6 py-2 rounded-md transition duration-300 inline-block"
             >
               Get Started
             </a>
@@ -83,21 +81,15 @@ const Header = () => {
                 <a 
                   key={link.href}
                   href={link.href} 
-                  className="text-gray-800 dark:text-gray-200 hover:text-[#FF3B30] dark:hover:text-[#FF3B30] transition duration-200"
+                  className="text-gray-300 hover:text-white transition duration-200"
                   onClick={closeMenu}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="flex items-center justify-between pt-2 pb-2 border-t border-gray-700">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Appearance</span>
-                </div>
-                <AppearanceSettings />
-              </div>
               <a 
                 href="#contact" 
-                className="bg-[#FF3B30] hover:bg-opacity-90 text-white px-4 py-2 rounded-md inline-block transition duration-300 text-center"
+                className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-4 py-2 rounded-md inline-block transition duration-300 text-center"
                 onClick={closeMenu}
               >
                 Get Started

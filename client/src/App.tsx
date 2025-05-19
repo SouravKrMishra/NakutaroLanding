@@ -21,9 +21,9 @@ function App() {
       const navbar = document.getElementById("navbar");
       if (navbar) {
         if (window.scrollY > 10) {
-          navbar.classList.add("navbar-scrolled", "shadow-lg");
+          navbar.classList.add("bg-[#121212]", "shadow-lg");
         } else {
-          navbar.classList.remove("navbar-scrolled", "shadow-lg");
+          navbar.classList.remove("bg-[#121212]", "shadow-lg");
         }
       }
     };

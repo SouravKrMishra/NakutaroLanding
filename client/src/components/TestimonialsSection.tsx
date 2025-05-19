@@ -150,27 +150,25 @@ const TestimonialsSection = () => {
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, amount: 0.25 }}
-                className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-6 py-4"
+                className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative group overflow-visible">
-                  <div className="absolute -top-10 -right-10 -bottom-10 -left-10 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-0"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center mb-4">
-                      <div className="text-[#FF3B30] flex">
-                        {renderStars(testimonial.rating)}
-                      </div>
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative overflow-hidden group">
+                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <div className="flex items-center mb-4">
+                    <div className="text-[#FF3B30] flex">
+                      {renderStars(testimonial.rating)}
                     </div>
-                    <blockquote className="text-gray-300 mb-6">
-                      "{testimonial.content}"
-                    </blockquote>
-                    <div className="flex items-center">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF3B30]/30 to-[#FF3B30]/10 flex items-center justify-center mr-4 border-2 border-[#FF3B30]/20">
-                        <span className="text-xl font-bold text-[#FF3B30]">{testimonial.initials}</span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">{testimonial.author}</h4>
-                        <p className="text-gray-500 text-sm">{testimonial.position}</p>
-                      </div>
+                  </div>
+                  <blockquote className="text-gray-300 mb-6">
+                    "{testimonial.content}"
+                  </blockquote>
+                  <div className="flex items-center">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF3B30]/30 to-[#FF3B30]/10 flex items-center justify-center mr-4 border-2 border-[#FF3B30]/20">
+                      <span className="text-xl font-bold text-[#FF3B30]">{testimonial.initials}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{testimonial.author}</h4>
+                      <p className="text-gray-500 text-sm">{testimonial.position}</p>
                     </div>
                   </div>
                 </div>
