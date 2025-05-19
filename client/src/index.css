@@ -120,6 +120,8 @@ body {
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
   position: relative;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Create theme-specific background patterns for each theme */

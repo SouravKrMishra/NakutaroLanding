@@ -29,31 +29,7 @@ const testimonials = [
 
 const TestimonialsSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [slideWidth, setSlideWidth] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const updateSlideWidth = () => {
-      if (sliderRef.current) {
-        const firstSlide = sliderRef.current.querySelector('.testimonial-slide');
-        if (firstSlide) {
-          const style = window.getComputedStyle(firstSlide as HTMLElement);
-          const width = (firstSlide as HTMLElement).offsetWidth;
-          const marginLeft = parseInt(style.marginLeft || '0', 10);
-          const marginRight = parseInt(style.marginRight || '0', 10);
-          
-          setSlideWidth(width + marginLeft + marginRight);
-        }
-      }
-    };
-    
-    updateSlideWidth();
-    window.addEventListener('resize', updateSlideWidth);
-    
-    return () => {
-      window.removeEventListener('resize', updateSlideWidth);
-    };
-  }, []);
   
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % testimonials.length);
@@ -137,11 +113,11 @@ const TestimonialsSection = () => {
           </motion.p>
         </motion.div>
         
-        <div className="relative testimonial-slider">
+        <div className="relative testimonial-slider mx-auto max-w-3xl">
           <div 
             ref={sliderRef}
             className="flex overflow-hidden"
-            style={{ transition: 'transform 0.5s ease', transform: `translateX(-${currentSlide * slideWidth}px)` }}
+            style={{ transition: 'transform 0.5s ease', transform: `translateX(-${currentSlide * 100}%)` }}
           >
             {testimonials.map((testimonial, index) => (
               <motion.div
@@ -150,9 +126,9 @@ const TestimonialsSection = () => {
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, amount: 0.25 }}
-                className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
+                className="testimonial-slide w-full flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-accent/5 hover:shadow-accent/10 transition-all duration-300 relative overflow-hidden group">
+                <div className="bg-[#1E1E1E] p-6 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-accent/5 hover:shadow-accent/10 transition-all duration-300 relative overflow-hidden group">
                   <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                   <div className="flex items-center mb-4">
                     <div className="text-accent flex">
