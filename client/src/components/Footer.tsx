@@ -4,26 +4,27 @@ import {
   Facebook, 
   Instagram 
 } from 'lucide-react';
+import { Link } from 'wouter';
 
 const Footer = () => {
   const year = new Date().getFullYear();
   
   const quickLinks = [
-    { href: '#home', label: 'Home' },
-    { href: '#products', label: 'Products' },
-    { href: '#events', label: 'Subscribe' },
-    { href: '#contact', label: 'Contact Us' },
-    { href: '#shop', label: 'Shop' },
-    { href: '#faq', label: 'FAQs' }
+    { href: '/', label: 'Home' },
+    { href: '/products', label: 'Products' },
+    { href: '/subscribe', label: 'Subscribe' },
+    { href: '/contact', label: 'Contact Us' },
+    { href: 'https://shop.animeindia.org', external: true, label: 'Shop' },
+    { href: '/products#faq', label: 'FAQs' }
   ];
   
   const serviceLinks = [
-    { href: '#', label: 'Action Figures' },
-    { href: '#', label: 'Anime Apparel' },
-    { href: '#', label: 'Manga & Books' },
-    { href: '#', label: 'Collectibles' },
-    { href: '#', label: 'Accessories' },
-    { href: '#', label: 'Special Editions' }
+    { href: '/products', label: 'Action Figures' },
+    { href: '/products', label: 'Anime Apparel' },
+    { href: '/products', label: 'Manga & Books' },
+    { href: '/products', label: 'Collectibles' },
+    { href: '/products', label: 'Accessories' },
+    { href: '/products', label: 'Special Editions' }
   ];
   
   const socialLinks = [
@@ -38,11 +39,11 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
-            <a href="#" className="flex items-center space-x-2 mb-5">
+            <Link href="/" className="flex items-center space-x-2 mb-5">
               <span className="font-bold text-2xl text-white">
                 Anime<span className="text-[#FF3B30]">India</span>
               </span>
-            </a>
+            </Link>
             <p className="mb-4">
               India's premier anime merchandise store. From action figures to apparel, we bring the best of Japanese animation to Indian fans.
             </p>
@@ -65,12 +66,23 @@ const Footer = () => {
             <ul className="space-y-3">
               {quickLinks.map((link, index) => (
                 <li key={index}>
-                  <a 
-                    href={link.href} 
-                    className="hover:text-[#FF3B30] transition duration-300"
-                  >
-                    {link.label}
-                  </a>
+                  {link.external ? (
+                    <a 
+                      href={link.href} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#FF3B30] transition duration-300"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link 
+                      href={link.href} 
+                      className="hover:text-[#FF3B30] transition duration-300"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -81,12 +93,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {serviceLinks.map((link, index) => (
                 <li key={index}>
-                  <a 
+                  <Link 
                     href={link.href} 
                     className="hover:text-[#FF3B30] transition duration-300"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
