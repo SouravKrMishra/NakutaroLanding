@@ -10,7 +10,7 @@ import { ThemeCustomizer } from "./components/ThemeCustomizer";
 // Pages
 import HomePage from "@/pages/HomePage";
 import ProductsPage from "@/pages/ProductsPage";
-import SubscribePage from "@/pages/SubscribePage";
+import EventsPage from "@/pages/EventsPage";
 import ContactPage from "@/pages/ContactPage";
 import NotFoundPage from "@/pages/not-found";
 
@@ -49,7 +49,7 @@ function App() {
             <Switch>
               <Route path="/" component={HomePage} />
               <Route path="/products" component={ProductsPage} />
-              <Route path="/subscribe" component={SubscribePage} />
+              <Route path="/events" component={EventsPage} />
               <Route path="/contact" component={ContactPage} />
               <Route component={NotFoundPage} />
             </Switch>
