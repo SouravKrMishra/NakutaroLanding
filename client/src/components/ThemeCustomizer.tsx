@@ -62,66 +62,33 @@ export const ThemeCustomizer: React.FC = () => {
               </button>
             </div>
             
-            <div className="space-y-2">
-              <p style={{ color: '#9CA3AF', fontSize: '0.75rem', marginBottom: '0.5rem' }}>Accent Color</p>
-              <div className="grid grid-cols-5 gap-2">
+            <div className="space-y-3">
+              <p style={{ color: '#9CA3AF', fontSize: '0.75rem', marginBottom: '0.5rem' }}>Theme Color</p>
+              
+              <div className="flex flex-col gap-1">
                 {themeOptions.map((option) => (
                   <button
                     key={option.id}
-                    className="w-full aspect-square rounded-full flex items-center justify-center"
                     style={{ 
-                      backgroundColor: option.color,
-                      border: `2px solid ${option.id === theme ? 'white' : 'transparent'}`
+                      backgroundColor: option.id === theme ? '#2D2D2D' : 'transparent',
+                      color: option.id === theme ? option.color : 'white',
+                      fontSize: '0.875rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      textAlign: 'left',
+                      borderLeft: option.id === theme ? `3px solid ${option.color}` : '3px solid transparent',
+                      transition: 'all 0.2s ease'
                     }}
                     onClick={() => handleThemeChange(option.id)}
-                    title={option.name}
                   >
-                    {option.id === theme && <Check className="h-3 w-3" style={{ color: 'white' }} />}
+                    {option.name}
+                    {option.id === theme && <Check style={{ height: '0.875rem', width: '0.875rem', color: option.color }} />}
                   </button>
                 ))}
-              </div>
-              
-              <div style={{ 
-                marginTop: '1rem', 
-                paddingTop: '0.75rem', 
-                borderTopWidth: '1px', 
-                borderTopStyle: 'solid', 
-                borderTopColor: '#2D2D2D' 
-              }}>
-                <div className="flex flex-col gap-2">
-                  {themeOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      style={{ 
-                        backgroundColor: option.id === theme ? '#2D2D2D' : 'transparent',
-                        color: 'white',
-                        fontSize: '0.75rem',
-                        padding: '0.375rem 0.5rem',
-                        borderRadius: '0.25rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        textAlign: 'left'
-                      }}
-                      onClick={() => handleThemeChange(option.id)}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div 
-                          style={{ 
-                            width: '0.75rem', 
-                            height: '0.75rem', 
-                            borderRadius: '9999px', 
-                            backgroundColor: option.color,
-                            marginRight: '0.5rem'
-                          }} 
-                        />
-                        {option.name}
-                      </div>
-                      {option.id === theme && <Check style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
