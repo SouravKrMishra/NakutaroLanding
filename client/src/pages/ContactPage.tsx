@@ -29,7 +29,7 @@ const ContactPage = () => {
   return (
     <div className="contact-page pt-28 pb-16 overflow-hidden">
       {/* Hero Section with Animated Background */}
-      <div className="relative h-[70vh] min-h-[500px] mb-20 overflow-hidden bg-[#121212]">
+      <div className="relative h-[60vh] sm:h-[65vh] md:h-[70vh] min-h-[400px] sm:min-h-[450px] md:min-h-[500px] mb-12 sm:mb-16 md:mb-20 overflow-hidden bg-[#121212]">
         <div className="absolute inset-0 opacity-20">
           {/* Animated Grid Pattern */}
           <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
@@ -114,7 +114,7 @@ const ContactPage = () => {
               </motion.div>
               
               <h1
-                className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
+                className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight"
               >
                 <div className="inline-block">
                   <span style={{ color: 'var(--theme-color-hex)' }}>Contact Us</span>
@@ -128,7 +128,7 @@ const ContactPage = () => {
               
               <motion.p
                 variants={fadeIn("up", "tween", 0.2, 1)}
-                className="text-gray-400 text-xl mb-8 max-w-3xl mx-auto"
+                className="text-gray-400 text-base sm:text-lg md:text-xl mb-5 sm:mb-6 md:mb-8 max-w-3xl mx-auto px-4 sm:px-6"
               >
                 Have questions or feedback? Contact our team at Anime India for any inquiries
                 about our events, products, or services.
