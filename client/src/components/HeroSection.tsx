@@ -39,7 +39,7 @@ const HeroSection = () => {
                 className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700 relative overflow-hidden group"
               >
                 <span className="relative z-10">Explore Collections</span>
-                <span className="absolute w-0 h-full bg-[#FF3B30]/20 left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute w-0 h-full theme-hover-effect left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>
           </motion.div>

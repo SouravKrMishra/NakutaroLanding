@@ -260,6 +260,11 @@ button[class*="shop"]:hover,
   background-color: hsl(var(--accent-dark)) !important;
 }
 
+/* Translucent theme color effect for button hover */
+.theme-hover-effect {
+  background-color: hsla(var(--theme-color), 0.2) !important;
+}
+
 /* Background elements that should use the accent color */
 .bg-red-500, 
 .bg-red-600, 
