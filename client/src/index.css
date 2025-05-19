@@ -194,7 +194,24 @@ body::before {
 .text-[#FF3B30],
 .text-[#E53E3E],
 .text-[#FF0000],
-*[class*="text-red"] {
+*[class*="text-red"],
+svg[fill="red"],
+svg[stroke="red"],
+svg[stroke="#FF3B30"],
+svg[fill="#FF3B30"] {
+  color: hsl(var(--accent-primary)) !important;
+  fill: hsl(var(--accent-primary)) !important;
+  stroke: hsl(var(--accent-primary)) !important;
+}
+
+/* Target specific elements with red numbers and check marks */
+[class*="checkmark"],
+[class*="check-mark"],
+svg[class*="check"],
+div[class*="stats"] > *,
+div[class*="statistics"] > *,
+.stats *,
+*[class*="count"] {
   color: hsl(var(--accent-primary)) !important;
 }
 

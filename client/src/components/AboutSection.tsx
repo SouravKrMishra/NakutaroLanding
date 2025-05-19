@@ -74,7 +74,7 @@ const AboutSection = () => {
                   className="flex items-start"
                 >
                   <div className="flex-shrink-0 mt-1">
-                    <Check className="text-[#FF3B30] h-5 w-5" />
+                    <Check className="text-accent h-5 w-5" />
                   </div>
                   <p className="ml-3 text-gray-300">{point}</p>
                 </motion.div>
@@ -87,7 +87,7 @@ const AboutSection = () => {
             >
               <a 
                 href="#services" 
-                className="text-[#FF3B30] font-medium flex items-center hover:text-[#FF6B61] transition duration-300"
+                className="text-accent font-medium flex items-center hover:text-accent/80 transition duration-300"
               >
                 Explore Anime Categories
                 <svg 
@@ -128,7 +128,7 @@ const AboutSection = () => {
               variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
               className="bg-[#2D2D2D] p-6 rounded-lg text-center"
             >
-              <div className="text-[#FF3B30] text-3xl font-bold mb-2">{stat.value}</div>
+              <div className="text-accent text-3xl font-bold mb-2">{stat.value}</div>
               <div className="text-gray-400 text-sm">{stat.label}</div>
             </motion.div>
           ))}
