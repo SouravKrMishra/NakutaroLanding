@@ -92,12 +92,17 @@ const HeroSection = () => {
             </motion.div>
             
             <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
-              <div className="inline-block">
-                <span className="text-accent">ANIME INDIA</span>
+              <div className="inline-block relative">
+                <span className="text-accent drop-shadow-[0_0_8px_rgba(var(--theme-color-rgb),0.3)] tracking-wide">ANIME INDIA</span>
+                <div className="absolute -bottom-1 left-0 w-full h-[2px] bg-gradient-to-r from-accent via-accent/70 to-transparent"></div>
               </div>
             </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white">
-              Celebrating the Fandom!
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white tracking-wider">
+              <span className="inline-block relative px-6 py-1">
+                <span className="relative z-10">Celebrating the Fandom!</span>
+                <span className="absolute inset-0 bg-accent/10 rounded-full -skew-x-3 transform"></span>
+                <span className="absolute h-full w-1 bg-accent rounded-full left-0 top-0"></span>
+              </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0 leading-relaxed relative z-10">
               <span className="relative">
