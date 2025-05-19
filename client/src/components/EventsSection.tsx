@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, Ticket, Users, Medal, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Clock, Trophy, Camera, Users, Medal } from 'lucide-react';
 import { GalleryPopup } from './ui/gallery-popup';
 import { EventPopup } from './ui/event-popup';
 
@@ -16,7 +16,6 @@ interface Event {
   prizePool?: string;
   attendees?: string;
   featured_image?: string;
-  registrationUrl?: string;
 }
 
 const EventsSection = () => {
@@ -33,8 +32,7 @@ const EventsSection = () => {
     featured_image: 'https://images.unsplash.com/photo-1575900239752-13e5ef40c924?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
     featured: true,
     prizePool: '₹50,000',
-    attendees: '300+',
-    registrationUrl: 'https://shop.animeindia.org'
+    attendees: '300+'
   };
   
   const sponsoredEvents: Event[] = [
@@ -46,9 +44,7 @@ const EventsSection = () => {
       description: "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
       image: 'https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
       prizePool: '₹30,000',
-      attendees: '500+',
-      featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
-      registrationUrl: 'https://shop.animeindia.org'
+      attendees: '500+'
     },
     {
       title: 'Khooni Monday Horrorcon',
@@ -58,9 +54,7 @@ const EventsSection = () => {
       description: "Nakutaro partnered as a sponsor for this horror-themed convention featuring a cosplay competition with a prize pool of ₹60,000, providing a platform for fans to immerse themselves in the genre.",
       image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
       prizePool: '₹60,000',
-      attendees: '600+',
-      featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
-      registrationUrl: 'https://shop.animeindia.org'
+      attendees: '600+'
     }
   ];
   
@@ -163,11 +157,6 @@ const EventsSection = () => {
     setGalleryOpen(true);
   };
 
-  const openEventDetails = (event: Event, e: React.MouseEvent) => {
-    e.preventDefault();
-    setSelectedEvent(event);
-  };
-  
   return (
     <section id="events" className="py-20 relative overflow-hidden">
       {/* Background with pattern */}
@@ -322,27 +311,10 @@ const EventsSection = () => {
                           <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
                         </span>
                         <span className="relative flex items-center">
-                          <Camera className="h-5 w-5 mr-2 text-accent" />
+                          <Camera className="h-5 w-5 mr-2 text-white" />
                           View Gallery
                         </span>
                       </button>
-                      
-                      {organizedEvent.registrationUrl && (
-                        <a 
-                          href={organizedEvent.registrationUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative inline-flex items-center overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
-                        >
-                          <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
-                          <span className="absolute bottom-0 left-0 h-1 w-full bg-white opacity-10"></span>
-                          <span className="absolute right-0 -mt-3 h-16 w-16 rotate-45 translate-x-8 -translate-y-2 bg-white opacity-10"></span>
-                          <span className="relative flex items-center">
-                            <Ticket className="h-5 w-5 mr-2" />
-                            Register Now
-                          </span>
-                        </a>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -415,36 +387,12 @@ const EventsSection = () => {
                       {event.description}
                     </p>
                     
-                    <div className="flex items-center justify-between">
-                      {event.attendees && (
-                        <div className="text-sm text-gray-400 flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-accent/70" />
-                          {event.attendees} Attendees
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={(e) => openEventDetails(event, e)}
-                          className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
-                          aria-label="View event details"
-                        >
-                          <ArrowRight className="h-5 w-5" />
-                        </button>
-                        
-                        {event.registrationUrl && (
-                          <a 
-                            href={event.registrationUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
-                            aria-label="Register for event"
-                          >
-                            <ExternalLink className="h-5 w-5" />
-                          </a>
-                        )}
+                    {event.attendees && (
+                      <div className="text-sm text-gray-400 flex items-center">
+                        <Users className="h-4 w-4 mr-1 text-accent/70" />
+                        {event.attendees} Attendees
                       </div>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -488,11 +436,13 @@ const EventsSection = () => {
         title="Nakutaro Cosplay Royale Gallery"
       />
       
-      <EventPopup
-        isOpen={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        event={selectedEvent || organizedEvent} // Fallback to avoid type error
-      />
+      {selectedEvent && (
+        <EventPopup
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          event={selectedEvent}
+        />
+      )}
     </section>
   );
 };
