@@ -8,6 +8,7 @@ import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import ServicesSection from "@/components/ServicesSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import ProductsSection from "@/components/ProductsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import CTASection from "@/components/CTASection";
 import ContactSection from "@/components/ContactSection";
@@ -43,6 +44,7 @@ function App() {
           <HeroSection />
           <AboutSection />
           <ServicesSection />
+          <ProductsSection />
           <FeaturesSection />
           <TestimonialsSection />
           <CTASection />

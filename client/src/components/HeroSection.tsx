@@ -15,24 +15,26 @@ const HeroSection = () => {
             variants={fadeIn('right', 'tween', 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6">
-              Your Ultimate <span className="text-gradient">Anime</span> Destination in India
+            <span className="text-lg sm:text-xl text-[#FF3B30] font-medium mb-2 block">Welcome to</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4">
+              <span className="text-gradient">ANIME INDIA</span>
             </h1>
+            <h2 className="text-2xl sm:text-3xl font-medium mb-6 text-gray-300">Celebrating the Fandom!</h2>
             <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Discover the latest news, reviews, and discussions about your favorite anime series, manga, and Japanese culture.
+              India's #1 Anime Store Bringing You the Best Anime Merch Without the Hassle!
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <a
-                href="#contact"
+                href="#features"
                 className="px-8 py-3 bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium rounded-md transition duration-300 text-lg shadow-lg hover:shadow-xl"
               >
-                Join Community
+                Get Started
               </a>
               <a
-                href="#about"
+                href="#services"
                 className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700 relative overflow-hidden group"
               >
-                <span className="relative z-10">Explore Anime</span>
+                <span className="relative z-10">What We Offer</span>
                 <span className="absolute w-0 h-full bg-[#FF3B30]/20 left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>

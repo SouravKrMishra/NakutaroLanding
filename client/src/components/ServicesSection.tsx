@@ -13,34 +13,19 @@ import {
 const ServicesSection = () => {
   const services = [
     {
-      icon: <Code className="h-8 w-8" />,
-      title: 'Shonen Anime',
-      description: "Action-packed anime typically aimed at teenage boys featuring protagonists with extraordinary abilities and epic battles.",
+      icon: <BarChart2 className="h-8 w-8" />,
+      title: 'B2B Platform',
+      description: "We supply premium anime action figures, merchandise, and manga to retailers and collectors, ensuring authenticity and quality. Our B2B services are designed to meet the diverse needs of businesses seeking to offer top-tier anime products to their customers.",
     },
     {
       icon: <Smartphone className="h-8 w-8" />,
-      title: 'Shojo Anime',
-      description: "Romance-focused anime aimed primarily at young women, featuring emotional storylines and character development.",
+      title: 'Nakutaro: B2C Platform',
+      description: "Through our sub-brand, Nakutaro, we connect directly with anime fans, providing a wide array of high-quality merchandise and collectibles at affordable prices. Nakutaro is committed to delivering products that resonate with the passion and enthusiasm of the anime community.",
     },
     {
-      icon: <BarChart2 className="h-8 w-8" />,
-      title: 'Seinen Anime',
-      description: "Mature anime targeting adult men with complex storylines, realistic characters, and often darker themes.",
-    },
-    {
-      icon: <Cloud className="h-8 w-8" />,
-      title: 'Isekai Anime',
-      description: "Stories where protagonists are transported to, reborn, or trapped in a parallel universe, alternate world, or virtual reality.",
-    },
-    {
-      icon: <Shield className="h-8 w-8" />,
-      title: 'Mecha Anime',
-      description: "Features giant robots or machines controlled by people, with epic battles and advanced technology.",
-    },
-    {
-      icon: <Bot className="h-8 w-8" />,
-      title: 'Slice of Life Anime',
-      description: "Portrays mundane everyday experiences, focusing on the ordinary lives of characters rather than fantastic adventures.",
+      icon: <Code className="h-8 w-8" />,
+      title: 'Event Organization and Community Engagement',
+      description: "We host engaging events, conventions, and workshops that celebrate anime culture and bring fans together. Our events are designed to foster community spirit, encourage creativity, and provide platforms for fans to connect and share their love for anime.",
     }
   ];
 
@@ -58,19 +43,19 @@ const ServicesSection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
-            Anime Categories
+            What We Offer
           </motion.span>
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            Explore Anime Genres
+            Our Services
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Discover the diverse world of anime through these popular genres and find your next favorite series.
+            We offer a wide range of anime merchandise and services to satisfy your otaku needs.
           </motion.p>
         </motion.div>
         

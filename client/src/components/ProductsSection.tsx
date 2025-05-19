@@ -1,0 +1,126 @@
+import { motion } from 'framer-motion';
+import { fadeIn, staggerContainer } from '@/lib/animations';
+import { ArrowRight } from 'lucide-react';
+
+const ProductsSection = () => {
+  const products = [
+    {
+      title: 'Action Figures',
+      description: 'Premium collectible action figures featuring your favorite anime characters',
+      images: [
+        'https://images.unsplash.com/photo-1558679908-541bcf1249ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1607456648016-62021188884f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime T-Shirts',
+      description: 'Stylish and comfortable t-shirts with exclusive anime designs',
+      images: [
+        'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1618354691792-d1d42acfd860?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime Hoodies',
+      description: 'Premium hoodies featuring iconic anime artwork and characters',
+      images: [
+        'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime Accessories',
+      description: 'Complete your look with our curated selection of anime accessories',
+      images: [
+        'https://images.unsplash.com/photo-1519238359922-333183840e32?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1628340814848-33bad6f2c031?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    }
+  ];
+
+  return (
+    <section id="products" className="py-20 bg-[#121212] relative overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.25 }}
+          className="max-w-3xl mx-auto text-center mb-16"
+        >
+          <motion.span 
+            variants={fadeIn('up', 'tween', 0.1, 1)}
+            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+          >
+            Our Collection
+          </motion.span>
+          <motion.h2 
+            variants={fadeIn('up', 'tween', 0.2, 1)}
+            className="text-3xl md:text-4xl font-bold mt-2 mb-6"
+          >
+            Featured Products
+          </motion.h2>
+          <motion.p 
+            variants={fadeIn('up', 'tween', 0.3, 1)}
+            className="text-gray-400 text-lg"
+          >
+            Discover our carefully curated collection of premium anime merchandise, from collectible figures to stylish apparel.
+          </motion.p>
+        </motion.div>
+        
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.25 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+        >
+          {products.map((product, index) => (
+            <motion.div
+              key={index}
+              variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
+              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-[#FF3B30]/30 transition-all duration-300"
+            >
+              <div className="relative h-60 overflow-hidden">
+                <img 
+                  src={product.images[0]} 
+                  alt={`${product.title} 1`}
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 group-hover:opacity-0"
+                />
+                <img 
+                  src={product.images[1]} 
+                  alt={`${product.title} 2`}
+                  className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E1E1E] to-transparent opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold mb-2">{product.title}</h3>
+                <p className="text-gray-400 mb-4">
+                  {product.description}
+                </p>
+                <a 
+                  href="#" 
+                  className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
+                >
+                  View All Products
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+      
+      {/* Anime-inspired decorative elements */}
+      <div className="absolute top-20 right-10 w-24 h-24 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute bottom-20 left-10 w-32 h-32 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
+      
+      {/* Animated elements */}
+      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
+      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+    </section>
+  );
+};
+
+export default ProductsSection;
