@@ -4,17 +4,17 @@ import { Check } from 'lucide-react';
 
 const AboutSection = () => {
   const missionPoints = [
-    'Bringing the best anime content and news to Indian fans',
-    'Creating a vibrant community for anime lovers across the country',
-    'Promoting Japanese culture and artistry through anime and manga',
-    'Supporting local artists and cosplayers in the anime community'
+    'Bringing fans and businesses together through anime events',
+    'Organizing immersive anime events celebrating Japanese pop culture',
+    'Providing B2B merchandise services for premium anime products',
+    'Creating memorable anime experiences through conventions and meetups'
   ];
 
   const stats = [
-    { value: '1000+', label: 'Anime Reviews' },
-    { value: '50K+', label: 'Community Members' },
-    { value: '100+', label: 'Events Hosted' },
-    { value: '5K+', label: 'Articles Published' }
+    { value: '2.7K+', label: 'Users' },
+    { value: '1.8K+', label: 'Deliveries' },
+    { value: '112+', label: 'Daily Orders' },
+    { value: '4', label: 'Categories' }
   ];
 
   return (
@@ -37,13 +37,13 @@ const AboutSection = () => {
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            Who We Are
+            About Anime India
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Founded by passionate anime fans, Anime India has grown into the country's premier community for anime enthusiasts, creators, and collectors.
+            At Anime India, we are a dedicated group of anime enthusiasts committed to bringing fans and businesses together.
           </motion.p>
         </motion.div>
         
@@ -58,9 +58,12 @@ const AboutSection = () => {
             variants={fadeIn('right', 'tween', 0.2, 1)}
             className="order-2 md:order-1"
           >
-            <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
+            <h3 className="text-2xl font-bold mb-4">What We Do</h3>
             <p className="text-gray-400 mb-6">
-              At Anime India, we're dedicated to connecting fans with the anime they love and building an inclusive community that celebrates Japanese animation and culture in all its forms.
+              We organize immersive anime events that celebrate the vibrant world of Japanese pop culture. Our B2B merchandise services help companies access exclusive anime-related products, fostering partnerships within the anime industry.
+            </p>
+            <p className="text-gray-400 mb-6">
+              We specialize in creating memorable anime experiences by hosting events that connect fans and brands. Our team handles everything from conventions and pop-up events to fan meetups, fostering a dynamic anime community.
             </p>
             
             <div className="space-y-4">

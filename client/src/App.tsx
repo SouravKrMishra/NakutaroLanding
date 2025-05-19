@@ -7,9 +7,11 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import ServicesSection from "@/components/ServicesSection";
-import FeaturesSection from "@/components/FeaturesSection";
 import ProductsSection from "@/components/ProductsSection";
+import EventsSection from "@/components/EventsSection";
+import FeaturesSection from "@/components/FeaturesSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import FAQSection from "@/components/FAQSection";
 import CTASection from "@/components/CTASection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
@@ -45,8 +47,10 @@ function App() {
           <AboutSection />
           <ServicesSection />
           <ProductsSection />
+          <EventsSection />
           <FeaturesSection />
           <TestimonialsSection />
+          <FAQSection />
           <CTASection />
           <ContactSection />
         </main>
