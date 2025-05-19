@@ -82,15 +82,29 @@ const TestimonialsSection = () => {
     const hasHalfStar = rating % 1 !== 0;
     
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-accent text-accent" />);
+      stars.push(
+        <Star 
+          key={`full-${i}`} 
+          className="h-4 w-4" 
+          style={{ fill: 'hsl(var(--accent-primary))', color: 'hsl(var(--accent-primary))' }} 
+        />
+      );
     }
     
     if (hasHalfStar) {
       stars.push(
-        <svg key="half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 text-accent">
+        <svg 
+          key="half" 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          className="h-4 w-4" 
+          style={{ color: 'hsl(var(--accent-primary))' }}
+        >
           <defs>
             <linearGradient id="halfGradient">
-              <stop offset="50%" className="stop-accent" />
+              <stop offset="50%" style={{ stopColor: 'hsl(var(--accent-primary))' }} />
               <stop offset="50%" stopColor="transparent" />
             </linearGradient>
           </defs>
@@ -101,7 +115,13 @@ const TestimonialsSection = () => {
     
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-accent" />);
+      stars.push(
+        <Star 
+          key={`empty-${i}`} 
+          className="h-4 w-4" 
+          style={{ color: 'hsl(var(--accent-primary))' }} 
+        />
+      );
     }
     
     return stars;
@@ -120,6 +140,7 @@ const TestimonialsSection = () => {
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-accent font-semibold text-sm uppercase tracking-wider"
+            style={{ color: 'hsl(var(--accent-primary))' }}
           >
             Community Voices
           </motion.span>
@@ -152,10 +173,15 @@ const TestimonialsSection = () => {
                 viewport={{ once: true, amount: 0.25 }}
                 className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-accent/5 hover:shadow-accent/10 transition-all duration-300 relative overflow-hidden group">
-                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                    style={{ 
+                      background: `linear-gradient(to bottom right, hsla(var(--accent-primary), 0.1), transparent)` 
+                    }}
+                  ></div>
                   <div className="flex items-center mb-4">
-                    <div className="text-accent flex">
+                    <div className="flex">
                       {renderStars(testimonial.rating)}
                     </div>
                   </div>
