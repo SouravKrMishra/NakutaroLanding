@@ -48,7 +48,7 @@ const allProducts: Product[] = [
     rating: 4.8,
     reviews: 124,
     category: "Action Figures",
-    image: "https://images.unsplash.com/photo-1608278047522-58806a6ac85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    image: "https://m.media-amazon.com/images/I/71jvD4JoRIL._AC_UF1000,1000_QL80_.jpg",
     isNew: true
   },
   {
@@ -58,7 +58,7 @@ const allProducts: Product[] = [
     rating: 4.9,
     reviews: 87,
     category: "Action Figures",
-    image: "https://images.unsplash.com/photo-1593642657768-a56ce2479fe0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://i5.walmartimages.com/asr/e92409a7-9466-403d-998d-b180fb380917.72ca97f9c4a31c6a53f9d6e38f992512.jpeg"
   },
   {
     id: 3,
@@ -67,7 +67,7 @@ const allProducts: Product[] = [
     rating: 4.7,
     reviews: 92,
     category: "Action Figures",
-    image: "https://images.unsplash.com/photo-1589642774083-a321310a71a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    image: "https://m.media-amazon.com/images/I/61TUy2PUadL._AC_UF1000,1000_QL80_.jpg"
   },
   {
     id: 4,
@@ -76,7 +76,7 @@ const allProducts: Product[] = [
     rating: 4.9,
     reviews: 156,
     category: "Action Figures",
-    image: "https://images.unsplash.com/photo-1607456648016-62021188884f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    image: "https://m.media-amazon.com/images/I/71Zr6e+6CYL._AC_UF1000,1000_QL80_.jpg",
     isNew: true
   },
   
@@ -322,7 +322,7 @@ const ProductsPage = () => {
             </a>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {filteredProducts.slice(0, 3).map(product => (
               <div 
                 key={product.id}
@@ -371,7 +371,7 @@ const ProductsPage = () => {
         </div>
         
         {/* Categories & All Products */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
           {/* Left Sidebar - Categories */}
           <div className={`lg:col-span-1 ${filterSidebarOpen ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-[#1E1E1E] rounded-lg p-6 border border-[#2D2D2D] sticky top-24">
@@ -521,7 +521,7 @@ const ProductsPage = () => {
               <div className="border-t border-[#2D2D2D] pt-6">
                 {/* Grid View */}
                 {view === "grid" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     {filteredProducts.map(product => (
                       <div 
                         key={product.id}
