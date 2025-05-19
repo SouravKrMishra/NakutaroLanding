@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
 
-const HeroSection = () => {
+const NewHeroSection = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-28 bg-[#0A0A0A] overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-20 z-0"></div>
+    <section className="relative min-h-screen flex items-center pt-28 overflow-hidden bg-gradient-to-b from-[#0A0A0A] to-[#121212]">
+      {/* Background patterns and effects */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
       
-      <div className="absolute top-20 left-[10%] w-56 h-56 bg-accent rounded-full filter blur-[120px] opacity-[0.15] z-0"></div>
-      <div className="absolute bottom-40 right-[10%] w-72 h-72 bg-accent rounded-full filter blur-[100px] opacity-[0.1] z-0"></div>
+      <div className="absolute top-20 left-[10%] w-56 h-56 bg-accent rounded-full filter blur-[120px] opacity-15"></div>
+      <div className="absolute bottom-40 right-[10%] w-72 h-72 bg-accent rounded-full filter blur-[100px] opacity-10"></div>
       
-      {/* Content */}
+      {/* Main content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
@@ -18,6 +18,7 @@ const HeroSection = () => {
           animate="show"
           className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
         >
+          {/* Text content */}
           <motion.div 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-center lg:text-left"
@@ -86,6 +87,24 @@ const HeroSection = () => {
             </div>
           </motion.div>
         </motion.div>
+        
+        {/* Stats section */}
+        <motion.div 
+          variants={fadeIn('up', 'tween', 0.6, 1)}
+          className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 text-center"
+        >
+          {[
+            { number: "5000+", label: "Happy Customers" },
+            { number: "500+", label: "Unique Products" },
+            { number: "50+", label: "Anime Series" },
+            { number: "24/7", label: "Customer Support" }
+          ].map((stat, index) => (
+            <div key={index} className="bg-black/30 backdrop-blur-sm rounded-lg border border-white/10 p-4">
+              <div className="text-2xl sm:text-3xl font-bold text-accent mb-1">{stat.number}</div>
+              <div className="text-sm text-gray-400">{stat.label}</div>
+            </div>
+          ))}
+        </motion.div>
       </div>
       
       {/* Bottom gradient */}
@@ -94,4 +113,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default NewHeroSection;

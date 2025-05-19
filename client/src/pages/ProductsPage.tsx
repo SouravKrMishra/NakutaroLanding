@@ -1,6 +1,7 @@
 import ProductsSection from "@/components/ProductsSection";
 import FAQSection from "@/components/FAQSection";
 import CTASection from "@/components/CTASection";
+import SimpleHero from "@/components/SimpleHero";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
 import { useEffect, useState } from "react";
