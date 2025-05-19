@@ -148,7 +148,7 @@ const allProducts: Product[] = [
     rating: 4.7,
     reviews: 203,
     category: "Hoodies",
-    image: "https://m.media-amazon.com/images/I/61A1ZQZ9meL._AC_UY1000_.jpg",
+    image: "https://i.imgur.com/1KqzRQl.jpg",
     onSale: true
   },
   {
@@ -158,7 +158,7 @@ const allProducts: Product[] = [
     rating: 4.5,
     reviews: 156,
     category: "Hoodies",
-    image: "https://m.media-amazon.com/images/I/616-UqjytDL._AC_UF1000,1000_QL80_.jpg"
+    image: "https://i.imgur.com/FvA5FOD.jpg"
   }
 ];
 
