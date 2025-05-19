@@ -338,20 +338,18 @@ const ProductsPage = () => {
                 <span className="text-accent font-medium text-sm">Premium Anime Collection</span>
               </motion.div>
               
-              <motion.h1
-                variants={fadeIn("up", "tween", 0.1, 1)}
+              <h1
                 className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
               >
                 <div className="inline-block">
-                  <span className="text-accent persistent-color">Anime India Products</span>
-                  <motion.span 
-                    className="block h-1 bg-accent/30 rounded-full mt-1 persistent-underline"
-                    initial={{ width: "100%" }}
-                    animate={{ width: "100%" }}
+                  <span style={{ color: 'var(--theme-color-hex)' }}>Anime India Products</span>
+                  <div 
+                    className="block h-1 rounded-full mt-1"
+                    style={{ backgroundColor: 'var(--theme-color-hex)', opacity: 0.3 }}
                   />
                 </div>
                 <div className="text-white block mt-2">&amp; Merchandise</div>
-              </motion.h1>
+              </h1>
               
               <motion.p
                 variants={fadeIn("up", "tween", 0.2, 1)}
