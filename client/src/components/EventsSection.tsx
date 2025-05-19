@@ -1,9 +1,15 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, Ticket, Users, Medal, ExternalLink, Sparkles, Star, Flag } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
+import { fadeIn, staggerContainer, slideIn, zoomIn } from '@/lib/animations';
+import { 
+  Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, 
+  Ticket, Users, Medal, ExternalLink, Sparkles, Star, 
+  Flag, ChevronLeft, ChevronRight, Tag 
+} from 'lucide-react';
 import { GalleryPopup } from './ui/gallery-popup';
 import { EventPopup } from './ui/event-popup';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 interface Event {
   title: string;
@@ -24,6 +30,11 @@ interface Event {
 const EventsSection = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'sponsored'>('all');
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
+  
+  const eventsCarouselRef = useRef<HTMLDivElement>(null);
+  const carouselControls = useAnimation();
   
   const organizedEvent: Event = {
     title: 'Nakutaro Cosplay Royale',
@@ -55,6 +66,20 @@ const EventsSection = () => {
       registrationUrl: 'https://shop.animeindia.org',
       type: 'Exhibition',
       tags: ['Art', 'Merchandise', 'Panels']
+    },
+    {
+      title: 'Anime Fest 2025',
+      date: 'January 10-12, 2025',
+      location: 'India Expo Centre, Greater Noida',
+      time: '11:00 AM - 9:00 PM',
+      description: "The largest anime convention in North India featuring cosplay competitions, anime screenings, gaming tournaments, and meet & greets with voice actors.",
+      image: 'https://images.unsplash.com/photo-1611457194403-d3aca4cf9d11?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
+      prizePool: '₹100,000',
+      attendees: '2500+',
+      featured_image: 'https://images.unsplash.com/photo-1611457194403-d3aca4cf9d11?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
+      registrationUrl: 'https://shop.animeindia.org',
+      type: 'Convention',
+      tags: ['Cosplay', 'Gaming', 'Anime', 'Voice Actors']
     }
   ];
   
@@ -86,6 +111,20 @@ const EventsSection = () => {
       registrationUrl: 'https://shop.animeindia.org',
       type: 'Convention',
       tags: ['Horror', 'Cosplay', 'Themed']
+    },
+    {
+      title: 'Manga Art Expo',
+      date: 'November 15, 2024',
+      location: 'Lalit Kala Akademi, New Delhi',
+      time: '10:00 AM - 7:00 PM',
+      description: "A specialized art exhibition showcasing manga and anime-inspired artwork, featuring workshops by professional artists and illustrators. Nakutaro is the main sponsor for this cultural exchange event.",
+      image: 'https://images.unsplash.com/photo-1612012460576-5d51b4805de8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
+      prizePool: '₹25,000',
+      attendees: '400+',
+      featured_image: 'https://images.unsplash.com/photo-1612012460576-5d51b4805de8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
+      registrationUrl: 'https://shop.animeindia.org',
+      type: 'Exhibition',
+      tags: ['Art', 'Manga', 'Workshops']
     }
   ];
   
@@ -183,6 +222,7 @@ const EventsSection = () => {
     }
   ];
 
+  // Helper functions
   const openGallery = (e: React.MouseEvent) => {
     e.preventDefault();
     setGalleryOpen(true);
@@ -192,6 +232,35 @@ const EventsSection = () => {
     e.preventDefault();
     setSelectedEvent(event);
   };
+  
+  const getAllEvents = () => {
+    if (activeTab === 'all') {
+      return [organizedEvent, ...upcomingEvents, ...sponsoredEvents];
+    } else if (activeTab === 'upcoming') {
+      return upcomingEvents;
+    } else {
+      return sponsoredEvents;
+    }
+  };
+  
+  const handleTabChange = (tab: 'all' | 'upcoming' | 'sponsored') => {
+    setActiveTab(tab);
+    setCurrentEventIndex(0);
+  };
+  
+  const handleNextEvent = () => {
+    const events = getAllEvents();
+    setCurrentEventIndex((prev) => (prev + 1) % events.length);
+  };
+  
+  const handlePrevEvent = () => {
+    const events = getAllEvents();
+    setCurrentEventIndex((prev) => (prev - 1 + events.length) % events.length);
+  };
+  
+  // Calculate the current visible events for the carousel
+  const currentEvents = getAllEvents();
+  const visibleEvent = currentEvents[currentEventIndex];
   
   // Event stats
   const eventStats = [
