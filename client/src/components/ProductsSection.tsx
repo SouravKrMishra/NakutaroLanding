@@ -91,28 +91,55 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.25 }}
-          className="max-w-3xl mx-auto text-center mb-16"
+          className="max-w-3xl mx-auto mb-16"
         >
-          <motion.span 
-            variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-accent font-semibold text-sm uppercase tracking-wider"
-          >
-            {showFullCatalog ? 'Anime India Store' : 'Our Collection'}
-          </motion.span>
-          <motion.h2 
-            variants={fadeIn('up', 'tween', 0.2, 1)}
-            className="text-3xl md:text-4xl font-bold mt-2 mb-6"
-          >
-            {showFullCatalog ? 'Complete Catalog' : 'Featured Products'}
-          </motion.h2>
-          <motion.p 
+          {/* Collection Header */}
+          <motion.div variants={fadeIn('up', 'tween', 0.1, 1)} className="mb-8">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">
+              BEST COLLECTION
+            </span>
+            <div className="mt-1">
+              <h2 className="text-3xl md:text-4xl font-bold text-white">
+                Premium Anime
+              </h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-accent">
+                Collectibles & Merchandise
+              </h2>
+            </div>
+            <p className="text-gray-400 mt-4 max-w-2xl">
+              Discover authentic anime merchandise from your favorite series. From action
+              figures to apparel, we have everything an anime fan could want.
+            </p>
+            
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a 
+                href="/featured" 
+                className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+              >
+                Featured Items
+              </a>
+              <a 
+                href="/categories" 
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-md transition-colors border border-white/20"
+              >
+                View Categories
+              </a>
+            </div>
+          </motion.div>
+          
+          {/* Section Title */}
+          <motion.div 
             variants={fadeIn('up', 'tween', 0.3, 1)}
-            className="text-gray-400 text-lg"
+            className="flex justify-between items-center border-b border-white/10 pb-2 mb-8 mt-20"
           >
-            {showFullCatalog 
-              ? 'Browse our extensive collection of anime merchandise, including exclusive and limited edition items.'
-              : 'Discover our carefully curated collection of premium anime merchandise, from collectible figures to stylish apparel.'}
-          </motion.p>
+            <h3 className="text-xl font-bold">Featured Products</h3>
+            <Link 
+              href="/products" 
+              className="text-accent hover:text-accent/80 transition duration-300 font-medium inline-flex items-center"
+            >
+              View All Featured <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </motion.div>
         </motion.div>
         
         <motion.div
