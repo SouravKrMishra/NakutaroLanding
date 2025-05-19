@@ -227,8 +227,13 @@ h3 span,
 
 /* Make buttons use accent color */
 .btn-primary, 
-.bg-red-600 {
+.bg-red-600,
+a[class*="shop"],
+button[class*="shop"],
+.shop,
+.bg-\[\#FF3B30\] {
   background-color: hsl(var(--accent-primary)) !important;
+  color: white !important;
 }
 
 /* Special case for tailwind arbitrary values and wildcards */
@@ -236,9 +241,18 @@ h3 span,
   background-color: hsl(var(--accent-primary)) !important;
 }
 
-/* Hover styles for primary buttons */
-.btn-primary:hover {
+/* Target Home page hero shop buttons */
+.absolute button {
+  background-color: hsl(var(--accent-primary)) !important;
+}
+
+/* Hover styles for buttons */
+.btn-primary:hover,
+a[class*="shop"]:hover,
+button[class*="shop"]:hover,
+.shop:hover {
   background-color: hsl(var(--accent-dark)) !important;
+  opacity: 0.9;
 }
 
 /* Handle tailwind hover variants */
