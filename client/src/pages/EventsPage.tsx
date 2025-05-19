@@ -177,7 +177,7 @@ const EventsPage = () => {
                     />
                   </span>
                 </div>
-                <span className="block mt-2">&amp; Conventions</span>
+                <span className="block mt-2 text-white">&amp; Conventions</span>
               </motion.h1>
               
               <motion.p
