@@ -3,14 +3,7 @@ import { fadeIn, staggerContainer } from '@/lib/animations';
 
 const HeroSection = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-28 bg-[#0A0A0A] overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-20 z-0"></div>
-      
-      <div className="absolute top-20 left-[10%] w-56 h-56 bg-accent rounded-full filter blur-[120px] opacity-[0.15] z-0"></div>
-      <div className="absolute bottom-40 right-[10%] w-72 h-72 bg-accent rounded-full filter blur-[100px] opacity-[0.1] z-0"></div>
-      
-      {/* Content */}
+    <section id="home" className="relative min-h-[90vh] md:min-h-screen flex items-center pt-16 md:pt-20 hero-gradient overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
@@ -19,77 +12,55 @@ const HeroSection = () => {
           className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
         >
           <motion.div 
-            variants={fadeIn('up', 'tween', 0.2, 1)}
+            variants={fadeIn('right', 'tween', 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <div className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6">
-              <span className="text-accent font-medium text-sm">India's Premier Anime Store</span>
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              <div className="inline-block mb-2">
-                <span style={{ color: 'var(--theme-color-hex)' }}>ANIME INDIA</span>
-                <div 
-                  className="block h-1 rounded-full mt-1 w-full"
-                  style={{ backgroundColor: 'var(--theme-color-hex)', opacity: 0.3 }}
-                />
-              </div>
-              <div className="text-white block">Celebrating The Otaku Culture</div>
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4">
+              <span className="text-gradient">ANIME INDIA</span>
             </h1>
-            
-            <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Discover authentic anime merchandise, exclusive collectibles, and limited edition items 
-              from your favorite series — all in one place.
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-gray-300">Celebrating the Fandom!</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
+              India's #1 Anime Store Bringing You the Best Anime Merch Without the Hassle!
             </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <a
                 href="https://shop.animeindia.org"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 bg-accent hover:bg-accent/90 text-white font-medium rounded-lg text-lg shadow-lg inline-flex items-center justify-center"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-accent hover:bg-accent/80 text-white font-medium rounded-md transition duration-300 text-base sm:text-lg shadow-lg hover:shadow-xl inline-flex items-center justify-center w-full sm:w-auto"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                Shop Now
+                Shop
               </a>
-              
               <a
-                href="#products"
-                className="px-8 py-4 bg-transparent border-2 border-white/30 hover:border-white/50 text-white font-medium rounded-lg text-lg transition-colors duration-300"
+                href="#services"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-base sm:text-lg border border-gray-700 relative overflow-hidden group w-full sm:w-auto"
               >
-                Explore Collection
+                <span className="relative z-10">Explore Collections</span>
+                <span className="absolute w-0 h-full theme-hover-effect left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>
           </motion.div>
           
-          {/* Image */}
           <motion.div 
-            variants={fadeIn('up', 'tween', 0.4, 1)}
+            variants={fadeIn('left', 'tween', 0.4, 1)}
             className="hidden lg:block"
           >
-            <div className="relative">
-              <div className="absolute -top-10 -right-10 w-full h-full bg-accent/10 rounded-2xl transform rotate-3"></div>
-              <div className="relative overflow-hidden rounded-2xl border-2 border-accent/30 shadow-2xl">
-                <img
-                  src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
-                  alt="Anime collection showcase"
-                  className="w-full h-auto transform hover:scale-105 transition duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                
-                <div className="absolute top-4 left-4 bg-accent/90 text-white text-xs px-3 py-1 rounded-full">
-                  NEW ARRIVALS
-                </div>
-              </div>
-            </div>
+            <img
+              src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+              alt="Anime illustration"
+              className="rounded-lg shadow-2xl w-full h-auto transform hover:scale-105 transition duration-700 border-2 border-accent/20"
+            />
           </motion.div>
         </motion.div>
       </div>
       
-      {/* Bottom gradient */}
+      {/* Decorative Elements */}
       <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] to-transparent"></div>
+      <div className="absolute top-1/2 left-0 w-20 h-20 bg-accent rounded-full filter blur-3xl opacity-10"></div>
+      <div className="absolute top-1/4 right-1/4 w-40 h-40 bg-accent rounded-full filter blur-3xl opacity-5"></div>
     </section>
   );
 };
