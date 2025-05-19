@@ -8,14 +8,10 @@ import { Filter, Grid, List, ChevronRight, Award, Star, ShoppingBag } from "luci
 import { Button } from "@/components/ui/button";
 
 const categories = [
-  "Figures & Statues",
-  "Clothing & Apparel",
-  "Manga & Books",
-  "Collectibles",
+  "Action Figures",
+  "T-Shirts",
   "Accessories",
-  "Posters & Wall Art",
-  "Home Decor",
-  "Cosplay Items"
+  "Hoodies"
 ];
 
 const featuredProducts = [
