@@ -107,24 +107,37 @@ const HeroSection = () => {
                 <span className="inline-block transform hover:translate-y-[-2px] transition-transform duration-300 delay-300">Without the Hassle!</span>
               </span>
             </p>
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4 mt-2">
               <a
                 href="https://shop.animeindia.org"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-accent hover:bg-accent/80 text-white font-medium rounded-md transition duration-300 text-base sm:text-lg shadow-lg hover:shadow-xl inline-flex items-center justify-center w-full sm:w-auto"
+                className="group relative inline-flex items-center justify-center w-full sm:w-auto overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-8 py-3 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                Shop
+                <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                <span className="absolute bottom-0 left-0 h-1 w-full bg-white opacity-10"></span>
+                <span className="absolute right-0 -mt-3 h-16 w-16 rotate-45 translate-x-8 -translate-y-2 bg-white opacity-10"></span>
+                <span className="relative flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  Shop Now
+                </span>
               </a>
+              
               <a
                 href="#services"
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-base sm:text-lg border border-gray-700 relative overflow-hidden group w-full sm:w-auto"
+                className="group relative inline-flex items-center justify-center w-full sm:w-auto overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-8 py-3 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105"
               >
-                <span className="relative z-10">Explore Collections</span>
-                <span className="absolute w-0 h-full theme-hover-effect left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                  <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+                </span>
+                <span className="relative flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5 mr-2 text-accent">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  Explore Collections
+                </span>
               </a>
             </div>
           </motion.div>
