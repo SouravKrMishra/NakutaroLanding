@@ -177,28 +177,28 @@ const TestimonialsSection = () => {
         
         {/* Floating geometric elements */}
         <motion.div
-          className="absolute top-20 right-[15%] w-6 h-6 border border-accent/30 rounded-sm"
+          className="absolute top-20 right-[15%] w-6 h-6 border border-accent/30 rounded-sm will-change-transform"
           animate={{
             y: [0, -15, 0],
             rotate: [0, 45, 0],
             opacity: [0.3, 0.5, 0.3]
           }}
           transition={{
-            duration: 6,
+            duration: 8,
             repeat: Infinity,
             ease: "easeInOut"
           }}
         />
         
         <motion.div
-          className="absolute bottom-32 left-[20%] w-8 h-8 border border-white/20 rounded-full"
+          className="absolute bottom-32 left-[20%] w-8 h-8 border border-white/20 rounded-full will-change-transform"
           animate={{
             y: [0, 20, 0],
             scale: [1, 0.8, 1],
             opacity: [0.2, 0.4, 0.2]
           }}
           transition={{
-            duration: 8,
+            duration: 10,
             repeat: Infinity,
             ease: "easeInOut",
             delay: 1
@@ -206,7 +206,7 @@ const TestimonialsSection = () => {
         />
         
         <motion.div
-          className="absolute top-1/3 left-[10%] w-4 h-4 bg-accent/10 rounded-sm"
+          className="absolute top-1/3 left-[10%] w-4 h-4 bg-accent/10 rounded-sm will-change-transform"
           animate={{
             y: [0, -10, 0],
             x: [0, 10, 0],
@@ -214,7 +214,7 @@ const TestimonialsSection = () => {
             opacity: [0.2, 0.4, 0.2]
           }}
           transition={{
-            duration: 7,
+            duration: 9,
             repeat: Infinity,
             ease: "easeInOut",
             delay: 2

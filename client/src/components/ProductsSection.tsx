@@ -302,12 +302,16 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                   <img 
                     src={product.images[0]} 
                     alt={`${product.title} 1`}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
                   />
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <img 
                       src={product.images[1]} 
                       alt={`${product.title} 2`}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   </div>

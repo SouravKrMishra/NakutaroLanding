@@ -159,7 +159,9 @@ const HeroSection = () => {
                   <img
                     src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
                     alt="Anime illustration"
-                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition duration-700 z-10"
+                    loading="eager"
+                    decoding="async"
+                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition-transform duration-700 z-10 will-change-transform"
                   />
                   
                   {/* Overlay texture */}
