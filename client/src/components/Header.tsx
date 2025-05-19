@@ -29,7 +29,7 @@ const Header = () => {
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-bold">
-              <span className="text-white">Anime</span> <span className="india text-accent">India</span> <span className="text-white text-lg font-normal">Logo</span>
+              <span className="text-white">Anime</span> <span className="india text-accent">India</span>
             </span>
           </Link>
           
