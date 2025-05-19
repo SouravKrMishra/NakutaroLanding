@@ -216,28 +216,6 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
               </a>
             </motion.div>
           </motion.div>
-          
-          {/* Category filters */}
-          <motion.div 
-            variants={fadeIn('up', 'tween', 0.4, 1)}
-            className="flex flex-wrap justify-center gap-2 my-12"
-          >
-            {categories.map((category, index) => (
-              <motion.button
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`flex items-center px-4 py-2 rounded-full transition-all duration-300 ${
-                  index === 0 
-                    ? 'bg-accent text-white' 
-                    : 'bg-[#1A1A1A] text-gray-300 hover:bg-[#222] border border-[#333]'
-                }`}
-              >
-                <span className="mr-2">{category.icon}</span>
-                {category.name}
-              </motion.button>
-            ))}
-          </motion.div>
         </motion.div>
         
         <motion.div
