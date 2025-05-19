@@ -71,8 +71,8 @@ const ContactSection = () => {
       title: 'Our Location',
       content: (
         <>
-          Office No. 316, 3rd Floor, DLF Galleria<br />
-          Mayur Vihar Phase 1, New Delhi 110091
+          215, Rajpur khurd ext.<br />
+          DLF Farms Chattarpur, New Delhi – 110068
         </>
       )
     },
@@ -397,6 +397,15 @@ const ContactSection = () => {
                 </div>
                 <div className="absolute bottom-2 right-2 bg-[#121212] px-2 py-1 rounded text-xs text-gray-400">
                   Interactive Map
+                </div>
+                <div className="absolute bottom-4 left-4 text-white bg-[#121212]/90 px-3 py-2 rounded-lg shadow-lg border border-accent/20 text-sm max-w-[200px]">
+                  <p className="font-medium flex items-center">
+                    <span>Chattarpur</span>
+                    <span className="inline-block w-2 h-2 bg-accent rounded-full ml-2"></span>
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    DLF Farms
+                  </p>
                 </div>
               </div>
               
