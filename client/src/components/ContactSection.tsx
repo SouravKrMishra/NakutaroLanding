@@ -131,7 +131,7 @@ const ContactSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             Contact Us
           </motion.span>
