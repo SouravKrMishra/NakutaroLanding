@@ -92,24 +92,12 @@ const HeroSection = () => {
             </motion.div>
             
             <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
-              <div className="inline-block relative overflow-hidden">
-                <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent/70 animate-pulse">ANIME INDIA</span>
-                <div 
-                  className="absolute bottom-0 left-0 w-full h-1 rounded-full bg-gradient-to-r from-accent to-accent/30"
-                  style={{ filter: "drop-shadow(0 0 8px var(--theme-color-hex))" }}
-                />
+              <div className="inline-block">
+                <span className="text-accent">ANIME INDIA</span>
               </div>
             </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-gray-300 relative">
-              <span className="relative inline-block">
-                Celebrating the Fandom!
-                <motion.span 
-                  className="absolute -bottom-1 left-0 h-[2px] bg-accent/40"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
-                />
-              </span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white">
+              Celebrating the Fandom!
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0 leading-relaxed relative z-10">
               <span className="relative">
