@@ -167,58 +167,25 @@ const TestimonialsSection = () => {
         />
         
         {/* Subtle accent elements */}
-        <div className="absolute top-1/4 right-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s' }}></div>
-        <div className="absolute bottom-1/3 left-12 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/3 w-3 h-3 bg-white/10 rounded-full animate-pulse" style={{ animationDuration: '5s' }}></div>
+        {/* Reduced number of animated elements */}
+        <div className="absolute bottom-1/3 left-12 w-2 h-2 bg-accent rounded-full opacity-30"></div>
+        <div className="absolute top-1/2 left-1/3 w-3 h-3 bg-white/10 rounded-full"></div>
         
         {/* Subtle glow */}
         <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-accent rounded-full filter blur-[80px] opacity-[0.03]"></div>
         <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[100px] opacity-[0.02]"></div>
         
-        {/* Floating geometric elements */}
-        <motion.div
-          className="absolute top-20 right-[15%] w-6 h-6 border border-accent/30 rounded-sm will-change-transform"
-          animate={{
-            y: [0, -15, 0],
-            rotate: [0, 45, 0],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
+        {/* Static geometric elements - removed animations to reduce lag */}
+        <div
+          className="absolute top-20 right-[15%] w-6 h-6 border border-accent/30 rounded-sm"
         />
         
-        <motion.div
-          className="absolute bottom-32 left-[20%] w-8 h-8 border border-white/20 rounded-full will-change-transform"
-          animate={{
-            y: [0, 20, 0],
-            scale: [1, 0.8, 1],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
+        <div
+          className="absolute bottom-32 left-[20%] w-8 h-8 border border-white/20 rounded-full"
         />
         
-        <motion.div
-          className="absolute top-1/3 left-[10%] w-4 h-4 bg-accent/10 rounded-sm will-change-transform"
-          animate={{
-            y: [0, -10, 0],
-            x: [0, 10, 0],
-            rotate: [0, 90, 0],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 9,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
+        <div
+          className="absolute top-1/3 left-[10%] w-4 h-4 bg-accent/10 rounded-sm"
         />
       </div>
       

@@ -23,8 +23,8 @@ export const staggerContainer = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.03,
-      delayChildren: 0.02,
+      staggerChildren: 0.01,
+      delayChildren: 0.01,
     },
   },
 };

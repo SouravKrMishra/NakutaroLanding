@@ -113,66 +113,21 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#0A0A0A] overflow-hidden">
         
-        {/* Animated background elements */}
-        <motion.div 
+        {/* Static background elements - removed animations to reduce lag */}
+        <div 
           className="absolute -top-40 -right-40 w-96 h-96 bg-accent/5 rounded-full"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 15, 0]
-          }}
-          transition={{ 
-            duration: 20, 
-            repeat: Infinity,
-            ease: "easeInOut" 
-          }}
         />
         
-        <motion.div 
+        <div 
           className="absolute -bottom-20 -left-20 w-80 h-80 bg-accent/5 rounded-full"
-          animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: [0, -10, 0]
-          }}
-          transition={{ 
-            duration: 15, 
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
         />
         
-        {/* Floating geometric elements */}
-        <motion.div
-          className="absolute top-40 left-[15%] w-6 h-6 border border-accent/30 rounded-full"
-          animate={{
-            y: [0, -15, 0],
-            rotate: [0, 45, 0],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+        {/* Static geometric elements - removed animations to reduce lag */}
+        <div className="absolute top-40 left-[15%] w-6 h-6 border border-accent/30 rounded-full"></div>
         
-        <motion.div
-          className="absolute bottom-40 right-[20%] w-8 h-8 border border-white/20 rounded-sm"
-          animate={{
-            y: [0, 20, 0],
-            scale: [1, 0.8, 1],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
+        <div className="absolute bottom-40 right-[20%] w-8 h-8 border border-white/20 rounded-sm"></div>
         
-        <motion.div
-          className="absolute top-1/2 right-[10%] w-4 h-4 bg-accent/10 rounded-md"
+        <div className="absolute top-1/2 right-[10%] w-4 h-4 bg-accent/10 rounded-md"></div>
           animate={{
             y: [0, -10, 0],
             x: [0, -10, 0],
