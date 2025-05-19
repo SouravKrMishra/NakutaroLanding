@@ -174,6 +174,52 @@ const TestimonialsSection = () => {
         {/* Subtle glow */}
         <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-accent rounded-full filter blur-[80px] opacity-[0.03]"></div>
         <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[100px] opacity-[0.02]"></div>
+        
+        {/* Floating geometric elements */}
+        <motion.div
+          className="absolute top-20 right-[15%] w-6 h-6 border border-accent/30 rounded-sm"
+          animate={{
+            y: [0, -15, 0],
+            rotate: [0, 45, 0],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <motion.div
+          className="absolute bottom-32 left-[20%] w-8 h-8 border border-white/20 rounded-full"
+          animate={{
+            y: [0, 20, 0],
+            scale: [1, 0.8, 1],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+        
+        <motion.div
+          className="absolute top-1/3 left-[10%] w-4 h-4 bg-accent/10 rounded-sm"
+          animate={{
+            y: [0, -10, 0],
+            x: [0, 10, 0],
+            rotate: [0, 90, 0],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
