@@ -326,7 +326,7 @@ const ProductsPage = () => {
             {filteredProducts.slice(0, 4).map(product => (
               <div 
                 key={product.id}
-                className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
+                className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
               >
                 <div className="h-36 sm:h-40 md:h-48 overflow-hidden relative">
                   <img 
@@ -335,7 +335,7 @@ const ProductsPage = () => {
                     className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                   />
                   {product.isNew && (
-                    <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                       NEW
                     </div>
                   )}
@@ -347,10 +347,10 @@ const ProductsPage = () => {
                 </div>
                 <div className="p-3 sm:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
-                    <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#FF3B30] transition-colors duration-300 mb-1 sm:mb-0">
+                    <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1 sm:mb-0">
                       {product.name}
                     </h3>
-                    <span className="font-bold text-[#FF3B30]">{product.price}</span>
+                    <span className="font-bold text-accent">{product.price}</span>
                   </div>
                   <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                     <div className="flex items-center">
@@ -360,7 +360,7 @@ const ProductsPage = () => {
                     <span className="mx-2">•</span>
                     <span>{product.reviews} reviews</span>
                   </div>
-                  <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
+                  <button className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
                     <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     Add to Cart
                   </button>
@@ -390,9 +390,9 @@ const ProductsPage = () => {
                   <li key={category.name}>
                     <button 
                       onClick={() => toggleCategory(category.name)}
-                      className={`flex items-center w-full text-left ${category.active ? 'text-[#FF3B30]' : 'text-gray-300'} hover:text-[#FF3B30] py-2 px-2 rounded hover:bg-[#FF3B30]/5 transition-colors duration-200`}
+                      className={`flex items-center w-full text-left ${category.active ? 'text-accent' : 'text-gray-300'} hover:text-accent py-2 px-2 rounded hover:bg-accent/5 transition-colors duration-200`}
                     >
-                      <ChevronRight className="h-4 w-4 mr-2 text-[#FF3B30]" />
+                      <ChevronRight className="h-4 w-4 mr-2 text-accent" />
                       <span className="flex-1">{category.name}</span>
                       {category.count > 0 && (
                         <span className="text-xs text-gray-500">({category.count})</span>
@@ -436,7 +436,7 @@ const ProductsPage = () => {
                             id={`rating-${rating}`}
                             checked={ratings[rating]}
                             onChange={() => handleRatingChange(rating)}
-                            className="w-4 h-4 rounded border-gray-600 text-[#FF3B30] focus:ring-[#FF3B30] focus:ring-opacity-25 bg-gray-800"
+                            className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
                           />
                           <label htmlFor={`rating-${rating}`} className="flex items-center ml-2 cursor-pointer">
                             {Array(rating).fill(0).map((_, i) => (
@@ -456,7 +456,7 @@ const ProductsPage = () => {
                     variant="outline" 
                     size="sm"
                     onClick={clearFilters}
-                    className="w-full text-gray-300 border-gray-600 hover:bg-[#FF3B30]/10 hover:text-[#FF3B30] hover:border-[#FF3B30]"
+                    className="w-full text-gray-300 border-gray-600 hover:bg-accent/10 hover:text-accent hover:border-accent"
                   >
                     Clear Filters
                   </Button>
@@ -474,14 +474,14 @@ const ProductsPage = () => {
                   <span className="text-sm text-gray-400">View:</span>
                   <button 
                     onClick={() => setView("grid")}
-                    className={`p-1 rounded ${view === "grid" ? "bg-[#FF3B30] text-white" : "bg-[#2D2D2D] text-gray-400"}`}
+                    className={`p-1 rounded ${view === "grid" ? "bg-accent text-white" : "bg-[#2D2D2D] text-gray-400"}`}
                     aria-label="Grid view"
                   >
                     <Grid className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => setView("list")}
-                    className={`p-1 rounded ${view === "list" ? "bg-[#FF3B30] text-white" : "bg-[#2D2D2D] text-gray-400"}`}
+                    className={`p-1 rounded ${view === "list" ? "bg-accent text-white" : "bg-[#2D2D2D] text-gray-400"}`}
                     aria-label="List view"
                   >
                     <List className="h-4 w-4" />
@@ -503,7 +503,7 @@ const ProductsPage = () => {
                   </Button>
                   <div className="relative max-w-[140px] sm:max-w-none">
                     <select 
-                      className="bg-[#2D2D2D] text-gray-300 appearance-none rounded px-2 sm:px-3 py-1 text-xs sm:text-sm border border-[#3D3D3D] focus:outline-none focus:ring-1 focus:ring-[#FF3B30] pr-6 sm:pr-8 w-full"
+                      className="bg-[#2D2D2D] text-gray-300 appearance-none rounded px-2 sm:px-3 py-1 text-xs sm:text-sm border border-[#3D3D3D] focus:outline-none focus:ring-1 focus:ring-accent pr-6 sm:pr-8 w-full"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortOption)}
                     >
@@ -526,7 +526,7 @@ const ProductsPage = () => {
                     {filteredProducts.map(product => (
                       <div 
                         key={product.id}
-                        className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
+                        className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
                       >
                         <div className="h-36 sm:h-40 md:h-48 overflow-hidden relative">
                           <img 
@@ -535,7 +535,7 @@ const ProductsPage = () => {
                             className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                           />
                           {product.isNew && (
-                            <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                            <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                               NEW
                             </div>
                           )}
@@ -547,10 +547,10 @@ const ProductsPage = () => {
                         </div>
                         <div className="p-3 sm:p-4">
                           <div className="flex flex-col sm:flex-row justify-between items-start mb-2">
-                            <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-[#FF3B30] transition-colors duration-300 mb-1 sm:mb-0">
+                            <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1 sm:mb-0">
                               {product.name}
                             </h3>
-                            <span className="font-bold text-[#FF3B30]">{product.price}</span>
+                            <span className="font-bold text-accent">{product.price}</span>
                           </div>
                           <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                             <div className="flex items-center">
@@ -560,7 +560,7 @@ const ProductsPage = () => {
                             <span className="mx-2">•</span>
                             <span>{product.reviews} reviews</span>
                           </div>
-                          <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
+                          <button className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
                             <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                             Add to Cart
                           </button>
@@ -576,7 +576,7 @@ const ProductsPage = () => {
                     {filteredProducts.map(product => (
                       <div 
                         key={product.id}
-                        className="flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
+                        className="flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
                       >
                         <div className="md:w-1/4 h-48 md:h-auto overflow-hidden relative">
                           <img 
@@ -585,7 +585,7 @@ const ProductsPage = () => {
                             className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                           />
                           {product.isNew && (
-                            <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                            <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                               NEW
                             </div>
                           )}
@@ -597,10 +597,10 @@ const ProductsPage = () => {
                         </div>
                         <div className="md:w-3/4 p-6 flex flex-col">
                           <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-xl font-semibold text-white group-hover:text-[#FF3B30] transition-colors duration-300">
+                            <h3 className="text-xl font-semibold text-white group-hover:text-accent transition-colors duration-300">
                               {product.name}
                             </h3>
-                            <span className="font-bold text-xl text-[#FF3B30]">{product.price}</span>
+                            <span className="font-bold text-xl text-accent">{product.price}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-400 mb-4">
                             <div className="flex items-center">
@@ -617,7 +617,7 @@ const ProductsPage = () => {
                             Officially licensed merchandise with the best quality and authentic designs.
                           </p>
                           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <button className="bg-[#2D2D2D] hover:bg-[#FF3B30] text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300">
+                            <button className="bg-[#2D2D2D] hover:bg-accent text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300">
                               <ShoppingBag className="h-4 w-4 mr-2" />
                               Add to Cart
                             </button>
@@ -642,7 +642,7 @@ const ProductsPage = () => {
                   {[1, 2, 3, 4].map(page => (
                     <button 
                       key={page}
-                      className={`w-8 h-8 rounded ${page === 1 ? 'bg-[#FF3B30] text-white' : 'bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D]'} flex items-center justify-center transition-colors`}
+                      className={`w-8 h-8 rounded ${page === 1 ? 'bg-accent text-white' : 'bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D]'} flex items-center justify-center transition-colors`}
                       aria-label={`Page ${page}`}
                       aria-current={page === 1 ? 'page' : undefined}
                     >
