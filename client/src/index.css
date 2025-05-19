@@ -164,22 +164,64 @@ body {
 }
 
 /* Dynamic accent colors */
-.text-\[\#FF3B30\] {
+.text-\[\#FF3B30\], .hover\:text-\[\#FF3B30\]:hover, 
+.focus\:text-\[\#FF3B30\]:focus, .active\:text-\[\#FF3B30\]:active,
+[class*="text-[#FF3B30]"] {
   color: rgb(var(--current-accent));
 }
 
-.bg-\[\#FF3B30\] {
+.bg-\[\#FF3B30\], .hover\:bg-\[\#FF3B30\]:hover,
+.focus\:bg-\[\#FF3B30\]:focus, .active\:bg-\[\#FF3B30\]:active,
+[class*="bg-[#FF3B30]"] {
   background-color: rgb(var(--current-accent));
 }
 
-.border-\[\#FF3B30\] {
+.border-\[\#FF3B30\], .hover\:border-\[\#FF3B30\]:hover,
+.focus\:border-\[\#FF3B30\]:focus, .active\:border-\[\#FF3B30\]:active,
+[class*="border-[#FF3B30]"] {
   border-color: rgb(var(--current-accent));
 }
 
-.from-\[\#FF3B30\] {
+.from-\[\#FF3B30\], .hover\:from-\[\#FF3B30\]:hover,
+.focus\:from-\[\#FF3B30\]:focus, .active\:from-\[\#FF3B30\]:active,
+[class*="from-[#FF3B30]"], [class*="from-[#CC2F26]"] {
   --tw-gradient-from: rgb(var(--current-accent));
 }
 
-.to-\[\#FF6B61\] {
+.to-\[\#FF6B61\], .hover\:to-\[\#FF6B61\]:hover,
+.focus\:to-\[\#FF6B61\]:focus, .active\:to-\[\#FF6B61\]:active,
+.to-\[\#FF3B30\], .hover\:to-\[\#FF3B30\]:hover,
+[class*="to-[#FF"] {
   --tw-gradient-to: rgb(var(--current-accent) / 0.8);
+}
+
+.ring-\[\#FF3B30\], .hover\:ring-\[\#FF3B30\]:hover,
+.focus\:ring-\[\#FF3B30\]:focus, .active\:ring-\[\#FF3B30\]:active,
+[class*="ring-[#FF3B30]"] {
+  --tw-ring-color: rgb(var(--current-accent));
+}
+
+.border-l-\[\#FF3B30\], [class*="border-l-[#FF3B30]"] {
+  border-left-color: rgb(var(--current-accent));
+}
+
+.shadow-\[\#FF3B30\], [class*="shadow-[#FF3B30]"] {
+  --tw-shadow-color: rgb(var(--current-accent));
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+/* Additional color variants that might be used */
+.text-\[\#CC2F26\], .hover\:text-\[\#CC2F26\]:hover,
+.text-\[\#FF6B61\], .hover\:text-\[\#FF6B61\]:hover {
+  color: rgb(var(--current-accent));
+}
+
+.bg-\[\#CC2F26\], .hover\:bg-\[\#CC2F26\]:hover,
+.bg-\[\#FF6B61\], .hover\:bg-\[\#FF6B61\]:hover {
+  background-color: rgb(var(--current-accent));
+}
+
+.border-\[\#CC2F26\], .hover\:border-\[\#CC2F26\]:hover,
+.border-\[\#FF6B61\], .hover\:border-\[\#FF6B61\]:hover {
+  border-color: rgb(var(--current-accent));
 }

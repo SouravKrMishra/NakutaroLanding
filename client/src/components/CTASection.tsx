@@ -3,7 +3,7 @@ import { fadeIn } from '@/lib/animations';
 
 const CTASection = () => {
   return (
-    <section className="py-16 bg-gradient-to-r from-[#CC2F26] to-[#FF3B30] text-white">
+    <section className="py-16 bg-gradient-to-r from-[#FF3B30] to-[#FF6B61] text-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"

@@ -50,7 +50,7 @@ export function AppearanceSettings() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-12 z-50 w-72 rounded-md bg-white dark:bg-[#1E1E1E] shadow-lg p-4"
+            className="absolute right-0 top-12 z-50 w-72 rounded-md bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2D2D2D] shadow-lg p-4"
           >
             <div className="flex items-center justify-between mb-4 border-b dark:border-gray-700 pb-2">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">Appearance Settings</h3>
