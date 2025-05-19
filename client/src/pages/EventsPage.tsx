@@ -77,7 +77,7 @@ const EventsPage = () => {
   return (
     <div className="events-page pt-28 pb-16 overflow-hidden">
       {/* Hero Section with Animated Background */}
-      <div className="relative h-auto py-16 md:py-24 lg:py-32 mb-12 md:mb-20 overflow-hidden bg-[#121212]">
+      <div className="relative h-[70vh] min-h-[500px] mb-20 overflow-hidden bg-[#121212]">
         <div className="absolute inset-0 opacity-20">
           {/* Animated Grid Pattern */}
           <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
@@ -156,14 +156,14 @@ const EventsPage = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.6, ease: "backOut" }}
-                className="inline-block bg-accent/10 px-3 py-1 sm:px-4 rounded-full border border-accent/20 mb-4 sm:mb-6"
+                className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6"
               >
-                <span className="text-accent font-medium text-xs sm:text-sm">Upcoming Events 2024-2025</span>
+                <span className="text-accent font-medium text-sm">Upcoming Events 2024-2025</span>
               </motion.div>
               
               <motion.h1
                 variants={fadeIn("up", "tween", 0.1, 1)}
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight px-2"
+                className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
               >
                 <div className="inline-block">
                   <span className="text-accent">Anime India Events</span>
