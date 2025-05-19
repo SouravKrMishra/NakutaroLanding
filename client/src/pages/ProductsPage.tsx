@@ -256,7 +256,7 @@ const ProductsPage = () => {
       {/* Hero Banner */}
       <div className="w-full bg-[#121212] relative overflow-hidden mb-12">
         <div className="absolute inset-0 bg-gradient-to-r from-[#000000] to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 h-full w-1/2 bg-accent/20"></div>
+        <div className="absolute right-0 top-0 h-full w-1/2 bg-[#FF3B30]/20"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-20">
           <motion.div
             variants={staggerContainer}
@@ -266,7 +266,7 @@ const ProductsPage = () => {
           >
             <motion.span
               variants={fadeIn("up", "tween", 0.1, 1)}
-              className="text-accent font-semibold text-sm uppercase tracking-wider mb-2 block"
+              className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider mb-2 block"
             >
               Best Collection
             </motion.span>
@@ -275,7 +275,7 @@ const ProductsPage = () => {
               className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
             >
               Premium Anime <br />
-              <span className="text-accent">Collectibles & Merchandise</span>
+              <span className="text-[#FF3B30]">Collectibles & Merchandise</span>
             </motion.h1>
             <motion.p
               variants={fadeIn("up", "tween", 0.3, 1)}

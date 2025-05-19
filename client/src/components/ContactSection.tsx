@@ -82,7 +82,7 @@ const ContactSection = () => {
       content: (
         <a 
           href="mailto:support@animeindia.org" 
-          className="text-gray-400 hover:text-accent transition duration-300"
+          className="text-gray-400 hover:text-[#FF3B30] transition duration-300"
         >
           support@animeindia.org
         </a>
@@ -94,7 +94,7 @@ const ContactSection = () => {
       content: (
         <a 
           href="tel:+911149042581" 
-          className="text-gray-400 hover:text-accent transition duration-300"
+          className="text-gray-400 hover:text-[#FF3B30] transition duration-300"
         >
           (+91) 11 4904 2581
         </a>
@@ -131,7 +131,7 @@ const ContactSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-accent font-semibold text-sm uppercase tracking-wider"
+            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
             Contact Us
           </motion.span>
@@ -168,7 +168,7 @@ const ContactSection = () => {
                         <Input 
                           placeholder="Your Name" 
                           {...field} 
-                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-accent rounded-md px-4 py-3 text-white focus:outline-none"
+                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-[#FF3B30] rounded-md px-4 py-3 text-white focus:outline-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -187,7 +187,7 @@ const ContactSection = () => {
                           placeholder="your@email.com" 
                           type="email"
                           {...field} 
-                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-accent rounded-md px-4 py-3 text-white focus:outline-none"
+                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-[#FF3B30] rounded-md px-4 py-3 text-white focus:outline-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -205,7 +205,7 @@ const ContactSection = () => {
                         <Input 
                           placeholder="How can we help?" 
                           {...field} 
-                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-accent rounded-md px-4 py-3 text-white focus:outline-none"
+                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-[#FF3B30] rounded-md px-4 py-3 text-white focus:outline-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -224,7 +224,7 @@ const ContactSection = () => {
                           placeholder="Tell us about your project" 
                           rows={5}
                           {...field} 
-                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-accent rounded-md px-4 py-3 text-white focus:outline-none resize-none"
+                          className="w-full bg-[#2D2D2D] border border-[#333333] focus:border-[#FF3B30] rounded-md px-4 py-3 text-white focus:outline-none resize-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -235,7 +235,7 @@ const ContactSection = () => {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-accent hover:bg-accent/80 text-white font-medium py-3 px-6 rounded-md transition duration-300 shadow-lg"
+                  className="w-full bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium py-3 px-6 rounded-md transition duration-300 shadow-lg"
                 >
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
@@ -256,7 +256,7 @@ const ContactSection = () => {
                 {contactInfo.map((item, index) => (
                   <div key={index} className="flex items-start">
                     <div className="flex-shrink-0 mt-1">
-                      <div className="flex items-center justify-center h-10 w-10 rounded-md bg-[#2D2D2D] text-accent">
+                      <div className="flex items-center justify-center h-10 w-10 rounded-md bg-[#2D2D2D] text-[#FF3B30]">
                         {item.icon}
                       </div>
                     </div>
@@ -277,7 +277,7 @@ const ContactSection = () => {
                     <a 
                       key={index}
                       href={link.href} 
-                      className="bg-[#2D2D2D] hover:bg-[#333333] text-accent h-10 w-10 rounded-full flex items-center justify-center transition duration-300"
+                      className="bg-[#2D2D2D] hover:bg-[#333333] text-[#FF3B30] h-10 w-10 rounded-full flex items-center justify-center transition duration-300"
                       aria-label={`Social media link ${index + 1}`}
                     >
                       {link.icon}
