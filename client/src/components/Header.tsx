@@ -30,7 +30,7 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <a href="#" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl text-white">
+            <span className="font-bold text-2xl dark:text-white text-gray-900">
               Anime<span className="text-[#FF3B30]"> India</span>
             </span>
           </a>
@@ -41,7 +41,7 @@ const Header = () => {
               <a 
                 key={link.href}
                 href={link.href} 
-                className="text-gray-300 hover:text-white transition duration-200"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition duration-200"
               >
                 {link.label}
               </a>
@@ -87,7 +87,7 @@ const Header = () => {
                 <a 
                   key={link.href}
                   href={link.href} 
-                  className="text-gray-300 hover:text-white transition duration-200"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition duration-200"
                   onClick={closeMenu}
                 >
                   {link.label}

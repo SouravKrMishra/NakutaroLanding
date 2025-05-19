@@ -88,6 +88,15 @@ body {
   background-color: #ffffff;
 }
 
+/* Navbar styles */
+.navbar-scrolled {
+  background-color: #121212;
+}
+
+.light-mode .navbar-scrolled {
+  background-color: #ffffff;
+}
+
 .light-mode .text-gray-200,
 .light-mode .text-gray-300 {
   color: #1a202c;
