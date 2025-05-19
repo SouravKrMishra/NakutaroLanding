@@ -1,8 +1,8 @@
 export const fadeIn = (direction: string, type: string, delay: number, duration: number) => {
   return {
     hidden: {
-      x: direction === 'left' ? 50 : direction === 'right' ? -50 : 0,
-      y: direction === 'up' ? 50 : direction === 'down' ? -50 : 0,
+      x: direction === 'left' ? 30 : direction === 'right' ? -30 : 0,
+      y: direction === 'up' ? 30 : direction === 'down' ? -30 : 0,
       opacity: 0,
     },
     show: {
@@ -11,8 +11,8 @@ export const fadeIn = (direction: string, type: string, delay: number, duration:
       opacity: 1,
       transition: {
         type,
-        delay: Math.max(0.05, delay / 2), // Reduce delay by half with a minimum threshold
-        duration: Math.max(0.5, duration / 1.5), // Reduce duration for faster animations
+        delay: Math.min(0.3, delay * 0.5), // Cap delay at 0.3s for better responsiveness
+        duration: Math.min(0.7, duration * 0.8), // Slightly faster animations
         ease: 'easeOut',
       },
     },
@@ -23,8 +23,8 @@ export const staggerContainer = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.05,
+      staggerChildren: 0.03,
+      delayChildren: 0.02,
     },
   },
 };
@@ -32,7 +32,7 @@ export const staggerContainer = {
 export const zoomIn = (delay: number, duration: number) => {
   return {
     hidden: {
-      scale: 0,
+      scale: 0.9,
       opacity: 0,
     },
     show: {
@@ -40,8 +40,8 @@ export const zoomIn = (delay: number, duration: number) => {
       opacity: 1,
       transition: {
         type: 'tween',
-        delay,
-        duration,
+        delay: Math.min(0.2, delay * 0.6),
+        duration: Math.min(0.6, duration * 0.7),
         ease: 'easeOut',
       },
     },
