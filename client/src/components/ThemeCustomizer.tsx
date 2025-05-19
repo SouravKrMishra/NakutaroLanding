@@ -50,16 +50,17 @@ export const ThemeCustomizer: React.FC = () => {
             }}
           >
             <div 
-              className="p-3 border-b border-[#27272A] bg-[#27272A]/50 backdrop-blur-sm"
+              className="p-3 border-b border-[#27272A]"
               style={{
-                backgroundColor: '#27272A',
+                backgroundColor: '#222222',
               }}
             >
               <h3 className="text-sm font-medium text-white">Theme Color</h3>
             </div>
             
             <div className="p-3">
-              <div className="grid grid-cols-5 gap-3 mb-3">
+              {/* Color circles for theme preview */}
+              <div className="grid grid-cols-5 gap-2 mb-4 px-1">
                 {themeOptions.map((option) => (
                   <button
                     key={option.id}
@@ -71,37 +72,40 @@ export const ThemeCustomizer: React.FC = () => {
                                       option.id === 'pink' ? '#FF2D55' : 
                                       option.id === 'purple' ? '#AF52DE' : 
                                       option.id === 'green' ? '#34C759' : option.color,
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                     }}
                   >
                     {option.id === theme && (
                       <div className="absolute inset-0 border-2 border-white rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                       </div>
                     )}
                   </button>
                 ))}
               </div>
               
+              {/* Theme selection buttons */}
               <div className="space-y-2">
-                {themeOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleThemeChange(option.id)}
-                    className="w-full rounded-md text-left text-white py-2 px-3 transition-colors"
-                    style={{
-                      backgroundColor: option.id === theme ? '#27272A' : 'transparent'
-                    }}
-                  >
-                    <div className="flex items-center">
+                {themeOptions.map((option) => {
+                  // Get the appropriate color for the current theme option
+                  const circleColor = option.id === 'default' ? '#FF3B30' : 
+                                      option.id === 'blue' ? '#007AFF' : 
+                                      option.id === 'pink' ? '#FF2D55' : 
+                                      option.id === 'purple' ? '#AF52DE' : 
+                                      option.id === 'green' ? '#34C759' : option.color;
+                  
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => handleThemeChange(option.id)}
+                      className="w-full rounded text-left text-white py-2 px-3 transition-colors flex items-center"
+                      style={{
+                        backgroundColor: '#333333'
+                      }}
+                    >
                       <div 
-                        className="w-3 h-3 rounded-full mr-3 flex items-center justify-center"
+                        className="w-4 h-4 rounded-full mr-3 flex items-center justify-center"
                         style={{
-                          backgroundColor: option.id === 'default' ? '#FF3B30' : 
-                                          option.id === 'blue' ? '#007AFF' : 
-                                          option.id === 'pink' ? '#FF2D55' : 
-                                          option.id === 'purple' ? '#AF52DE' : 
-                                          option.id === 'green' ? '#34C759' : option.color,
+                          backgroundColor: circleColor
                         }}
                       >
                         {option.id === theme && (
@@ -109,17 +113,17 @@ export const ThemeCustomizer: React.FC = () => {
                         )}
                       </div>
                       <span className="text-sm">{option.name}</span>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
-            <div className="flex justify-end p-3 bg-[#27272A]/50">
+            <div className="flex justify-end p-3">
               <Button
-                size="sm"
-                className="bg-[#374151] hover:bg-[#4B5563] text-white text-xs py-1 px-3 rounded"
                 onClick={() => setIsOpen(false)}
+                className="rounded text-white text-sm py-2 px-4"
+                style={{ backgroundColor: '#AF52DE' }}
               >
                 Close
               </Button>
