@@ -256,7 +256,7 @@ const ProductsPage = () => {
       {/* Hero Banner */}
       <div className="w-full bg-[#121212] relative overflow-hidden mb-12">
         <div className="absolute inset-0 bg-gradient-to-r from-[#000000] to-transparent z-10"></div>
-        <div className="absolute right-0 top-0 h-full w-1/2 bg-[#FF3B30]/20"></div>
+        <div className="absolute right-0 top-0 h-full w-1/2 bg-accent/20"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-20">
           <motion.div
             variants={staggerContainer}
@@ -266,7 +266,7 @@ const ProductsPage = () => {
           >
             <motion.span
               variants={fadeIn("up", "tween", 0.1, 1)}
-              className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider mb-2 block"
+              className="text-accent font-semibold text-sm uppercase tracking-wider mb-2 block"
             >
               Best Collection
             </motion.span>
@@ -275,7 +275,7 @@ const ProductsPage = () => {
               className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
             >
               Premium Anime <br />
-              <span className="text-[#FF3B30]">Collectibles & Merchandise</span>
+              <span className="text-accent">Collectibles & Merchandise</span>
             </motion.h1>
             <motion.p
               variants={fadeIn("up", "tween", 0.3, 1)}
@@ -289,13 +289,13 @@ const ProductsPage = () => {
               className="flex space-x-4"
             >
               <Button 
-                className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white"
+                className="bg-accent hover:bg-accent/90 text-white"
               >
                 Featured Items
               </Button>
               <Button 
                 variant="outline"
-                className="border-[#FF3B30] text-[#FF3B30] hover:bg-[#FF3B30]/10"
+                className="border-accent text-accent hover:bg-accent/10"
               >
                 View Categories
               </Button>
@@ -310,12 +310,12 @@ const ProductsPage = () => {
         <div className="mb-16">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold flex items-center">
-              <Award className="text-[#FF3B30] mr-2 h-5 w-5" />
+              <Award className="text-accent mr-2 h-5 w-5" />
               Featured Products
             </h2>
             <a 
               href="#" 
-              className="text-[#FF3B30] hover:text-[#FF6B61] flex items-center text-sm font-medium"
+              className="text-accent hover:text-accent/80 flex items-center text-sm font-medium"
             >
               View All Featured
               <ChevronRight className="h-4 w-4 ml-1" />
