@@ -185,61 +185,7 @@ const EventsPage = () => {
                 screenings. Experience the vibrant community of anime enthusiasts across India.
               </motion.p>
               
-              {/* Featured upcoming event carousel */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeSlide}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-[#1A1A1A]/80 backdrop-blur-sm p-6 rounded-xl border border-[#333] shadow-xl max-w-3xl mx-auto"
-                >
-                  <div className="flex flex-col md:flex-row items-start md:items-center text-left gap-4">
-                    <div className="bg-accent/10 p-3 rounded-lg">
-                      <Calendar className="w-10 h-10 text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold mb-2">{upcomingEvents[activeSlide].title}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-300">
-                        <div className="flex items-center">
-                          <CalendarIcon className="w-4 h-4 mr-2 text-accent/70" />
-                          {upcomingEvents[activeSlide].date}
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2 text-accent/70" />
-                          {upcomingEvents[activeSlide].location}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-2 text-accent/70" />
-                          {upcomingEvents[activeSlide].attendees}
-                        </div>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 mr-2 text-accent/70" />
-                          Registrations Open
-                        </div>
-                      </div>
-                      <div className="mt-3 text-sm text-gray-400">
-                        <span className="font-medium text-white">Highlights:</span> {upcomingEvents[activeSlide].highlights}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-              
-              {/* Carousel dots */}
-              <div className="flex justify-center mt-4 space-x-2">
-                {upcomingEvents.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveSlide(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      activeSlide === index ? "bg-accent w-6" : "bg-gray-600 hover:bg-gray-500"
-                    }`}
-                    aria-label={`View event ${index + 1}`}
-                  />
-                ))}
-              </div>
+
             </motion.div>
           </div>
         </div>
