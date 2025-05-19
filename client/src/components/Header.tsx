@@ -29,7 +29,7 @@ const Header = () => {
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-bold">
-              <span className="text-white">Anime</span> <span className="text-[#FF3B30]">India</span> <span className="text-white text-lg font-normal">Logo</span>
+              <span className="text-white">Anime</span> <span className="india text-accent">India</span> <span className="text-white text-lg font-normal">Logo</span>
             </span>
           </Link>
           
@@ -51,7 +51,7 @@ const Header = () => {
               href="https://shop.animeindia.org" 
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+              className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
             >
               <ShoppingCart className="h-4 w-4" />
               <span>Shop</span>
@@ -94,7 +94,7 @@ const Header = () => {
                 href="https://shop.animeindia.org" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                 onClick={closeMenu}
               >
                 <ShoppingCart className="h-4 w-4" />
