@@ -70,14 +70,18 @@ export const ThemeCustomizer: React.FC = () => {
                     key={option.id}
                     className="w-full aspect-square rounded-full flex items-center justify-center"
                     style={{ 
-                      backgroundColor: option.color,
+                      backgroundColor: option.id === 'default' ? '#FF3B30' : 
+                                      option.id === 'blue' ? '#007AFF' : 
+                                      option.id === 'pink' ? '#FF2D55' : 
+                                      option.id === 'purple' ? '#AF52DE' : 
+                                      option.id === 'green' ? '#34C759' : option.color,
                       border: `2px solid ${option.id === theme ? 'white' : 'transparent'}`
                     }}
                     onClick={() => handleThemeChange(option.id)}
                     title={option.name}
                   >
                     {option.id === theme && (
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      <div style={{ width: '0.375rem', height: '0.375rem', borderRadius: '9999px', backgroundColor: 'white' }}></div>
                     )}
                   </button>
                 ))}
@@ -120,7 +124,11 @@ export const ThemeCustomizer: React.FC = () => {
                               width: '1rem',
                               height: '1rem',
                               borderRadius: '9999px',
-                              backgroundColor: option.color,
+                              backgroundColor: option.id === 'default' ? '#FF3B30' : 
+                                              option.id === 'blue' ? '#007AFF' : 
+                                              option.id === 'pink' ? '#FF2D55' : 
+                                              option.id === 'purple' ? '#AF52DE' : 
+                                              option.id === 'green' ? '#34C759' : option.color,
                               marginRight: '0.5rem',
                               display: 'flex',
                               alignItems: 'center',
