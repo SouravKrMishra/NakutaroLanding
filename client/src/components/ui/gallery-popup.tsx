@@ -66,7 +66,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
           onClick={onClose}
         >
           <motion.div 
-            className="bg-[#121212] overflow-hidden shadow-2xl max-w-5xl w-full mx-4 rounded-lg"
+            className="bg-[#121212] overflow-hidden shadow-2xl max-w-5xl w-full mx-4 rounded-lg max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -74,7 +74,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
             transition={{ duration: 0.2 }}
           >
             {/* Full image at top */}
-            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+            <div className="relative w-full" style={{ aspectRatio: '21/9' }}>
               <img 
                 src={selectedImage.src}
                 alt={selectedImage.alt}
@@ -113,7 +113,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
             </div>
             
             {/* Gallery title and thumbnails */}
-            <div className="p-6 pt-5">
+            <div className="p-4 pt-3">
               {title && (
                 <h3 className="text-xl font-bold mb-4 text-white">{title}</h3>
               )}
@@ -184,10 +184,10 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
               </div>
               
               {/* Button */}
-              <div className="mt-4 flex justify-end">
+              <div className="mt-1 flex justify-end">
                 <button
                   onClick={onClose}
-                  className="px-5 py-2 bg-accent hover:bg-accent/90 transition-colors duration-200 text-white rounded-md text-sm font-medium"
+                  className="px-4 py-1.5 bg-accent hover:bg-accent/90 transition-colors duration-200 text-white rounded-md text-sm font-medium"
                 >
                   Close
                 </button>
