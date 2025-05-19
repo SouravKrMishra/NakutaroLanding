@@ -165,6 +165,15 @@ const TestimonialsSection = () => {
             delay: 1
           }}
         />
+        
+        {/* Subtle accent elements */}
+        <div className="absolute top-1/4 right-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s' }}></div>
+        <div className="absolute bottom-1/3 left-12 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/3 w-3 h-3 bg-white/10 rounded-full animate-pulse" style={{ animationDuration: '5s' }}></div>
+        
+        {/* Subtle glow */}
+        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-accent rounded-full filter blur-[80px] opacity-[0.03]"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[100px] opacity-[0.02]"></div>
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
