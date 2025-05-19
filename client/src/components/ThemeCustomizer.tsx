@@ -70,23 +70,20 @@ export const ThemeCustomizer: React.FC = () => {
                   <button
                     key={option.id}
                     style={{ 
-                      backgroundColor: option.id === theme ? '#2D2D2D' : 'transparent',
-                      color: option.id === theme ? option.color : 'white',
+                      backgroundColor: 'transparent',
+                      color: 'white',
                       fontSize: '0.875rem',
                       padding: '0.5rem 0.75rem',
                       borderRadius: '0.25rem',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
                       width: '100%',
                       textAlign: 'left',
-                      borderLeft: option.id === theme ? `3px solid ${option.color}` : '3px solid transparent',
                       transition: 'all 0.2s ease'
                     }}
                     onClick={() => handleThemeChange(option.id)}
                   >
                     {option.name}
-                    {option.id === theme && <Check style={{ height: '0.875rem', width: '0.875rem', color: option.color }} />}
                   </button>
                 ))}
               </div>
