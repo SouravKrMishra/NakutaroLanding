@@ -1,8 +1,8 @@
 export const fadeIn = (direction: string, type: string, delay: number, duration: number) => {
   return {
     hidden: {
-      x: direction === 'left' ? 100 : direction === 'right' ? -100 : 0,
-      y: direction === 'up' ? 100 : direction === 'down' ? -100 : 0,
+      x: direction === 'left' ? 50 : direction === 'right' ? -50 : 0,
+      y: direction === 'up' ? 50 : direction === 'down' ? -50 : 0,
       opacity: 0,
     },
     show: {
@@ -11,8 +11,8 @@ export const fadeIn = (direction: string, type: string, delay: number, duration:
       opacity: 1,
       transition: {
         type,
-        delay,
-        duration,
+        delay: Math.max(0.05, delay / 2), // Reduce delay by half with a minimum threshold
+        duration: Math.max(0.5, duration / 1.5), // Reduce duration for faster animations
         ease: 'easeOut',
       },
     },
@@ -23,8 +23,8 @@ export const staggerContainer = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
     },
   },
 };
