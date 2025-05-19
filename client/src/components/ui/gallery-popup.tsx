@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface GalleryImage {
@@ -17,6 +17,9 @@ interface GalleryPopupProps {
 }
 
 export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const selectedImage = images[selectedImageIndex];
+
   // Lock scroll when gallery is open
   useEffect(() => {
     if (isOpen) {
@@ -29,45 +32,28 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
     };
   }, [isOpen]);
   
-  // Calculate layout columns for masonry grid based on screen size
-  const getColumnCount = () => {
-    if (window.innerWidth < 640) return 1;
-    if (window.innerWidth < 768) return 2;
-    if (window.innerWidth < 1024) return 3;
-    return 4;
-  };
-  
-  const [columnCount, setColumnCount] = useState(getColumnCount());
-  
+  // Reset selected image when gallery opens
   useEffect(() => {
-    const handleResize = () => {
-      setColumnCount(getColumnCount());
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    if (isOpen) {
+      setSelectedImageIndex(0);
+    }
+  }, [isOpen]);
   
-  // Function to organize images into masonry columns
-  const organizeImagesIntoColumns = (images: GalleryImage[], columnCount: number) => {
-    const columns: GalleryImage[][] = Array.from({ length: columnCount }, () => []);
-    
-    // Distribute images to columns based on heights to maintain balance
-    images.forEach((image, index) => {
-      // Find the column with the least height
-      const columnHeights = columns.map(column => 
-        column.reduce((total, img) => total + (img.height / img.width), 0)
-      );
-      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-      columns[shortestColumnIndex].push(image);
-    });
-    
-    return columns;
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleThumbnailClick = (index: number) => {
+    setSelectedImageIndex(index);
   };
   
-  const imageColumns = organizeImagesIntoColumns(images, columnCount);
-  
-  if (!isOpen) return null;
+  if (!isOpen || images.length === 0) return null;
   
   return (
     <AnimatePresence>
@@ -76,79 +62,100 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
           onClick={onClose}
         >
-          <div 
-            className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full h-full flex flex-col"
+          <motion.div 
+            className="bg-[#121212] overflow-hidden shadow-2xl max-w-2xl w-full mx-4 rounded-lg"
             onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            transition={{ duration: 0.2 }}
           >
-            {/* Header with close button */}
-            <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-black/50 backdrop-blur-sm py-2 px-4 rounded-lg">
-              {title && (
-                <h3 className="text-xl font-bold text-white">{title}</h3>
-              )}
+            {/* Full image at top */}
+            <div className="relative h-72 w-full">
+              <img 
+                src={selectedImage.src}
+                alt={selectedImage.alt}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] to-transparent opacity-70"></div>
+              
+              {/* Close button */}
               <button 
                 onClick={onClose}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 text-white"
+                className="absolute top-4 right-4 p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200 text-white"
                 aria-label="Close gallery"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </button>
+              
+              {/* Navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200 text-white"
+                    onClick={handlePrevious}
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-200 text-white"
+                    onClick={handleNext}
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
             </div>
             
-            {/* Container with horizontal scroll */}
-            <div className="flex-1 overflow-x-auto pb-4 hide-scrollbar">
-              <div className="min-w-max">
-                {/* Masonry Gallery */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="grid gap-4"
-                  style={{ 
-                    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 250px))`,
-                    width: `${columnCount * 266}px` // 250px column + 16px gap
-                  }}
-                >
-                  {imageColumns.map((column, columnIndex) => (
-                    <div key={columnIndex} className="flex flex-col gap-4">
-                      {column.map((image, imageIndex) => (
-                        <motion.div
-                          key={`${columnIndex}-${imageIndex}`}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ 
-                            duration: 0.3,
-                            delay: 0.05 * (columnIndex + imageIndex) 
-                          }}
-                          className="overflow-hidden rounded-lg bg-accent/5 hover:bg-accent/10 transition-all duration-300"
-                        >
-                          <img
-                            src={image.src}
-                            alt={image.alt}
-                            className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
-                            style={{ aspectRatio: `${image.width}/${image.height}` }}
-                          />
-                        </motion.div>
-                      ))}
+            {/* Gallery title and thumbnails */}
+            <div className="p-6 pt-5">
+              {title && (
+                <h3 className="text-xl font-bold mb-4 text-white">{title}</h3>
+              )}
+              
+              {/* Image counter */}
+              <div className="text-sm text-gray-400 mb-4">
+                Image {selectedImageIndex + 1} of {images.length}
+              </div>
+              
+              {/* Thumbnail navigation */}
+              <div className="overflow-x-auto hide-scrollbar pb-2">
+                <div className="flex space-x-2 min-w-max">
+                  {images.map((image, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleThumbnailClick(index)}
+                      className={`cursor-pointer relative rounded overflow-hidden transition-all duration-200 
+                        ${index === selectedImageIndex 
+                          ? 'ring-2 ring-accent' 
+                          : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-accent/50'}`}
+                    >
+                      <img
+                        src={image.src}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-16 h-12 object-cover"
+                      />
                     </div>
                   ))}
-                </motion.div>
+                </div>
+              </div>
+              
+              {/* Button */}
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={onClose}
+                  className="px-5 py-2 bg-accent hover:bg-accent/90 transition-colors duration-200 text-white rounded-md text-sm font-medium"
+                >
+                  Close
+                </button>
               </div>
             </div>
-            
-            {/* Visual indicator for horizontal scrolling */}
-            <div className="mt-4 flex justify-center items-center">
-              <div className="flex space-x-1">
-                <span className="text-white text-xs">Scroll horizontally to see more images</span>
-                <svg className="w-4 h-4 text-accent animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
