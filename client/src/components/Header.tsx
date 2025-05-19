@@ -40,7 +40,7 @@ const Header = () => {
               <a 
                 key={link.href}
                 href={link.href} 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition duration-200"
+                className="text-gray-800 dark:text-gray-200 hover:text-[#FF3B30] dark:hover:text-[#FF3B30] transition duration-200"
               >
                 {link.label}
               </a>
@@ -83,7 +83,7 @@ const Header = () => {
                 <a 
                   key={link.href}
                   href={link.href} 
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition duration-200"
+                  className="text-gray-800 dark:text-gray-200 hover:text-[#FF3B30] dark:hover:text-[#FF3B30] transition duration-200"
                   onClick={closeMenu}
                 >
                   {link.label}
