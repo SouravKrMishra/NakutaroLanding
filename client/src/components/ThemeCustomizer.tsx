@@ -1,81 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../lib/ThemeContext';
-import { Settings, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '../components/ui/button';
+import { Settings, Check, ChevronDown } from 'lucide-react';
 
 interface ThemeOption {
   id: string;
   name: string;
+  color: string;
 }
 
 const themeOptions: ThemeOption[] = [
-  { id: 'default', name: 'Red' },
-  { id: 'blue', name: 'Blue' },
-  { id: 'pink', name: 'Pink' },
-  { id: 'purple', name: 'Purple' },
-  { id: 'green', name: 'Green' },
+  { id: 'default', name: 'Red', color: '#FF3B30' },
+  { id: 'blue', name: 'Blue', color: '#007AFF' },
+  { id: 'pink', name: 'Pink', color: '#FF2D55' },
+  { id: 'purple', name: 'Purple', color: '#AF52DE' },
+  { id: 'green', name: 'Green', color: '#34C759' },
 ];
 
 export const ThemeCustomizer: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Close the panel when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isOpen && !target.closest('#theme-panel') && !target.closest('#theme-toggle')) {
-        setIsOpen(false);
-      }
-    };
+  const toggleOpen = () => setIsOpen(!isOpen);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
+  const handleThemeChange = (themeId: string) => {
+    setTheme(themeId as any);
+    setIsOpen(false);
+  };
+
+  const currentTheme = themeOptions.find(t => t.id === theme) || themeOptions[0];
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <button
-        id="theme-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 bg-neutral-800 rounded-full shadow-lg hover:bg-neutral-700 transition-colors"
-      >
-        <Settings className="h-5 w-5 text-white" />
-      </button>
-      
-      <AnimatePresence>
+      <div className="relative">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full p-2 bg-[#1E1E1E] border-[#2D2D2D] hover:bg-[#2D2D2D]"
+          onClick={toggleOpen}
+        >
+          <Settings className="h-5 w-5" style={{ color: currentTheme.color }} />
+        </Button>
+        
         {isOpen && (
-          <motion.div
-            id="theme-panel"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 bottom-12 w-48 bg-neutral-900 border border-neutral-800 rounded-md shadow-xl overflow-hidden"
-          >
-            <div className="px-3 py-2 border-b border-neutral-800 bg-neutral-800">
-              <h3 className="text-sm font-medium text-white">Theme Color</h3>
+          <div className="absolute bottom-12 right-0 bg-[#1E1E1E] border border-[#2D2D2D] rounded-lg shadow-lg p-4 w-60 animate-in slide-in-from-bottom-5 duration-200">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold text-sm">Customize Appearance</h3>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
             </div>
             
-            <div className="p-2">
-              {themeOptions.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => setTheme(option.id as any)}
-                  className="w-full flex items-center justify-between px-3 py-2 my-1 text-sm text-white rounded bg-neutral-800 hover:bg-neutral-700"
-                >
-                  <span>{option.name}</span>
-                  {theme === option.id && (
-                    <Check className="h-4 w-4 text-white" />
-                  )}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <p className="text-gray-400 text-xs mb-2">Accent Color</p>
+              <div className="grid grid-cols-5 gap-2">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`w-full aspect-square rounded-full flex items-center justify-center border-2 ${option.id === theme ? 'border-white' : 'border-transparent'}`}
+                    style={{ backgroundColor: option.color }}
+                    onClick={() => handleThemeChange(option.id)}
+                    title={option.name}
+                  >
+                    {option.id === theme && <Check className="h-3 w-3 text-white" />}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-4 pt-3 border-t border-[#2D2D2D]">
+                <div className="flex flex-col gap-2">
+                  {themeOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`flex items-center justify-between text-xs py-1.5 px-2 rounded hover:bg-[#2D2D2D] transition-colors ${option.id === theme ? 'bg-[#2D2D2D]' : ''}`}
+                      onClick={() => handleThemeChange(option.id)}
+                    >
+                      <div className="flex items-center">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{ backgroundColor: option.color }} 
+                        />
+                        {option.name}
+                      </div>
+                      {option.id === theme && <Check className="h-3 w-3" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 };

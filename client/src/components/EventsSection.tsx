@@ -1,9 +1,6 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight } from 'lucide-react';
-import { GalleryPopup } from './ui/gallery-popup';
-import { EventPopup } from './ui/event-popup';
+import { Calendar, MapPin, Clock, Trophy, Camera } from 'lucide-react';
 
 interface Event {
   title: string;
@@ -13,13 +10,9 @@ interface Event {
   description: string;
   image: string;
   featured?: boolean;
-  prizePool?: string;
 }
 
 const EventsSection = () => {
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  
   const organizedEvent: Event = {
     title: 'Nakutaro Cosplay Royale',
     date: 'September 28, 2024',
@@ -27,8 +20,7 @@ const EventsSection = () => {
     time: '10:00 AM - 6:00 PM',
     description: "Self-organized premier cosplay event featuring a prize pool of ₹50,000, attracting numerous cosplay enthusiasts to showcase their talents.",
     image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-    featured: true,
-    prizePool: '₹50,000'
+    featured: true
   };
   
   const sponsoredEvents: Event[] = [
@@ -38,8 +30,7 @@ const EventsSection = () => {
       location: 'IIT Delhi Campus',
       time: 'All Day',
       description: "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
-      image: 'https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      prizePool: '₹30,000'
+      image: 'https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80'
     },
     {
       title: 'Khooni Monday Horrorcon',
@@ -47,115 +38,10 @@ const EventsSection = () => {
       location: 'Siri Fort Auditorium, New Delhi',
       time: '11:00 AM - 9:00 PM',
       description: "Nakutaro partnered as a sponsor for this horror-themed convention featuring a cosplay competition with a prize pool of ₹60,000, providing a platform for fans to immerse themselves in the genre.",
-      image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      prizePool: '₹60,000'
-    }
-  ];
-  
-  // Gallery images with different widths/heights for masonry layout
-  const galleryImages = [
-    { 
-      src: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80', 
-      alt: 'Anime cosplay event 1',
-      width: 800,
-      height: 600
-    },
-    { 
-      src: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200&q=80', 
-      alt: 'Anime cosplay event 2',
-      width: 800,
-      height: 1200
-    },
-    { 
-      src: 'https://images.unsplash.com/photo-1594385468549-15dbcac14e54?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800&q=80', 
-      alt: 'Anime cosplay event 3',
-      width: 1200,
-      height: 800
-    },
-    { 
-      src: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=800&q=80', 
-      alt: 'Anime cosplay event 4',
-      width: 800,
-      height: 800
-    },
-    { 
-      src: 'https://images.unsplash.com/photo-1623776025811-fd139155a39b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80', 
-      alt: 'Anime cosplay event 5',
-      width: 800,
-      height: 600
-    },
-    { 
-      src: 'https://images.unsplash.com/photo-1617070201971-fb8c082e0001?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1000&q=80', 
-      alt: 'Anime cosplay event 6',
-      width: 800,
-      height: 1000
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1565799284935-da1e913a72a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200&q=80',
-      alt: 'Anime cosplay event 7',
-      width: 800,
-      height: 1200
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1615524140580-5b1331d86c85?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=1500&q=80',
-      alt: 'Anime cosplay event 8',
-      width: 1000,
-      height: 1500
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1626379616459-b2ce1d9decbc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      alt: 'Anime cosplay event 9',
-      width: 800,
-      height: 600
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1570462621100-763a8dc3f0b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=900&q=80',
-      alt: 'Anime cosplay event 10',
-      width: 1200,
-      height: 900
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1100&q=80',
-      alt: 'Anime cosplay event 11',
-      width: 800,
-      height: 1100
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1613561125090-255dc241a456?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=800&q=80',
-      alt: 'Anime cosplay event 12',
-      width: 1000,
-      height: 800
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1560932833-01678178a032?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800&q=80',
-      alt: 'Anime cosplay event 13',
-      width: 1200,
-      height: 800
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1615367136042-965d9268e6be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1100&q=80',
-      alt: 'Anime cosplay event 14',
-      width: 800,
-      height: 1100
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&h=700&q=80',
-      alt: 'Anime cosplay event 15',
-      width: 900,
-      height: 700
+      image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80'
     }
   ];
 
-  const openGallery = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setGalleryOpen(true);
-  };
-
-  const openEventDetails = (event: Event, e: React.MouseEvent) => {
-    e.preventDefault();
-    setSelectedEvent(event);
-  };
-  
   return (
     <section id="events" className="py-20 bg-[#1E1E1E] relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -223,18 +109,18 @@ const EventsSection = () => {
                   </div>
                   <div className="flex items-center text-gray-400 mb-4">
                     <Trophy className="h-4 w-4 mr-2" />
-                    <span>Prize Pool: {organizedEvent.prizePool}</span>
+                    <span>Prize Pool: ₹50,000</span>
                   </div>
                   <p className="text-gray-300 mb-6">
                     {organizedEvent.description}
                   </p>
-                  <button 
-                    onClick={openGallery}
+                  <a 
+                    href="#" 
                     className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
                   >
                     View Gallery
                     <Camera className="h-4 w-4 ml-2" />
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -276,13 +162,15 @@ const EventsSection = () => {
                     <p className="text-gray-300 mb-6 line-clamp-3">
                       {event.description}
                     </p>
-                    <button 
-                      onClick={(e) => openEventDetails(event, e)}
+                    <a 
+                      href="#" 
                       className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
                     >
                       About Event
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </button>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </a>
                   </div>
                 </motion.div>
               ))}
@@ -300,20 +188,6 @@ const EventsSection = () => {
       {/* Stylized anime-inspired shape */}
       <div className="absolute -top-10 -right-10 w-40 h-40 border-8 border-accent/10 rounded-full"></div>
       <div className="absolute -bottom-10 -left-10 w-60 h-60 border-8 border-accent/5 rounded-full"></div>
-      
-      {/* Popups */}
-      <GalleryPopup
-        isOpen={galleryOpen}
-        onClose={() => setGalleryOpen(false)}
-        images={galleryImages}
-        title="Nakutaro Cosplay Royale Gallery"
-      />
-      
-      <EventPopup
-        isOpen={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        event={selectedEvent || organizedEvent} // Fallback to avoid type error
-      />
     </section>
   );
 };

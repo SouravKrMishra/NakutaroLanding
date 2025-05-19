@@ -4,7 +4,6 @@
 
 @layer base {
   :root {
-    /* Base variables - will be overridden by mode-specific variables */
     --background: 0 0% 100%;
     --foreground: 20 14.3% 4.1%;
     --muted: 60 4.8% 95.9%;
@@ -15,7 +14,23 @@
     --card-foreground: 20 14.3% 4.1%;
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
+    --primary: 0 79% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 0 84.2% 60.2%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --ring: 20 14.3% 4.1%;
     --radius: 0.5rem;
+    
+    /* Custom theme colors for Anime India */
+    --dark-900: 0 0% 7%;
+    --dark-800: 0 0% 12%;
+    --dark-700: 0 0% 18%;
+    --dark-600: 0 0% 20%;
+    --dark-500: 0 0% 29%;
     
     /* Theme colors */
     --theme-color: 3 100% 59%;
@@ -35,42 +50,6 @@
     /* Set theme color hex values for direct use */
     --theme-color-hex: #ff3b30;
     --theme-color-rgb: 255, 59, 48;
-  }
-  
-  /* Dark mode variables */
-  .dark {
-    --background-color: #121212;
-    --card-background: #1E1E1E;
-    --text-primary: #FFFFFF;
-    --text-secondary: #A0A0A0;
-    --border-color: #2D2D2D;
-    --input-background: #333333;
-    --hover-color: #2D2D2D;
-    
-    /* Dark specific colors */
-    --dark-900: 0 0% 7%;
-    --dark-800: 0 0% 12%;
-    --dark-700: 0 0% 18%;
-    --dark-600: 0 0% 20%;
-    --dark-500: 0 0% 29%;
-  }
-  
-  /* Light mode variables */
-  .light {
-    --background-color: #F7F7F7;
-    --card-background: #FFFFFF;
-    --text-primary: #333333;
-    --text-secondary: #666666;
-    --border-color: #E5E5E5;
-    --input-background: #F0F0F0;
-    --hover-color: #EEEEEE;
-    
-    /* Light specific colors */
-    --dark-900: 0 0% 95%; 
-    --dark-800: 0 0% 92%;
-    --dark-700: 0 0% 87%;
-    --dark-600: 0 0% 82%;
-    --dark-500: 0 0% 75%;
   }
   
   /* Blue Theme */
@@ -137,12 +116,10 @@
 }
 
 body {
-  @apply font-sans antialiased;
+  @apply bg-[#121212] text-gray-200 font-sans antialiased;
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
   position: relative;
-  background-color: var(--background-color);
-  color: var(--text-primary);
 }
 
 /* Create theme-specific background patterns for each theme */

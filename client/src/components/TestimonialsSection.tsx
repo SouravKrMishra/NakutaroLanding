@@ -82,29 +82,15 @@ const TestimonialsSection = () => {
     const hasHalfStar = rating % 1 !== 0;
     
     for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star 
-          key={`full-${i}`} 
-          className="h-4 w-4" 
-          style={{ fill: 'hsl(var(--accent-primary))', color: 'hsl(var(--accent-primary))' }} 
-        />
-      );
+      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-accent text-accent" />);
     }
     
     if (hasHalfStar) {
       stars.push(
-        <svg 
-          key="half" 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          className="h-4 w-4" 
-          style={{ color: 'hsl(var(--accent-primary))' }}
-        >
+        <svg key="half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 text-accent">
           <defs>
             <linearGradient id="halfGradient">
-              <stop offset="50%" style={{ stopColor: 'hsl(var(--accent-primary))' }} />
+              <stop offset="50%" className="stop-accent" />
               <stop offset="50%" stopColor="transparent" />
             </linearGradient>
           </defs>
@@ -115,13 +101,7 @@ const TestimonialsSection = () => {
     
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <Star 
-          key={`empty-${i}`} 
-          className="h-4 w-4" 
-          style={{ color: 'hsl(var(--accent-primary))' }} 
-        />
-      );
+      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-accent" />);
     }
     
     return stars;
@@ -140,7 +120,6 @@ const TestimonialsSection = () => {
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-accent font-semibold text-sm uppercase tracking-wider"
-            style={{ color: 'hsl(var(--accent-primary))' }}
           >
             Community Voices
           </motion.span>
@@ -173,15 +152,10 @@ const TestimonialsSection = () => {
                 viewport={{ once: true, amount: 0.25 }}
                 className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg transition-all duration-300 relative overflow-hidden group">
-                  <div 
-                    className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                    style={{ 
-                      background: `linear-gradient(to bottom right, hsla(var(--accent-primary), 0.1), transparent)` 
-                    }}
-                  ></div>
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-accent/5 hover:shadow-accent/10 transition-all duration-300 relative overflow-hidden group">
+                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                   <div className="flex items-center mb-4">
-                    <div className="flex">
+                    <div className="text-accent flex">
                       {renderStars(testimonial.rating)}
                     </div>
                   </div>
@@ -189,19 +163,8 @@ const TestimonialsSection = () => {
                     "{testimonial.content}"
                   </blockquote>
                   <div className="flex items-center">
-                    <div 
-                      className="h-12 w-12 rounded-full flex items-center justify-center mr-4 border-2"
-                      style={{ 
-                        background: `linear-gradient(to bottom right, hsla(var(--accent-primary), 0.3), hsla(var(--accent-primary), 0.1))`,
-                        borderColor: `hsla(var(--accent-primary), 0.2)`
-                      }}
-                    >
-                      <span 
-                        className="text-xl font-bold"
-                        style={{ color: `hsl(var(--accent-primary))` }}
-                      >
-                        {testimonial.initials}
-                      </span>
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center mr-4 border-2 border-accent/20">
+                      <span className="text-xl font-bold text-accent">{testimonial.initials}</span>
                     </div>
                     <div>
                       <h4 className="font-semibold">{testimonial.author}</h4>
@@ -219,7 +182,7 @@ const TestimonialsSection = () => {
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`h-3 w-3 rounded-full focus:outline-none ${
-                  index === currentSlide ? 'bg-[hsl(var(--accent-primary))]' : 'bg-[#2D2D2D]'
+                  index === currentSlide ? 'bg-accent' : 'bg-[#2D2D2D]'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -244,18 +207,9 @@ const TestimonialsSection = () => {
       </div>
       
       {/* Anime-inspired decorative elements */}
-      <div 
-        className="absolute -top-10 -left-10 w-20 h-20 opacity-5 rounded-full"
-        style={{ backgroundColor: 'hsl(var(--accent-primary))' }}
-      ></div>
-      <div 
-        className="absolute top-1/4 right-10 w-40 h-40 opacity-5 rounded-full"
-        style={{ backgroundColor: 'hsl(var(--accent-primary))' }}
-      ></div>
-      <div 
-        className="absolute bottom-20 left-1/3 w-32 h-32 opacity-5 rounded-full"
-        style={{ backgroundColor: 'hsl(var(--accent-primary))' }}
-      ></div>
+      <div className="absolute -top-10 -left-10 w-20 h-20 bg-accent opacity-5 rounded-full"></div>
+      <div className="absolute top-1/4 right-10 w-40 h-40 bg-accent opacity-5 rounded-full"></div>
+      <div className="absolute bottom-20 left-1/3 w-32 h-32 bg-accent opacity-5 rounded-full"></div>
       
       {/* Animated stars */}
       <div className="absolute top-10 right-1/4 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '1.5s' }}></div>
@@ -263,14 +217,8 @@ const TestimonialsSection = () => {
       <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '1s' }}></div>
       
       {/* Anime-style accent shapes */}
-      <div 
-        className="absolute top-0 right-0 h-40 w-40 border-t-4 border-r-4 rounded-tr-3xl"
-        style={{ borderColor: 'hsla(var(--accent-primary), 0.2)' }}
-      ></div>
-      <div 
-        className="absolute bottom-0 left-0 h-40 w-40 border-b-4 border-l-4 rounded-bl-3xl"
-        style={{ borderColor: 'hsla(var(--accent-primary), 0.2)' }}
-      ></div>
+      <div className="absolute top-0 right-0 h-40 w-40 border-t-4 border-r-4 border-accent/20 rounded-tr-3xl"></div>
+      <div className="absolute bottom-0 left-0 h-40 w-40 border-b-4 border-l-4 border-accent/20 rounded-bl-3xl"></div>
     </section>
   );
 };

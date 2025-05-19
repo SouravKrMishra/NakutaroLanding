@@ -95,8 +95,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="font-semibold text-sm uppercase tracking-wider"
-            style={{ color: 'hsl(var(--accent-primary))' }}
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             {showFullCatalog ? 'Anime India Store' : 'Our Collection'}
           </motion.span>
@@ -127,7 +126,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
             <motion.div
               key={index}
               variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-[hsla(var(--accent-primary),0.3)] transition-all duration-300"
+              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-accent/30 transition-all duration-300"
             >
               <div className="relative h-60 overflow-hidden">
                 <img 
@@ -152,8 +151,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                     href="https://shop.animeindia.org" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="transition duration-300 font-medium inline-flex items-center hover:opacity-80"
-                    style={{ color: 'hsl(var(--accent-primary))' }}
+                    className="text-accent hover:text-accent/80 transition duration-300 font-medium inline-flex items-center"
                   >
                     Shop Now
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -161,8 +159,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                 ) : (
                   <Link 
                     href="/products" 
-                    className="transition duration-300 font-medium inline-flex items-center hover:opacity-80"
-                    style={{ color: 'hsl(var(--accent-primary))' }}
+                    className="text-accent hover:text-accent/80 transition duration-300 font-medium inline-flex items-center"
                   >
                     View All Products
                     <ArrowRight className="ml-2 h-4 w-4" />
