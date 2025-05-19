@@ -5,20 +5,37 @@ import { ShoppingBag, Calendar, Users, Mail } from 'lucide-react';
 const CTASection = () => {
   return (
     <section className="py-20 relative overflow-hidden">
-      {/* Background gradient and pattern */}
-      <div className="absolute inset-0 bg-gradient-to-b from-accent/20 to-accent/5 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-[#171717] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
         
-        {/* Animated particles */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '2.5s' }}></div>
-          <div className="absolute top-40 right-32 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '3.5s', animationDelay: '0.7s' }}></div>
-          <div className="absolute bottom-20 left-1/2 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1.2s' }}></div>
-        </div>
+        {/* Decorative elements */}
+        <motion.div 
+          className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[120px] opacity-10"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.05, 0.1, 0.05]
+          }}
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity,
+            ease: "easeInOut" 
+          }}
+        />
         
-        {/* Large decorative circle */}
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 border-2 border-white/10 rounded-full"></div>
-        <div className="absolute -top-20 -left-20 w-60 h-60 border-2 border-white/10 rounded-full"></div>
+        <motion.div 
+          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.08, 0.05]
+          }}
+          transition={{ 
+            duration: 10, 
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

@@ -135,21 +135,35 @@ const TestimonialsSection = () => {
   
   return (
     <section id="testimonials" className="py-20 relative overflow-hidden">
-      {/* Background with pattern */}
-      <div className="absolute inset-0 bg-[#0A0A0A] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-[#171717] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
         
-        {/* Animated background elements */}
+        {/* Decorative elements */}
         <motion.div 
-          className="absolute -bottom-40 -right-40 w-96 h-96 bg-accent/5 rounded-full"
+          className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[120px] opacity-10"
           animate={{ 
             scale: [1, 1.2, 1],
-            rotate: [0, 15, 0]
+            opacity: [0.05, 0.1, 0.05]
           }}
           transition={{ 
-            duration: 20, 
+            duration: 8, 
             repeat: Infinity,
             ease: "easeInOut" 
+          }}
+        />
+        
+        <motion.div 
+          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.08, 0.05]
+          }}
+          transition={{ 
+            duration: 10, 
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
           }}
         />
       </div>
