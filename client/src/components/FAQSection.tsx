@@ -45,7 +45,7 @@ const FAQSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             FAQ
           </motion.span>
@@ -76,7 +76,7 @@ const FAQSection = () => {
                   onClick={() => toggleFAQ(index)}
                 >
                   <h3 className="font-semibold text-lg">{faq.question}</h3>
-                  <div className="text-[#FF3B30]">
+                  <div className="text-accent">
                     {activeIndex === index ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                   </div>
                 </button>
@@ -99,7 +99,7 @@ const FAQSection = () => {
               Still have questions? Contact us at 
               <a 
                 href="tel:+911149042581" 
-                className="text-[#FF3B30] ml-2 hover:text-[#FF6B61] inline-flex items-center"
+                className="text-accent ml-2 hover:text-accent/80 inline-flex items-center"
               >
                 <Phone className="h-4 w-4 mr-1" />
                 (+91) 11 4904 2581
@@ -111,8 +111,8 @@ const FAQSection = () => {
       
       {/* Decorative elements */}
       <div className="absolute bottom-0 right-0 w-full h-40 bg-gradient-to-t from-[#1E1E1E] to-transparent opacity-50"></div>
-      <div className="absolute top-20 right-10 w-32 h-32 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
-      <div className="absolute bottom-20 left-20 w-40 h-40 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute top-20 right-10 w-32 h-32 bg-accent rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute bottom-20 left-20 w-40 h-40 bg-accent rounded-full filter blur-3xl opacity-5"></div>
     </section>
   );
 };

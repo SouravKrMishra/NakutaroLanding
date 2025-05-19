@@ -82,15 +82,15 @@ const TestimonialsSection = () => {
     const hasHalfStar = rating % 1 !== 0;
     
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-[#FF3B30] text-[#FF3B30]" />);
+      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-accent text-accent" />);
     }
     
     if (hasHalfStar) {
       stars.push(
-        <svg key="half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 text-[#FF3B30]">
+        <svg key="half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4 text-accent">
           <defs>
             <linearGradient id="halfGradient">
-              <stop offset="50%" stopColor="#FF3B30" />
+              <stop offset="50%" className="stop-accent" />
               <stop offset="50%" stopColor="transparent" />
             </linearGradient>
           </defs>
@@ -101,7 +101,7 @@ const TestimonialsSection = () => {
     
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-[#FF3B30]" />);
+      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-accent" />);
     }
     
     return stars;
@@ -119,7 +119,7 @@ const TestimonialsSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             Community Voices
           </motion.span>
