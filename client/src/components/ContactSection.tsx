@@ -71,8 +71,8 @@ const ContactSection = () => {
       title: 'Our Location',
       content: (
         <>
-          123 Innovation Drive<br />
-          Tech City, TC 98765
+          Office No. 316, 3rd Floor, DLF Galleria<br />
+          Mayur Vihar Phase 1, New Delhi 110091
         </>
       )
     },
@@ -81,10 +81,10 @@ const ContactSection = () => {
       title: 'Email Us',
       content: (
         <a 
-          href="mailto:info@nakutaro.com" 
+          href="mailto:support@animeindia.org" 
           className="text-gray-400 hover:text-[#FF3B30] transition duration-300"
         >
-          info@nakutaro.com
+          support@animeindia.org
         </a>
       )
     },
@@ -93,10 +93,10 @@ const ContactSection = () => {
       title: 'Call Us',
       content: (
         <a 
-          href="tel:+1234567890" 
+          href="tel:+911149042581" 
           className="text-gray-400 hover:text-[#FF3B30] transition duration-300"
         >
-          +1 (234) 567-890
+          (+91) 11 4904 2581
         </a>
       )
     },
@@ -105,18 +105,18 @@ const ContactSection = () => {
       title: 'Working Hours',
       content: (
         <>
-          Monday - Friday: 9AM - 6PM<br />
-          Saturday: 10AM - 2PM
+          Monday - Saturday: 10AM - 7PM<br />
+          Sunday: By Appointment Only
         </>
       )
     }
   ];
 
   const socialLinks = [
-    { icon: <Twitter className="h-5 w-5" />, href: '#' },
-    { icon: <Linkedin className="h-5 w-5" />, href: '#' },
+    { icon: <Instagram className="h-5 w-5" />, href: '#' },
     { icon: <Facebook className="h-5 w-5" />, href: '#' },
-    { icon: <Instagram className="h-5 w-5" />, href: '#' }
+    { icon: <Twitter className="h-5 w-5" />, href: '#' },
+    { icon: <Mail className="h-5 w-5" />, href: 'mailto:support@animeindia.org' }
   ];
 
   return (

@@ -15,20 +15,20 @@ const CTASection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-3xl md:text-4xl font-bold mb-6"
           >
-            Ready to Transform Your Business?
+            Ready to Join the Anime Community?
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-xl opacity-90 mb-8"
           >
-            Join hundreds of successful companies that have partnered with Nakutaro to drive innovation and growth.
+            Discover premium anime merchandise and connect with fellow anime enthusiasts across India. From action figures to exclusive apparel!
           </motion.p>
           <motion.a
             variants={fadeIn('up', 'tween', 0.3, 1)}
             href="#contact"
             className="inline-block bg-white text-[#FF3B30] hover:bg-gray-100 font-bold px-8 py-3 rounded-md shadow-lg transition duration-300 text-lg"
           >
-            Get in Touch Today
+            Shop Now
           </motion.a>
         </motion.div>
       </div>

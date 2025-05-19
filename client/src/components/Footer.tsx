@@ -128,11 +128,11 @@ const Footer = () => {
         
         <div className="border-t border-[#2D2D2D] pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p>&copy; {year} Nakutaro. All rights reserved.</p>
+            <p>&copy; {year} Anime India. All rights reserved.</p>
             <div className="mt-4 md:mt-0">
               <a href="#" className="text-sm mr-4 hover:text-[#FF3B30] transition duration-300">Privacy Policy</a>
               <a href="#" className="text-sm mr-4 hover:text-[#FF3B30] transition duration-300">Terms of Service</a>
-              <a href="#" className="text-sm hover:text-[#FF3B30] transition duration-300">Sitemap</a>
+              <a href="#" className="text-sm hover:text-[#FF3B30] transition duration-300">Return Policy</a>
             </div>
           </div>
         </div>
