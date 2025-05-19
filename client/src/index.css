@@ -163,17 +163,7 @@ body::before {
 }
 
 /* Accent color theming */
-.text-accent,
-.text-red-500,
-.text-red-600,
-.text-red-700,
-.text-red-800,
-h1 > span,
-h2 > span,
-h3 > span,
-h4 > span,
-.india,
-a:not(.btn-primary) {
+.text-accent {
   color: hsl(var(--accent-primary)) !important;
 }
 
@@ -181,13 +171,13 @@ a:not(.btn-primary) {
   background-color: hsl(var(--accent-primary)) !important;
 }
 
-.border-accent,
-.border-red-500,
-.border-red-600,
-.border,
-img.border,
-*[class*="border-red"] {
+.border-accent {
   border-color: hsl(var(--accent-primary)) !important;
+}
+
+/* Header elements */
+.india {
+  color: hsl(var(--accent-primary)) !important;
 }
 
 /* Make buttons use accent color */
@@ -215,31 +205,8 @@ img.border,
 .bg-red-500, 
 .bg-red-600, 
 .bg-red-700, 
-.bg-red-800,
-button[class*="bg-red"],
-.card-badge,
-.badge,
-.tag-red,
-.status-active {
+.bg-red-800 {
   background-color: hsl(var(--accent-primary)) !important;
-}
-
-/* All button and link hover/focus states */
-button:hover:not(.btn-secondary):not([class*="bg-"]),
-a:hover:not(.text-white):not(.btn-primary),
-.nav-link:hover,
-a:focus:not(.text-white):not(.btn-primary) {
-  color: hsl(var(--accent-light)) !important;
-}
-
-/* Shadow effects and glows */
-.shadow-glow,
-.hover-glow:hover,
-.btn-primary:focus,
-.ring-accent,
-*[class*="shadow-red"],
-*[class*="glow"] {
-  box-shadow: 0 0 15px hsla(var(--accent-primary), 0.5) !important;
 }
 
 /* Hero and CTA sections */
