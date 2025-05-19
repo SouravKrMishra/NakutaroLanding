@@ -25,16 +25,57 @@
     --ring: 20 14.3% 4.1%;
     --radius: 0.5rem;
     
-    /* Custom colors for Nakutaro */
+    /* Custom theme colors for Anime India */
     --dark-900: 0 0% 7%;
     --dark-800: 0 0% 12%;
     --dark-700: 0 0% 18%;
     --dark-600: 0 0% 20%;
     --dark-500: 0 0% 29%;
     
+    /* Default Red Theme */
     --accent-primary: 3 100% 59%;
     --accent-light: 3 100% 69%;
     --accent-dark: 3 100% 47%;
+  }
+  
+  /* Blue Theme */
+  [data-theme="blue"] {
+    --accent-primary: 217 100% 59%;
+    --accent-light: 217 100% 69%;
+    --accent-dark: 217 100% 47%;
+    --primary: 217 79% 45%;
+    --accent: 217 84.2% 60.2%;
+    --destructive: 217 84.2% 60.2%;
+  }
+  
+  /* Pink Theme */
+  [data-theme="pink"] {
+    --accent-primary: 330 100% 59%;
+    --accent-light: 330 100% 69%;
+    --accent-dark: 330 100% 47%;
+    --primary: 330 79% 45%;
+    --accent: 330 84.2% 60.2%;
+    --destructive: 330 84.2% 60.2%;
+  }
+  
+  /* Purple Theme */
+  [data-theme="purple"] {
+    --accent-primary: 270 100% 59%;
+    --accent-light: 270 100% 69%;
+    --accent-dark: 270 100% 47%;
+    --primary: 270 79% 45%;
+    --accent: 270 84.2% 60.2%;
+    --destructive: 270 84.2% 60.2%;
+  }
+  
+  /* Green Theme */
+  [data-theme="green"] {
+    --accent-primary: 120 100% 35%;
+    --accent-light: 120 100% 45%;
+    --accent-dark: 120 100% 25%;
+    --primary: 120 79% 35%;
+    --accent: 120 84.2% 40.2%;
+    --destructive: 120 84.2% 40.2%;
   }
 
   .dark {

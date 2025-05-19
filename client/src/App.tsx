@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch } from "wouter";
+import { ThemeProvider } from "./lib/ThemeContext";
+import { ThemeCustomizer } from "./components/ThemeCustomizer";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -39,21 +41,24 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Header />
-        <main>
-          <Switch>
-            <Route path="/" component={HomePage} />
-            <Route path="/products" component={ProductsPage} />
-            <Route path="/subscribe" component={SubscribePage} />
-            <Route path="/contact" component={ContactPage} />
-            <Route component={NotFoundPage} />
-          </Switch>
-        </main>
-        <Footer />
-        <ScrollToTop />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Header />
+          <main>
+            <Switch>
+              <Route path="/" component={HomePage} />
+              <Route path="/products" component={ProductsPage} />
+              <Route path="/subscribe" component={SubscribePage} />
+              <Route path="/contact" component={ContactPage} />
+              <Route component={NotFoundPage} />
+            </Switch>
+          </main>
+          <Footer />
+          <ScrollToTop />
+          <ThemeCustomizer />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
