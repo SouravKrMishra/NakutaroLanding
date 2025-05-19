@@ -153,7 +153,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
             <motion.div
               key={index}
               variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-accent/30 transition-all duration-300 hover-lift click-shrink"
+              className="bg-[#1E1E1E] rounded-xl overflow-hidden border border-[#2D2D2D] group hover:border-accent/30 transition-all duration-300"
             >
               <div className="relative h-60 overflow-hidden">
                 <img 
