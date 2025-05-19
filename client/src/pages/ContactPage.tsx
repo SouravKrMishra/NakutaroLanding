@@ -137,38 +137,7 @@ const ContactPage = () => {
                 about our events, products, or services.
               </motion.p>
               
-              {/* Tab Switcher */}
-              <motion.div
-                variants={fadeIn("up", "tween", 0.3, 1)}
-                className="flex justify-center mt-8 mb-4 relative z-10"
-              >
-                <div className="inline-flex bg-[#1A1A1A] p-1.5 rounded-lg shadow-md">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className="relative flex items-center py-2 px-5 rounded-md transition-all duration-300"
-                    >
-                      <span className={`relative z-10 flex items-center ${
-                        activeTab === tab.id 
-                          ? "text-white font-medium" 
-                          : "text-gray-300 hover:text-white"
-                      }`}>
-                        {tab.icon}
-                        {tab.label}
-                      </span>
-                      {activeTab === tab.id && (
-                        <motion.span
-                          layoutId="bubble"
-                          className="absolute inset-0 bg-[#FF3B30] rounded-md"
-                          style={{ zIndex: 1 }}
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
+
             </motion.div>
           </div>
         </div>
