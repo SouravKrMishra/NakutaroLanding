@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, Ticket, Users, Medal, ExternalLink } from 'lucide-react';
 import { GalleryPopup } from './ui/gallery-popup';
 import { EventPopup } from './ui/event-popup';
 
@@ -14,6 +14,9 @@ interface Event {
   image: string;
   featured?: boolean;
   prizePool?: string;
+  attendees?: string;
+  featured_image?: string;
+  registrationUrl?: string;
 }
 
 const EventsSection = () => {
@@ -27,8 +30,11 @@ const EventsSection = () => {
     time: '10:00 AM - 6:00 PM',
     description: "Self-organized premier cosplay event featuring a prize pool of ₹50,000, attracting numerous cosplay enthusiasts to showcase their talents.",
     image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
+    featured_image: 'https://images.unsplash.com/photo-1575900239752-13e5ef40c924?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
     featured: true,
-    prizePool: '₹50,000'
+    prizePool: '₹50,000',
+    attendees: '300+',
+    registrationUrl: 'https://shop.animeindia.org'
   };
   
   const sponsoredEvents: Event[] = [
@@ -39,7 +45,10 @@ const EventsSection = () => {
       time: 'All Day',
       description: "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
       image: 'https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      prizePool: '₹30,000'
+      prizePool: '₹30,000',
+      attendees: '500+',
+      featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
+      registrationUrl: 'https://shop.animeindia.org'
     },
     {
       title: 'Khooni Monday Horrorcon',
@@ -48,7 +57,10 @@ const EventsSection = () => {
       time: '11:00 AM - 9:00 PM',
       description: "Nakutaro partnered as a sponsor for this horror-themed convention featuring a cosplay competition with a prize pool of ₹60,000, providing a platform for fans to immerse themselves in the genre.",
       image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      prizePool: '₹60,000'
+      prizePool: '₹60,000',
+      attendees: '600+',
+      featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
+      registrationUrl: 'https://shop.animeindia.org'
     }
   ];
   
@@ -157,7 +169,40 @@ const EventsSection = () => {
   };
   
   return (
-    <section id="events" className="py-20 bg-[#1E1E1E] relative overflow-hidden">
+    <section id="events" className="py-20 relative overflow-hidden">
+      {/* Background with pattern */}
+      <div className="absolute inset-0 bg-[#0D0D0D] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
+        
+        {/* Animated background elements */}
+        <motion.div 
+          className="absolute -top-40 -left-40 w-96 h-96 bg-accent/5 rounded-full"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            rotate: [0, -15, 0]
+          }}
+          transition={{ 
+            duration: 20, 
+            repeat: Infinity,
+            ease: "easeInOut" 
+          }}
+        />
+        
+        <motion.div 
+          className="absolute -bottom-20 -right-20 w-80 h-80 bg-accent/5 rounded-full"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            rotate: [0, 10, 0]
+          }}
+          transition={{ 
+            duration: 15, 
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+      </div>
+      
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
@@ -166,21 +211,29 @@ const EventsSection = () => {
           viewport={{ once: true, amount: 0.25 }}
           className="max-w-3xl mx-auto text-center mb-16"
         >
-          <motion.span 
-            variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-accent font-semibold text-sm uppercase tracking-wider"
+          <motion.div
+            initial={{ scale: 0 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "backOut" }}
+            className="inline-block bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20 mb-6"
           >
-            Events & Collaborations
-          </motion.span>
+            <span className="text-accent font-medium text-sm flex items-center justify-center">
+              <Calendar className="h-4 w-4 mr-2" />
+              EVENTS & COLLABORATIONS
+            </span>
+          </motion.div>
+          
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
-            className="text-3xl md:text-4xl font-bold mt-2 mb-6"
+            className="text-3xl md:text-5xl font-bold mt-2 mb-6"
           >
-            We have Organized and Sponsored Multiple Events
+            <span className="text-white">Immersive Anime</span> <span className="text-accent">Events</span>
           </motion.h2>
+          
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
-            className="text-gray-400 text-lg"
+            className="text-gray-300 text-lg leading-relaxed"
           >
             Connect with fellow anime and cosplay enthusiasts at our exciting events across India
           </motion.p>
@@ -192,114 +245,240 @@ const EventsSection = () => {
           whileInView="show"
           viewport={{ once: true, amount: 0.25 }}
         >
+          {/* Featured Event */}
           <motion.div
             variants={fadeIn('up', 'tween', 0.2, 1)}
-            className="mb-12"
+            className="mb-16"
           >
-            <h3 className="text-2xl font-bold mb-6 text-accent">Our Organized Event</h3>
-            <div className="bg-[#242424] rounded-xl overflow-hidden border border-[#2D2D2D] shadow-xl">
-              <div className="grid grid-cols-1 lg:grid-cols-2">
-                <div className="h-64 lg:h-auto relative overflow-hidden">
-                  <img 
-                    src={organizedEvent.image}
-                    alt={organizedEvent.title}
-                    className="absolute w-full h-full object-cover transform transition-all duration-700 hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#121212] to-transparent opacity-50"></div>
+            <div className="flex items-center mb-8">
+              <div className="bg-gradient-to-r from-accent/30 to-transparent h-[1px] flex-grow mr-4"></div>
+              <h3 className="text-2xl font-bold text-white">
+                Our <span className="text-accent">Organized Event</span>
+              </h3>
+              <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
+            </div>
+            
+            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_25px_rgba(0,0,0,0.3)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border border-[#333] hover:border-accent/30 transition-all duration-500">
+              {/* Highlight glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-tr from-accent/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+              
+              <div className="relative h-[400px] lg:h-[500px] overflow-hidden">
+                <img 
+                  src={organizedEvent.featured_image || organizedEvent.image}
+                  alt={organizedEvent.title}
+                  className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent"></div>
+                
+                {/* Event badge */}
+                <div className="absolute top-6 left-6 bg-accent/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  FEATURED EVENT
                 </div>
-                <div className="p-8">
-                  <h4 className="text-2xl font-bold mb-4">{organizedEvent.title}</h4>
-                  <div className="flex items-center text-gray-400 mb-2">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span>{organizedEvent.date}</span>
+                
+                {/* Main content */}
+                <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
+                  <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <h4 className="text-3xl lg:text-4xl font-bold mb-4 text-white group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h4>
+                      
+                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
+                        <div className="flex items-center text-gray-300">
+                          <Calendar className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.date}</span>
+                        </div>
+                        <div className="flex items-center text-gray-300">
+                          <MapPin className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.location}</span>
+                        </div>
+                        <div className="flex items-center text-gray-300">
+                          <Clock className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.time}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
+                        <div className="flex items-center bg-accent/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <Trophy className="h-4 w-4 text-accent mr-2" />
+                          <span className="text-white">{organizedEvent.prizePool}</span>
+                        </div>
+                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <Users className="h-4 w-4 text-accent mr-2" />
+                          <span className="text-white">{organizedEvent.attendees} Attendees</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-300 max-w-3xl mb-8">
+                        {organizedEvent.description}
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-4 mt-4 lg:mt-0">
+                      <button 
+                        onClick={openGallery}
+                        className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                      >
+                        <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                          <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+                        </span>
+                        <span className="relative flex items-center">
+                          <Camera className="h-5 w-5 mr-2 text-accent" />
+                          View Gallery
+                        </span>
+                      </button>
+                      
+                      {organizedEvent.registrationUrl && (
+                        <a 
+                          href={organizedEvent.registrationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative inline-flex items-center overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                        >
+                          <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                          <span className="absolute bottom-0 left-0 h-1 w-full bg-white opacity-10"></span>
+                          <span className="absolute right-0 -mt-3 h-16 w-16 rotate-45 translate-x-8 -translate-y-2 bg-white opacity-10"></span>
+                          <span className="relative flex items-center">
+                            <Ticket className="h-5 w-5 mr-2" />
+                            Register Now
+                          </span>
+                        </a>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center text-gray-400 mb-2">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span>{organizedEvent.location}</span>
-                  </div>
-                  <div className="flex items-center text-gray-400 mb-2">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>{organizedEvent.time}</span>
-                  </div>
-                  <div className="flex items-center text-gray-400 mb-4">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    <span>Prize Pool: {organizedEvent.prizePool}</span>
-                  </div>
-                  <p className="text-gray-300 mb-6">
-                    {organizedEvent.description}
-                  </p>
-                  <button 
-                    onClick={openGallery}
-                    className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
-                  >
-                    View Gallery
-                    <Camera className="h-4 w-4 ml-2" />
-                  </button>
                 </div>
               </div>
             </div>
           </motion.div>
           
+          {/* Sponsored Events */}
           <motion.div
             variants={fadeIn('up', 'tween', 0.3, 1)}
+            className="mb-8"
           >
-            <h3 className="text-2xl font-bold mb-6 text-accent">Our Sponsored Events</h3>
+            <div className="flex items-center mb-8">
+              <div className="bg-gradient-to-r from-accent/30 to-transparent h-[1px] flex-grow mr-4"></div>
+              <h3 className="text-2xl font-bold text-white">
+                Our <span className="text-accent">Sponsored Events</span>
+              </h3>
+              <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {sponsoredEvents.map((event, index) => (
                 <motion.div
                   key={index}
                   variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-                  className="bg-[#242424] rounded-xl overflow-hidden border border-[#2D2D2D] hover:border-accent/20 transition-all duration-300"
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-lg"
                 >
-                  <div className="h-48 relative overflow-hidden">
+                  <div className="h-56 relative overflow-hidden">
                     <img 
                       src={event.image}
                       alt={event.title}
-                      className="absolute w-full h-full object-cover transform transition-all duration-700 hover:scale-110"
+                      className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#121212] to-transparent opacity-50"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] to-transparent"></div>
+                    
+                    {/* Event badge */}
+                    <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
+                      <div className="flex items-center">
+                        <Medal className="h-3 w-3 text-accent mr-1" />
+                        <span>Sponsored</span>
+                      </div>
+                    </div>
+                    
+                    {/* Prize indicator */}
+                    <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
+                      {event.prizePool}
+                    </div>
                   </div>
+                  
                   <div className="p-6">
-                    <h4 className="text-xl font-bold mb-3">{event.title}</h4>
-                    <div className="flex items-center text-gray-400 mb-1">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>{event.date}</span>
+                    <h4 className="text-xl font-bold mb-3 group-hover:text-accent transition-colors duration-300">{event.title}</h4>
+                    
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div className="flex items-center text-gray-400 text-sm">
+                        <Calendar className="h-4 w-4 mr-2 text-accent/70" />
+                        <span>{event.date}</span>
+                      </div>
+                      <div className="flex items-center text-gray-400 text-sm">
+                        <Clock className="h-4 w-4 mr-2 text-accent/70" />
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center text-gray-400 text-sm col-span-2">
+                        <MapPin className="h-4 w-4 mr-2 text-accent/70" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center text-gray-400 mb-1">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span>{event.location}</span>
-                    </div>
-                    <div className="flex items-center text-gray-400 mb-3">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>{event.time}</span>
-                    </div>
-                    <p className="text-gray-300 mb-6 line-clamp-3">
+                    
+                    <p className="text-gray-300 mb-6 line-clamp-3 text-sm">
                       {event.description}
                     </p>
-                    <button 
-                      onClick={(e) => openEventDetails(event, e)}
-                      className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
-                    >
-                      About Event
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </button>
+                    
+                    <div className="flex items-center justify-between">
+                      {event.attendees && (
+                        <div className="text-sm text-gray-400 flex items-center">
+                          <Users className="h-4 w-4 mr-1 text-accent/70" />
+                          {event.attendees} Attendees
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => openEventDetails(event, e)}
+                          className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+                          aria-label="View event details"
+                        >
+                          <ArrowRight className="h-5 w-5" />
+                        </button>
+                        
+                        {event.registrationUrl && (
+                          <a 
+                            href={event.registrationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+                            aria-label="Register for event"
+                          >
+                            <ExternalLink className="h-5 w-5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
+          
+          {/* Upcoming events CTA */}
+          <motion.div
+            variants={fadeIn('up', 'tween', 0.4, 1)}
+            className="mt-12 text-center"
+          >
+            <a 
+              href="/events"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-8 py-3 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105"
+            >
+              <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+              </span>
+              <span className="relative flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-accent" />
+                View All Events
+              </span>
+            </a>
+          </motion.div>
         </motion.div>
       </div>
       
-      {/* Anime-inspired decorative elements */}
-      <div className="absolute top-20 right-10 w-24 h-24 bg-accent rounded-full filter blur-3xl opacity-10 animate-pulse"></div>
-      <div className="absolute bottom-20 left-10 w-32 h-32 bg-accent rounded-full filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-accent rounded-full animate-ping"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+      {/* Animated elements */}
+      <div className="absolute top-1/4 left-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
+      <div className="absolute bottom-1/4 right-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+      <div className="absolute top-3/4 left-1/3 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
       
-      {/* Stylized anime-inspired shape */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 border-8 border-accent/10 rounded-full"></div>
-      <div className="absolute -bottom-10 -left-10 w-60 h-60 border-8 border-accent/5 rounded-full"></div>
+      {/* Accent glows */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-accent rounded-full opacity-[0.02] filter blur-[100px]"></div>
       
       {/* Popups */}
       <GalleryPopup
