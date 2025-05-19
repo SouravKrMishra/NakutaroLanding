@@ -143,195 +143,177 @@ body {
   --theme-pattern-svg: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpath id='kunai' d='M7,1 L1,7 L1,13 L7,19 L13,19 L19,13 L19,7 L13,1 L7,1 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='ramen' d='M3,3 C1.34,3 0,4.34 0,6 L0,13 C0,14.66 1.34,16 3,16 L17,16 C18.66,16 20,14.66 20,13 L20,6 C20,4.34 18.66,3 17,3 L3,3 Z M1.5,7 L18.5,7 L18.5,8 L1.5,8 L1.5,7 Z M6,4 C6.55,4 7,4.45 7,5 C7,5.55 6.55,6 6,6 C5.45,6 5,5.55 5,5 C5,4.45 5.45,4 6,4 Z M12,4 C12.55,4 13,4.45 13,5 C13,5.55 12.55,6 12,6 C11.45,6 11,5.55 11,5 C11,4.45 11.45,4 12,4 Z'/%3E%3Cpath id='katana' d='M19,1 L1,19 L3,19 L20,2 L19,1 Z'/%3E%3Cpath id='shuriken' d='M10,0 L13,7 L20,10 L13,13 L10,20 L7,13 L0,10 L7,7 L10,0 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='manga' d='M0,0 L0,20 L20,20 L20,0 L0,0 Z M1,1 L19,1 L19,19 L1,19 L1,1 Z M5,5 L15,5 L15,10 L5,10 L5,5 Z M5,12 L15,12 L15,15 L5,15 L5,12 Z'/%3E%3Cpath id='animeEyes' d='M2,10 C2,5.58 5.58,2 10,2 C14.42,2 18,5.58 18,10 C18,14.42 14.42,18 10,18 C5.58,18 2,14.42 2,10 Z M10,14 C12.2091,14 14,12.2091 14,10 C14,7.79086 12.2091,6 10,6 C7.79086,6 6,7.79086 6,10 C6,12.2091 7.79086,14 10,14 Z M10,12 C11.1046,12 12,11.1046 12,10 C12,8.89543 11.1046,8 10,8 C8.89543,8 8,8.89543 8,10 C8,11.1046 8.89543,12 10,12 Z M9,9 C9.55228,9 10,8.55228 10,8 C10,7.44772 9.55228,7 9,7 C8.44772,7 8,7.44772 8,8 C8,8.55228 8.44772,9 9,9 Z'/%3E%3C/defs%3E%3Cg%3E%3Cuse href='%23kunai' x='10' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='40' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='70' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='100' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='130' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='160' y='10' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='10' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='40' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='70' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='100' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='130' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='160' y='40' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='10' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='40' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='70' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='100' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='130' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='160' y='70' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='10' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='40' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='70' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='100' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='130' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='160' y='100' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='10' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='40' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='70' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='100' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='130' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='160' y='130' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='10' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='40' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='70' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='100' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='130' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='160' y='160' fill='%2334C759' fill-opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-body::before {
-  content: "";
-  position: fixed;
+.bg-pattern {
+  background-image: var(--theme-pattern-svg);
+  background-size: 200px;
+  background-repeat: repeat;
+}
+
+/* Hero section gradient */
+.hero-gradient {
+  background: linear-gradient(135deg, #121212 0%, #1A1A1A 100%);
+  position: relative;
+}
+
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--theme-pattern-svg);
+  background-size: 200px;
+  background-repeat: repeat;
+  opacity: 0.05;
+}
+
+.hero-gradient::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top right, rgba(var(--theme-color-rgb), 0.15), transparent 60%);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #fff 0%, hsl(var(--theme-color)) 50%, #fff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+/* Navbar background transition */
+#navbar {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Section animations */
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeDown {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+/* Micro-interactions & animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes gentle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes shine {
+  0% { background-position: -100px; }
+  100% { background-position: 200px; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.click-shrink:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.pulse-on-hover:hover {
+  animation: pulse 1s ease infinite;
+}
+
+.gentle-bounce-on-hover:hover {
+  animation: gentle-bounce 1s ease infinite;
+}
+
+.float-animation {
+  animation: float 4s ease infinite;
+}
+
+.wiggle-on-hover:hover {
+  animation: wiggle 0.5s ease;
+}
+
+.shimmer-effect {
+  animation: shimmer 2s ease infinite;
+}
+
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::after {
+  content: '';
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
-  background-color: #121212;
-  background-image: var(--theme-pattern-svg);
-  opacity: 1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: none;
 }
 
-/* Default theme color classes */
-.text-gradient {
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  background-image: linear-gradient(45deg, hsl(var(--accent-primary)), hsl(var(--accent-light)));
+.shine-effect:hover::after {
+  transform: translateX(100%);
+  transition: transform 0.8s ease;
 }
 
-.bg-gradient-subtle {
-  background-image: linear-gradient(hsla(var(--accent-primary), 0.05), transparent);
-}
-
-.hero-gradient {
-  background: radial-gradient(circle at 50% 50%, hsla(var(--accent-primary), 0.1), rgba(18, 18, 18, 0) 70%);
-}
-
-/* Accent color theming */
-.text-accent {
-  color: hsl(var(--accent-primary)) !important;
-}
-
-.bg-accent {
-  background-color: hsl(var(--accent-primary)) !important;
-}
-
-.border-accent {
-  border-color: hsl(var(--accent-primary)) !important;
-}
-
-/* All red text colors */
-.text-red-500,
-.text-red-600,
-.text-red-700,
-.text-red-800,
-.text-red-900,
-.text-[#FF3B30],
-.text-[#E53E3E],
-.text-[#FF0000],
-*[class*="text-red"],
-svg[fill="red"],
-svg[stroke="red"],
-svg[stroke="#FF3B30"],
-svg[fill="#FF3B30"] {
-  color: hsl(var(--accent-primary)) !important;
-  fill: hsl(var(--accent-primary)) !important;
-  stroke: hsl(var(--accent-primary)) !important;
-}
-
-/* Target specific elements with red numbers and check marks */
-[class*="checkmark"],
-[class*="check-mark"],
-svg[class*="check"],
-div[class*="stats"] > *,
-div[class*="statistics"] > *,
-.stats *,
-*[class*="count"] {
-  color: hsl(var(--accent-primary)) !important;
-}
-
-/* All red border colors */
-.border-red-500,
-.border-red-600,
-.border-red-700,
-.border-red-800,
-.border-[#FF3B30],
-*[class*="border-red"] {
-  border-color: hsl(var(--accent-primary)) !important;
-}
-
-/* Header specific elements */
-.india,
-h1 span,
-h2 span,
-h3 span,
-.logo span,
-*[class*="text-primary"] {
-  color: hsl(var(--accent-primary)) !important;
-}
-
-/* Add color to any element with inline style using red */
-*[style*="color: red"],
-*[style*="color:#ff"],
-*[style*="color: #ff"] {
-  color: hsl(var(--accent-primary)) !important;
-}
-
-/* Make buttons use accent color */
-.btn-primary, 
-.bg-red-600,
-a[class*="shop"],
-button[class*="shop"],
-.shop,
-.bg-\[\#FF3B30\] {
-  background-color: hsl(var(--accent-primary)) !important;
-  color: white !important;
-}
-
-/* Special case for tailwind arbitrary values and wildcards */
-*[class*="bg-red"] {
-  background-color: hsl(var(--accent-primary)) !important;
-}
-
-/* Target Home page hero shop buttons */
-.absolute button {
-  background-color: hsl(var(--accent-primary)) !important;
-}
-
-/* Hover styles for buttons */
-.btn-primary:hover,
-a[class*="shop"]:hover,
-button[class*="shop"]:hover,
-.shop:hover {
-  background-color: hsl(var(--accent-dark)) !important;
-  opacity: 0.9;
-}
-
-/* Handle tailwind hover variants */
-*[class*="hover:bg-red"]:hover {
-  background-color: hsl(var(--accent-dark)) !important;
-}
-
-/* Translucent theme color effect for button hover */
+/* Theme hover effect for buttons */
 .theme-hover-effect {
-  background-color: hsla(var(--theme-color), 0.2) !important;
-}
-
-/* Background elements that should use the accent color */
-.bg-red-500, 
-.bg-red-600, 
-.bg-red-700, 
-.bg-red-800 {
-  background-color: hsl(var(--accent-primary)) !important;
-}
-
-/* Hero and CTA sections */
-.hero-section,
-.cta-section {
-  background: linear-gradient(to bottom, transparent, hsla(var(--accent-primary), 0.05));
-}
-
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(255, 59, 48, 0.1);
-}
-
-/* Filter sidebar animations */
-.filter-sidebar-animate-in {
-  animation: slideIn 0.3s ease forwards;
-}
-
-.filter-sidebar-animate-out {
-  animation: slideOut 0.3s ease forwards;
-}
-
-@keyframes slideIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOut {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
+  background-color: hsl(var(--theme-color));
 }
