@@ -165,19 +165,16 @@ const EventsPage = () => {
                 variants={fadeIn("up", "tween", 0.1, 1)}
                 className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
               >
-                <div className="flex flex-col md:flex-row items-center justify-center">
-                  <span className="mr-2">Anime India</span>
-                  <span className="text-accent relative">
-                    Events
-                    <motion.span 
-                      className="absolute -bottom-2 left-0 w-full h-1 bg-accent/30 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 0.8, delay: 0.4 }}
-                    />
-                  </span>
+                <div className="inline-block">
+                  <span className="text-accent">Anime India Events</span>
+                  <motion.span 
+                    className="block h-1 bg-accent/30 rounded-full mt-1"
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  />
                 </div>
-                <span className="block mt-2 text-white">&amp; Conventions</span>
+                <div className="text-white block mt-2">&amp; Conventions</div>
               </motion.h1>
               
               <motion.p
