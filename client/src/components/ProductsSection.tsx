@@ -278,9 +278,9 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
           {products.map((product, index) => (
             <motion.div
               key={index}
-              variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
+              variants={fadeIn('up', 'tween', 0.1 + Math.min(index * 0.05, 0.3), 1)}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-lg"
+              className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-lg will-change-transform"
             >
               <div className="relative h-60 overflow-hidden">
                 {/* Badge */}

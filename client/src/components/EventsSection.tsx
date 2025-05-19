@@ -256,6 +256,8 @@ const EventsSection = () => {
                 <img 
                   src={organizedEvent.featured_image || organizedEvent.image}
                   alt={organizedEvent.title}
+                  loading="eager"
+                  decoding="async"
                   className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent"></div>
