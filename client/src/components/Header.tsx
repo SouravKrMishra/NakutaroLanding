@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from './ThemeToggle';
-import { AccentColorSelector } from './AccentColorSelector';
+import { AppearanceSettings } from './AppearanceSettings';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,10 +48,7 @@ const Header = () => {
           </nav>
           
           <div className="hidden md:flex items-center space-x-6">
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
-              <AccentColorSelector />
-            </div>
+            <AppearanceSettings />
             <a 
               href="#contact" 
               className="bg-[#FF3B30] hover:bg-opacity-90 text-white px-6 py-2 rounded-md transition duration-300 inline-block"
@@ -95,10 +91,9 @@ const Header = () => {
               ))}
               <div className="flex items-center justify-between pt-2 pb-2 border-t border-gray-700">
                 <div className="flex items-center space-x-2">
-                  <ThemeToggle />
-                  <span className="text-sm text-gray-400">Theme</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Appearance</span>
                 </div>
-                <AccentColorSelector />
+                <AppearanceSettings />
               </div>
               <a 
                 href="#contact" 
