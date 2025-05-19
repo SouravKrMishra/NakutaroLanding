@@ -41,7 +41,7 @@ const Footer = () => {
           <div>
             <Link href="/" className="flex items-center space-x-2 mb-5">
               <span className="font-bold text-2xl text-white">
-                Anime<span className="text-[#FF3B30]">India</span>
+                Anime<span className="text-accent">India</span>
               </span>
             </Link>
             <p className="mb-4">
@@ -52,7 +52,7 @@ const Footer = () => {
                 <a 
                   key={index}
                   href={link.href} 
-                  className="text-gray-400 hover:text-[#FF3B30] transition duration-300"
+                  className="text-gray-400 hover:text-accent transition duration-300"
                   aria-label={`Social media link ${index + 1}`}
                 >
                   {link.icon}
@@ -71,14 +71,14 @@ const Footer = () => {
                       href={link.href} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:text-[#FF3B30] transition duration-300"
+                      className="hover:text-accent transition duration-300"
                     >
                       {link.label}
                     </a>
                   ) : (
                     <Link 
                       href={link.href} 
-                      className="hover:text-[#FF3B30] transition duration-300"
+                      className="hover:text-accent transition duration-300"
                     >
                       {link.label}
                     </Link>
@@ -95,7 +95,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     href={link.href} 
-                    className="hover:text-[#FF3B30] transition duration-300"
+                    className="hover:text-accent transition duration-300"
                   >
                     {link.label}
                   </Link>
@@ -112,12 +112,12 @@ const Footer = () => {
                 <input 
                   type="email" 
                   placeholder="Your email" 
-                  className="bg-[#2D2D2D] border border-[#333333] focus:border-[#FF3B30] rounded-l-md px-4 py-2 text-white focus:outline-none w-full" 
+                  className="bg-[#2D2D2D] border border-[#333333] focus:border-accent rounded-l-md px-4 py-2 text-white focus:outline-none w-full" 
                   required 
                 />
                 <button 
                   type="submit" 
-                  className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-4 py-2 rounded-r-md transition duration-300"
+                  className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-r-md transition duration-300"
                   aria-label="Subscribe"
                 >
                   <svg 
@@ -133,7 +133,7 @@ const Footer = () => {
               </div>
             </form>
             <p className="text-sm">
-              By subscribing, you agree to our <a href="#" className="text-[#FF3B30] hover:underline">Privacy Policy</a>
+              By subscribing, you agree to our <a href="#" className="text-accent hover:underline">Privacy Policy</a>
             </p>
           </div>
         </div>
@@ -142,9 +142,9 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p>&copy; {year} Anime India. All rights reserved.</p>
             <div className="mt-4 md:mt-0">
-              <a href="#" className="text-sm mr-4 hover:text-[#FF3B30] transition duration-300">Privacy Policy</a>
-              <a href="#" className="text-sm mr-4 hover:text-[#FF3B30] transition duration-300">Terms of Service</a>
-              <a href="#" className="text-sm hover:text-[#FF3B30] transition duration-300">Return Policy</a>
+              <a href="#" className="text-sm mr-4 hover:text-accent transition duration-300">Privacy Policy</a>
+              <a href="#" className="text-sm mr-4 hover:text-accent transition duration-300">Terms of Service</a>
+              <a href="#" className="text-sm hover:text-accent transition duration-300">Return Policy</a>
             </div>
           </div>
         </div>
