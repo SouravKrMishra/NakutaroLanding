@@ -92,51 +92,12 @@ const HeroSection = () => {
             </motion.div>
             
             <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
-              <div className="inline-block relative">
-                <motion.span 
-                  className="text-accent"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7, ease: "easeOut" }}
-                >
-                  ANIME INDIA
-                </motion.span>
-                <motion.div 
-                  className="absolute -z-10 inset-0"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.2 }}
-                  transition={{ delay: 0.4, duration: 1 }}
-                >
-                  <div className="absolute top-0 -left-4 w-2 h-2 bg-accent rounded-full"></div>
-                  <div className="absolute bottom-0 -right-4 w-2 h-2 bg-accent rounded-full"></div>
-                </motion.div>
+              <div className="inline-block">
+                <span className="text-accent">ANIME INDIA</span>
               </div>
             </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white relative">
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="inline-block"
-              >
-                Celebrating
-              </motion.span>{" "}
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="inline-block"
-              >
-                the
-              </motion.span>{" "}
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="inline-block"
-              >
-                Fandom!
-              </motion.span>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white">
+              Celebrating the Fandom!
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0 leading-relaxed relative z-10">
               <span className="relative">
