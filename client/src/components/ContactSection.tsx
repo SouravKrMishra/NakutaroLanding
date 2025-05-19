@@ -353,7 +353,12 @@ const ContactSection = () => {
                       </motion.div>
                     </div>
                     <div className="ml-4">
-                      <h4 className="text-lg font-medium mb-1">{item.title}</h4>
+                      <h4 className="text-lg font-medium mb-1 flex items-center">
+                        <span>{item.title}</span>
+                        {item.title === 'Our Location' && (
+                          <span className="inline-block w-2 h-2 bg-accent rounded-full ml-2"></span>
+                        )}
+                      </h4>
                       <p className="text-gray-400">
                         {item.content}
                       </p>
