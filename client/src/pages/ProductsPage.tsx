@@ -374,7 +374,7 @@ const ProductsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
           {/* Left Sidebar - Categories */}
           <div className={`lg:col-span-1 ${filterSidebarOpen ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-[#1E1E1E] rounded-lg p-6 border border-[#2D2D2D] sticky top-24">
+            <div className="bg-[#1E1E1E] rounded-lg p-4 sm:p-5 md:p-6 border border-[#2D2D2D] sticky top-20 md:top-24">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-lg">Product Categories</h3>
                 <button 
@@ -497,7 +497,7 @@ const ProductsPage = () => {
                     className="flex items-center lg:hidden"
                     onClick={toggleFilterSidebar}
                   >
-                    <Filter className="h-3 w-3 mr-1" />
+                    <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     {filterSidebarOpen ? 'Hide Filters' : 'Show Filters'}
                   </Button>
                   <div className="relative">
