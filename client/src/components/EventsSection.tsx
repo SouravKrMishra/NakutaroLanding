@@ -251,7 +251,7 @@ const EventsSection = () => {
               {/* Highlight glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-tr from-accent/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               
-              <div className="relative h-[400px] lg:h-[500px] overflow-hidden">
+              <div className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] overflow-hidden">
                 <img 
                   src={organizedEvent.featured_image || organizedEvent.image}
                   alt={organizedEvent.title}
@@ -266,52 +266,52 @@ const EventsSection = () => {
                 </div>
                 
                 {/* Main content */}
-                <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 lg:p-12">
                   <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <h4 className="text-3xl lg:text-4xl font-bold mb-4 text-white group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h4>
+                      <h4 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 text-white group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h4>
                       
-                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
+                      <div className="flex flex-wrap gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3 mb-3 sm:mb-6">
                         <div className="flex items-center text-gray-300">
-                          <Calendar className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.date}</span>
+                          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-accent" />
+                          <span className="text-sm sm:text-base">{organizedEvent.date}</span>
                         </div>
                         <div className="flex items-center text-gray-300">
-                          <MapPin className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.location}</span>
+                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-accent" />
+                          <span className="text-sm sm:text-base">{organizedEvent.location}</span>
                         </div>
                         <div className="flex items-center text-gray-300">
-                          <Clock className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.time}</span>
+                          <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-accent" />
+                          <span className="text-sm sm:text-base">{organizedEvent.time}</span>
                         </div>
                       </div>
                       
-                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
-                        <div className="flex items-center bg-accent/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <Trophy className="h-4 w-4 text-accent mr-2" />
+                      <div className="flex flex-wrap gap-x-3 sm:gap-x-6 gap-y-2 sm:gap-y-3 mb-3 sm:mb-6">
+                        <div className="flex items-center bg-accent/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-sm sm:text-base">
+                          <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-accent mr-1.5 sm:mr-2" />
                           <span className="text-white">{organizedEvent.prizePool}</span>
                         </div>
-                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <Users className="h-4 w-4 text-accent mr-2" />
-                          <span className="text-white">{organizedEvent.attendees} Attendees</span>
+                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-sm sm:text-base">
+                          <Users className="h-3 w-3 sm:h-4 sm:w-4 text-accent mr-1.5 sm:mr-2" />
+                          <span className="text-white">{organizedEvent.attendees}</span>
                         </div>
                       </div>
                       
-                      <p className="text-gray-300 max-w-3xl mb-8">
+                      <p className="text-gray-300 max-w-3xl mb-4 sm:mb-8 text-sm sm:text-base">
                         {organizedEvent.description}
                       </p>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 mt-4 lg:mt-0">
+                    <div className="flex flex-wrap gap-3 sm:gap-4 mt-2 sm:mt-4 lg:mt-0">
                       <button 
                         onClick={openGallery}
-                        className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                        className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
                       >
                         <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
                           <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
                         </span>
                         <span className="relative flex items-center">
-                          <Camera className="h-5 w-5 mr-2 text-white" />
+                          <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-white" />
                           View Gallery
                         </span>
                       </button>
