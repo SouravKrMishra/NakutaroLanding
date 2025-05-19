@@ -202,6 +202,24 @@ body::before {
   border-color: hsl(var(--accent-primary)) !important;
 }
 
+/* Custom animations */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0) rotate(3deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 4s infinite ease-in-out;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
 /* All red text colors */
 .text-red-500,
 .text-red-600,

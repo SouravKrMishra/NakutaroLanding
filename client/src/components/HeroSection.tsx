@@ -91,18 +91,33 @@ const HeroSection = () => {
               <span className="text-accent font-medium">Premium Anime Collections</span>
             </motion.div>
             
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4">
-              <div className="inline-block">
-                <span style={{ color: 'var(--theme-color-hex)' }}>ANIME INDIA</span>
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
+              <div className="inline-block relative overflow-hidden">
+                <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent/70 animate-pulse">ANIME INDIA</span>
                 <div 
-                  className="block h-1 rounded-full mt-1"
-                  style={{ backgroundColor: 'var(--theme-color-hex)', opacity: 0.3 }}
+                  className="absolute bottom-0 left-0 w-full h-1 rounded-full bg-gradient-to-r from-accent to-accent/30"
+                  style={{ filter: "drop-shadow(0 0 8px var(--theme-color-hex))" }}
                 />
               </div>
             </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-gray-300">Celebrating the Fandom!</h2>
-            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
-              India's #1 Anime Store Bringing You the Best Anime Merch Without the Hassle!
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-gray-300 relative">
+              <span className="relative inline-block">
+                Celebrating the Fandom!
+                <motion.span 
+                  className="absolute -bottom-1 left-0 h-[2px] bg-accent/40"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+                />
+              </span>
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0 leading-relaxed relative z-10">
+              <span className="relative">
+                <span className="inline-block transform hover:translate-y-[-2px] transition-transform duration-300">India's #1 Anime Store</span>{" "}
+                <span className="inline-block transform hover:translate-y-[-2px] transition-transform duration-300 delay-100">Bringing You the Best</span>{" "}
+                <span className="inline-block transform hover:translate-y-[-2px] transition-transform duration-300 delay-200">Anime Merch</span>{" "}
+                <span className="inline-block transform hover:translate-y-[-2px] transition-transform duration-300 delay-300">Without the Hassle!</span>
+              </span>
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <a
@@ -130,14 +145,53 @@ const HeroSection = () => {
             variants={fadeIn('left', 'tween', 0.4, 1)}
             className="hidden lg:block relative"
           >
-            <div className="absolute -inset-4 bg-accent/5 rounded-lg blur-md"></div>
-            <img
-              src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
-              alt="Anime illustration"
-              className="rounded-lg shadow-2xl w-full h-auto transform hover:scale-105 transition duration-700 border-2 border-accent/20 relative z-10"
-            />
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-accent/10 rounded-full"></div>
-            <div className="absolute -top-4 -left-4 w-16 h-16 bg-accent/10 rounded-full"></div>
+            {/* Image container with animated border */}
+            <div className="relative group">
+              {/* Animated glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-accent/40 to-accent/20 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              
+              {/* Image with hexagonal clip-path mask */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent rounded-lg"></div>
+                <div className="relative overflow-hidden rounded-lg p-1 bg-[#131313] border border-accent/30">
+                  {/* Main image */}
+                  <img
+                    src="https://images.unsplash.com/photo-1627672360124-4ed09583e14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80"
+                    alt="Anime illustration"
+                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition duration-700 z-10"
+                  />
+                  
+                  {/* Overlay texture */}
+                  <div className="absolute inset-0 bg-grid-pattern opacity-10 mix-blend-overlay"></div>
+                  
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-bl-full"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-accent/5 rounded-tr-full"></div>
+                </div>
+              </div>
+              
+              {/* Animated corner decorations */}
+              <motion.div 
+                className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-accent/70"
+                animate={{ rotate: [0, 90, 0], opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div 
+                className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-accent/70"
+                animate={{ rotate: [0, -90, 0], opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              
+              {/* Floating badge */}
+              <div className="absolute -right-3 top-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform rotate-3 animate-bounce-slow">
+                <span className="text-accent text-xs font-medium">Top Collection</span>
+              </div>
+              
+              {/* Floating badge */}
+              <div className="absolute -left-3 bottom-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform -rotate-3 animate-bounce-slow animation-delay-1000">
+                <span className="text-accent text-xs font-medium">Limited Edition</span>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       </div>
