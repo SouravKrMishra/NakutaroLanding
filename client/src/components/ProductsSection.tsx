@@ -1,9 +1,14 @@
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'wouter';
 
-const ProductsSection = () => {
-  const products = [
+interface ProductsSectionProps {
+  showFullCatalog?: boolean;
+}
+
+const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
+  const featuredProducts = [
     {
       title: 'Action Figures',
       description: 'Premium collectible action figures featuring your favorite anime characters',
@@ -37,6 +42,46 @@ const ProductsSection = () => {
       ]
     }
   ];
+  
+  const additionalProducts = [
+    {
+      title: 'Manga Collection',
+      description: 'Extensive library of popular manga series and limited editions',
+      images: [
+        'https://images.unsplash.com/photo-1593492654845-a77c1fa186c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1589642774083-a321310a71a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime Posters',
+      description: 'High-quality posters featuring artwork from your favorite anime series',
+      images: [
+        'https://images.unsplash.com/photo-1504237111663-37d862ef9cc4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1511984805645-3723e8375a73?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime Cosplay Costumes',
+      description: 'Premium quality cosplay costumes for your favorite anime characters',
+      images: [
+        'https://images.unsplash.com/photo-1599508705587-d32ba1672568?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1550030085-00cee362ae48?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    },
+    {
+      title: 'Anime Stationery',
+      description: 'Notebooks, pens, and stationery inspired by popular anime series',
+      images: [
+        'https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1540714323673-d74c355eb58e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+      ]
+    }
+  ];
+  
+  // Determine which products to show based on the showFullCatalog prop
+  const products = showFullCatalog 
+    ? [...featuredProducts, ...additionalProducts]
+    : featuredProducts;
 
   return (
     <section id="products" className="py-20 bg-[#121212] relative overflow-hidden">
@@ -52,19 +97,21 @@ const ProductsSection = () => {
             variants={fadeIn('up', 'tween', 0.1, 1)}
             className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
           >
-            Our Collection
+            {showFullCatalog ? 'Anime India Store' : 'Our Collection'}
           </motion.span>
           <motion.h2 
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            Featured Products
+            {showFullCatalog ? 'Complete Catalog' : 'Featured Products'}
           </motion.h2>
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-400 text-lg"
           >
-            Discover our carefully curated collection of premium anime merchandise, from collectible figures to stylish apparel.
+            {showFullCatalog 
+              ? 'Browse our extensive collection of anime merchandise, including exclusive and limited edition items.'
+              : 'Discover our carefully curated collection of premium anime merchandise, from collectible figures to stylish apparel.'}
           </motion.p>
         </motion.div>
         
@@ -99,13 +146,25 @@ const ProductsSection = () => {
                 <p className="text-gray-400 mb-4">
                   {product.description}
                 </p>
-                <a 
-                  href="#" 
-                  className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
-                >
-                  View All Products
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
+                {showFullCatalog ? (
+                  <a 
+                    href="https://shop.animeindia.org" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
+                  >
+                    Shop Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </a>
+                ) : (
+                  <Link 
+                    href="/products" 
+                    className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
+                  >
+                    View All Products
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                )}
               </div>
             </motion.div>
           ))}

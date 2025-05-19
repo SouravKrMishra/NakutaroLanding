@@ -15,7 +15,6 @@ const HeroSection = () => {
             variants={fadeIn('right', 'tween', 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <span className="text-lg sm:text-xl text-[#FF3B30] font-medium mb-2 block">Welcome to</span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4">
               <span className="text-gradient">ANIME INDIA</span>
             </h1>
@@ -25,16 +24,21 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
               <a
-                href="#features"
-                className="px-8 py-3 bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium rounded-md transition duration-300 text-lg shadow-lg hover:shadow-xl"
+                href="https://shop.animeindia.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-3 bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium rounded-md transition duration-300 text-lg shadow-lg hover:shadow-xl inline-flex items-center justify-center"
               >
-                Get Started
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                Shop
               </a>
               <a
                 href="#services"
                 className="px-8 py-3 bg-[#2D2D2D] hover:bg-[#333333] text-white font-medium rounded-md transition duration-300 text-lg border border-gray-700 relative overflow-hidden group"
               >
-                <span className="relative z-10">What We Offer</span>
+                <span className="relative z-10">Explore Collections</span>
                 <span className="absolute w-0 h-full bg-[#FF3B30]/20 left-0 top-0 transition-all duration-300 group-hover:w-full"></span>
               </a>
             </div>

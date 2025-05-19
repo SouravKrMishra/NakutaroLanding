@@ -3,17 +3,17 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Route, Switch } from "wouter";
+
+// Pages
+import HomePage from "@/pages/HomePage";
+import ProductsPage from "@/pages/ProductsPage";
+import SubscribePage from "@/pages/SubscribePage";
+import ContactPage from "@/pages/ContactPage";
+import NotFoundPage from "@/pages/not-found";
+
+// Shared components
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
-import AboutSection from "@/components/AboutSection";
-import ServicesSection from "@/components/ServicesSection";
-import ProductsSection from "@/components/ProductsSection";
-import EventsSection from "@/components/EventsSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import FAQSection from "@/components/FAQSection";
-import CTASection from "@/components/CTASection";
-import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ui/scroll-to-top";
 
@@ -43,16 +43,13 @@ function App() {
         <Toaster />
         <Header />
         <main>
-          <HeroSection />
-          <AboutSection />
-          <ServicesSection />
-          <ProductsSection />
-          <EventsSection />
-          <FeaturesSection />
-          <TestimonialsSection />
-          <FAQSection />
-          <CTASection />
-          <ContactSection />
+          <Switch>
+            <Route path="/" component={HomePage} />
+            <Route path="/products" component={ProductsPage} />
+            <Route path="/subscribe" component={SubscribePage} />
+            <Route path="/contact" component={ContactPage} />
+            <Route component={NotFoundPage} />
+          </Switch>
         </main>
         <Footer />
         <ScrollToTop />
