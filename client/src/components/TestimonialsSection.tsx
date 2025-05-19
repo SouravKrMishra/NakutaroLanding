@@ -137,7 +137,6 @@ const TestimonialsSection = () => {
     <section id="testimonials" className="py-20 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
         
         {/* Decorative elements */}
         <motion.div 
