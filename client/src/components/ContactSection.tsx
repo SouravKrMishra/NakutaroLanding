@@ -368,22 +368,41 @@ const ContactSection = () => {
               </div>
               
               {/* Interactive Map */}
-              <div className="mt-8 rounded-lg overflow-hidden border border-[#333] relative">
-                <div className="w-full h-48 bg-[#1E1E1E] relative">
-                  <div className="absolute inset-0 opacity-30 bg-grid-pattern"></div>
-                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" className="w-full h-full opacity-20">
-                      <path d="M10,10 L50,20 L90,10 L130,30 L170,15" stroke="currentColor" fill="none" className="text-accent" strokeWidth="0.5"></path>
-                      <path d="M30,30 L70,40 L110,25 L150,45 L190,30" stroke="currentColor" fill="none" className="text-accent" strokeWidth="0.5"></path>
-                      <path d="M10,50 L50,65 L90,55 L130,70 L170,60" stroke="currentColor" fill="none" className="text-accent" strokeWidth="0.5"></path>
-                      <path d="M30,75 L70,85 L110,70 L150,90 L190,75" stroke="currentColor" fill="none" className="text-accent" strokeWidth="0.5"></path>
-                    </svg>
+              <motion.div 
+                className="mt-8 rounded-lg overflow-hidden border border-[#333] relative"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="relative w-full h-64 bg-[#121212]">
+                  {/* Real Google Map Integration */}
+                  <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3505.8940244320237!2d77.16067357440605!3d28.51019077565602!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d1e13c12fc77b%3A0xa66e9879f6c19cfa!2sRajpur%20Khurd%20Extension%2C%20Chhatarpur%2C%20New%20Delhi%2C%20Delhi%20110068!5e0!3m2!1sen!2sin!4v1683912345678!5m2!1sen!2sin" 
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    allowFullScreen={true} 
+                    loading="lazy" 
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Google Maps location of Anime India office"
+                    className="filter brightness-[0.85] contrast-[1.1]"
+                  ></iframe>
+                  
+                  {/* Overlay for branding */}
+                  <div className="absolute bottom-3 right-3 bg-[#121212]/90 px-3 py-2 rounded-md text-xs text-gray-300 border border-accent/20 shadow-md backdrop-blur-sm">
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 text-accent mr-1" />
+                      <span>Anime India HQ</span>
+                    </div>
                   </div>
                   
+                  {/* Interactive location marker */}
                   <motion.div 
-                    className="absolute top-1/2 left-1/2 -ml-3 -mt-8 text-accent"
-                    animate={{
-                      y: [0, -5, 0],
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                    initial={{ scale: 0 }}
+                    animate={{ 
+                      scale: [0.9, 1.1, 0.9],
+                      opacity: [0.7, 1, 0.7]
                     }}
                     transition={{
                       duration: 2,
@@ -391,14 +410,12 @@ const ContactSection = () => {
                       ease: "easeInOut"
                     }}
                   >
-                    <MapPin className="h-6 w-6 fill-current" />
-                    <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-accent rounded-full opacity-30 animate-ping"></span>
+                    <div className="w-16 h-16 rounded-full border-4 border-accent opacity-50"></div>
                   </motion.div>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-[#121212] px-2 py-1 rounded text-xs text-gray-400">
-                  Interactive Map
-                </div>
-                <div className="absolute bottom-4 left-4 text-white bg-[#121212]/90 px-3 py-2 rounded-lg shadow-lg border border-accent/20 text-sm max-w-[200px]">
+                
+                {/* Location details card */}
+                <div className="absolute bottom-4 left-4 text-white bg-[#121212]/90 px-3 py-2 rounded-lg shadow-lg border border-accent/20 text-sm max-w-[200px] backdrop-blur-sm">
                   <p className="font-medium flex items-center">
                     <span>Chattarpur</span>
                     <span className="inline-block w-2 h-2 bg-accent rounded-full ml-2"></span>
@@ -407,7 +424,7 @@ const ContactSection = () => {
                     DLF Farms
                   </p>
                 </div>
-              </div>
+              </motion.div>
               
               <div className="mt-8">
                 <h4 className="text-lg font-medium mb-4">Connect With Us</h4>
