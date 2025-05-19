@@ -151,7 +151,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                     href="https://shop.animeindia.org" 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
+                    className="text-accent hover:text-accent/80 transition duration-300 font-medium inline-flex items-center"
                   >
                     Shop Now
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -159,7 +159,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                 ) : (
                   <Link 
                     href="/products" 
-                    className="text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium inline-flex items-center"
+                    className="text-accent hover:text-accent/80 transition duration-300 font-medium inline-flex items-center"
                   >
                     View All Products
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -172,12 +172,12 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
       </div>
       
       {/* Anime-inspired decorative elements */}
-      <div className="absolute top-20 right-10 w-24 h-24 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
-      <div className="absolute bottom-20 left-10 w-32 h-32 bg-[#FF3B30] rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute top-20 right-10 w-24 h-24 bg-accent rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute bottom-20 left-10 w-32 h-32 bg-accent rounded-full filter blur-3xl opacity-5"></div>
       
       {/* Animated elements */}
-      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
-      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
+      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
     </section>
   );
 };
