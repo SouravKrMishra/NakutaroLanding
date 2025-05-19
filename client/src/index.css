@@ -125,19 +125,67 @@ body::before {
   opacity: 1;
 }
 
+/* Default theme color classes */
 .text-gradient {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  background-image: linear-gradient(45deg, hsl(3, 100%, 59%), hsl(3, 100%, 69%));
+  background-image: linear-gradient(45deg, hsl(var(--accent-primary)), hsl(var(--accent-light)));
 }
 
 .bg-gradient-subtle {
-  background-image: linear-gradient(rgba(255, 59, 48, 0.05), transparent);
+  background-image: linear-gradient(hsla(var(--accent-primary), 0.05), transparent);
 }
 
 .hero-gradient {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 59, 48, 0.1), rgba(18, 18, 18, 0) 70%);
+  background: radial-gradient(circle at 50% 50%, hsla(var(--accent-primary), 0.1), rgba(18, 18, 18, 0) 70%);
+}
+
+/* Accent color theming */
+.text-accent {
+  color: hsl(var(--accent-primary)) !important;
+}
+
+.bg-accent {
+  background-color: hsl(var(--accent-primary)) !important;
+}
+
+.border-accent {
+  border-color: hsl(var(--accent-primary)) !important;
+}
+
+/* Header elements */
+.india {
+  color: hsl(var(--accent-primary)) !important;
+}
+
+/* Make buttons use accent color */
+.btn-primary, 
+.bg-red-600,
+.bg-[#FF3B30],
+[class*="bg-red"] {
+  background-color: hsl(var(--accent-primary)) !important;
+}
+
+/* Hover styles for primary buttons */
+.btn-primary:hover, 
+.hover:bg-red-700:hover,
+.hover\:bg-red-700:hover {
+  background-color: hsl(var(--accent-dark)) !important;
+}
+
+/* Background elements that should use the accent color */
+.bg-red-500, 
+.bg-red-600, 
+.bg-red-700, 
+.bg-red-800 {
+  background-color: hsl(var(--accent-primary)) !important;
+}
+
+/* Hero and CTA sections */
+.hero-section,
+.cta-section {
+  background: linear-gradient(to bottom, transparent, hsla(var(--accent-primary), 0.05));
 }
 
 .card-hover {
