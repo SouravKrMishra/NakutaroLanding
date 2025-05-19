@@ -362,24 +362,7 @@ const ProductsPage = () => {
                 From action figures to apparel, we have everything an anime fan could want.
               </motion.p>
               
-              <motion.div
-                variants={fadeIn("up", "tween", 0.4, 1)}
-                className="flex flex-wrap justify-center gap-4"
-              >
-                <Button 
-                  className="bg-accent hover:bg-accent/90 text-white"
-                >
-                  <ShoppingBag className="h-4 w-4 mr-2" />
-                  Featured Items
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="border-accent text-accent hover:bg-accent/10"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Browse Categories
-                </Button>
-              </motion.div>
+
             </motion.div>
           </div>
         </div>
