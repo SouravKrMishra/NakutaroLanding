@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, Ticket, Users, Medal, ExternalLink, Sparkles, Star, Flag } from 'lucide-react';
+import { Calendar, MapPin, Clock, Trophy, Camera, ArrowRight, Ticket, Users, Medal, ExternalLink } from 'lucide-react';
 import { GalleryPopup } from './ui/gallery-popup';
 import { EventPopup } from './ui/event-popup';
 
@@ -17,8 +17,6 @@ interface Event {
   attendees?: string;
   featured_image?: string;
   registrationUrl?: string;
-  type?: string;
-  tags?: string[];
 }
 
 const EventsSection = () => {
@@ -36,42 +34,21 @@ const EventsSection = () => {
     featured: true,
     prizePool: '₹50,000',
     attendees: '300+',
-    registrationUrl: 'https://shop.animeindia.org',
-    type: 'Conference',
-    tags: ['Cosplay', 'Competition', 'Prizes']
+    registrationUrl: 'https://shop.animeindia.org'
   };
-  
-  const upcomingEvents: Event[] = [
-    {
-      title: 'Tokyo Pop Culture Exhibition',
-      date: 'December 15-18, 2024',
-      location: 'Jawaharlal Nehru Stadium, New Delhi',
-      time: '10:00 AM - 8:00 PM',
-      description: "A multi-day exhibition showcasing the rich history and evolution of Japanese pop culture, featuring artwork, displays, limited merchandise, and special guest panels.",
-      image: 'https://images.unsplash.com/photo-1565799284935-da1e913a72a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
-      prizePool: '',
-      attendees: '1000+',
-      featured_image: 'https://images.unsplash.com/photo-1565799284935-da1e913a72a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
-      registrationUrl: 'https://shop.animeindia.org',
-      type: 'Exhibition',
-      tags: ['Art', 'Merchandise', 'Panels']
-    }
-  ];
   
   const sponsoredEvents: Event[] = [
     {
       title: 'Masquerade Cosplay Event at IIT Delhi',
       date: 'October 5-8, 2024',
-      location: 'IIT Delhi Campus, Hauz Khas',
+      location: 'IIT Delhi Campus',
       time: 'All Day',
       description: "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
       image: 'https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80',
       prizePool: '₹30,000',
       attendees: '500+',
       featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
-      registrationUrl: 'https://shop.animeindia.org',
-      type: 'Festival',
-      tags: ['Cosplay', 'Campus', 'Cultural']
+      registrationUrl: 'https://shop.animeindia.org'
     },
     {
       title: 'Khooni Monday Horrorcon',
@@ -83,9 +60,7 @@ const EventsSection = () => {
       prizePool: '₹60,000',
       attendees: '600+',
       featured_image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80',
-      registrationUrl: 'https://shop.animeindia.org',
-      type: 'Convention',
-      tags: ['Horror', 'Cosplay', 'Themed']
+      registrationUrl: 'https://shop.animeindia.org'
     }
   ];
   
@@ -193,54 +168,34 @@ const EventsSection = () => {
     setSelectedEvent(event);
   };
   
-  // Event stats
-  const eventStats = [
-    { number: "12+", label: "Events Per Year", gradient: "from-blue-500 to-cyan-500" },
-    { number: "5000+", label: "Attendees Annually", gradient: "from-purple-500 to-pink-500" },
-    { number: "₹2L+", label: "Prize Pool Value", gradient: "from-accent to-yellow-500" }
-  ];
-  
   return (
-    <section id="events" className="py-24 relative overflow-hidden">
-      {/* Background with starry pattern */}
-      <div className="absolute inset-0 bg-[#080808] overflow-hidden">
-        {/* Custom star field */}
-        <div className="absolute inset-0">
-          {Array.from({ length: 50 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-              style={{ 
-                top: `${Math.random() * 100}%`, 
-                left: `${Math.random() * 100}%`,
-                opacity: Math.random() * 0.7 + 0.3,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${Math.random() * 3 + 2}s`
-              }}
-            />
-          ))}
-        </div>
+    <section id="events" className="py-20 relative overflow-hidden">
+      {/* Background with pattern */}
+      <div className="absolute inset-0 bg-[#0D0D0D] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
         
-        {/* Animated gradient background */}
+        {/* Animated background elements */}
         <motion.div 
-          className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-accent/10 to-transparent opacity-30"
+          className="absolute -top-40 -left-40 w-96 h-96 bg-accent/5 rounded-full"
           animate={{ 
-            opacity: [0.2, 0.3, 0.2],
+            scale: [1, 1.2, 1],
+            rotate: [0, -15, 0]
           }}
           transition={{ 
-            duration: 8, 
+            duration: 20, 
             repeat: Infinity,
             ease: "easeInOut" 
           }}
         />
         
         <motion.div 
-          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-gradient-to-tr from-accent/10 via-purple-500/5 to-transparent rounded-full filter blur-[100px]"
+          className="absolute -bottom-20 -right-20 w-80 h-80 bg-accent/5 rounded-full"
           animate={{ 
-            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.1, 1],
+            rotate: [0, 10, 0]
           }}
           transition={{ 
-            duration: 10, 
+            duration: 15, 
             repeat: Infinity,
             ease: "easeInOut",
             delay: 1
@@ -249,7 +204,6 @@ const EventsSection = () => {
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -262,11 +216,11 @@ const EventsSection = () => {
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: "backOut" }}
-            className="inline-block bg-gradient-to-r from-accent/20 to-purple-500/20 px-4 py-1.5 rounded-full border border-accent/20 mb-6"
+            className="inline-block bg-accent/10 px-4 py-1.5 rounded-full border border-accent/20 mb-6"
           >
             <span className="text-accent font-medium text-sm flex items-center justify-center">
-              <Sparkles className="h-4 w-4 mr-2" />
-              IMMERSIVE EXPERIENCES
+              <Calendar className="h-4 w-4 mr-2" />
+              EVENTS & COLLABORATIONS
             </span>
           </motion.div>
           
@@ -274,39 +228,17 @@ const EventsSection = () => {
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="text-3xl md:text-5xl font-bold mt-2 mb-6"
           >
-            <span className="text-white">Anime Events &</span> <span className="text-accent">Conventions</span>
+            <span className="text-white">Immersive Anime</span> <span className="text-accent">Events</span>
           </motion.h2>
           
           <motion.p 
             variants={fadeIn('up', 'tween', 0.3, 1)}
             className="text-gray-300 text-lg leading-relaxed"
           >
-            Connect with fellow anime enthusiasts at our vibrant events across India
+            Connect with fellow anime and cosplay enthusiasts at our exciting events across India
           </motion.p>
-          
-          {/* Event Stats */}
-          <motion.div 
-            variants={fadeIn('up', 'tween', 0.4, 1)}
-            className="grid grid-cols-3 gap-4 mt-10"
-          >
-            {eventStats.map((stat, index) => (
-              <div 
-                key={index} 
-                className="group rounded-lg p-0.5 transition-all duration-500 hover:scale-105"
-                style={{ background: `linear-gradient(120deg, ${stat.gradient})` }}
-              >
-                <div className="h-full w-full bg-[#121212] rounded-md py-4 px-2">
-                  <p className="font-bold text-2xl md:text-3xl bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(120deg, ${stat.gradient})` }}>
-                    {stat.number}
-                  </p>
-                  <p className="text-gray-400 text-sm">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
         </motion.div>
         
-        {/* Main Event Content */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -316,383 +248,237 @@ const EventsSection = () => {
           {/* Featured Event */}
           <motion.div
             variants={fadeIn('up', 'tween', 0.2, 1)}
-            className="mb-20"
+            className="mb-16"
           >
-            <div className="flex items-center mb-10">
-              <div className="h-px flex-grow bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
-              <div className="mx-4 flex items-center">
-                <Star className="h-5 w-5 text-accent mr-2" />
-                <h3 className="text-2xl font-bold text-white">Featured Event</h3>
-              </div>
-              <div className="h-px flex-grow bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
+            <div className="flex items-center mb-8">
+              <div className="bg-gradient-to-r from-accent/30 to-transparent h-[1px] flex-grow mr-4"></div>
+              <h3 className="text-2xl font-bold text-white">
+                Our <span className="text-accent">Organized Event</span>
+              </h3>
+              <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
             </div>
             
-            <div className="relative rounded-2xl overflow-hidden group shadow-2xl transform transition-all duration-700 hover:scale-[0.99]">
-              <div className="absolute inset-0 bg-gradient-to-r from-accent/60 via-purple-600/60 to-accent/60 opacity-0 group-hover:opacity-10 transition-opacity duration-700"></div>
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-accent via-purple-500 to-accent rounded-2xl opacity-0 group-hover:opacity-30 blur-sm group-hover:blur transition-all duration-700"></div>
+            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_25px_rgba(0,0,0,0.3)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border border-[#333] hover:border-accent/30 transition-all duration-500">
+              {/* Highlight glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-tr from-accent/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               
-              {/* Main Event Content */}
-              <div className="relative bg-gradient-to-b from-[#121212] to-[#080808] rounded-2xl overflow-hidden">
-                <div className="h-[500px] sm:h-[600px] relative overflow-hidden">
-                  {/* Background image with overlay and animated gradient */}
-                  <div className="absolute inset-0">
-                    <img 
-                      src={organizedEvent.featured_image || organizedEvent.image}
-                      alt={organizedEvent.title}
-                      className="absolute inset-0 w-full h-full object-cover transform transition-all duration-1000 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-[#080808]"></div>
+              <div className="relative h-[400px] lg:h-[500px] overflow-hidden">
+                <img 
+                  src={organizedEvent.featured_image || organizedEvent.image}
+                  alt={organizedEvent.title}
+                  className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent"></div>
+                
+                {/* Event badge */}
+                <div className="absolute top-6 left-6 bg-accent/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  FEATURED EVENT
+                </div>
+                
+                {/* Main content */}
+                <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
+                  <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <h4 className="text-3xl lg:text-4xl font-bold mb-4 text-white group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h4>
+                      
+                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
+                        <div className="flex items-center text-gray-300">
+                          <Calendar className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.date}</span>
+                        </div>
+                        <div className="flex items-center text-gray-300">
+                          <MapPin className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.location}</span>
+                        </div>
+                        <div className="flex items-center text-gray-300">
+                          <Clock className="h-5 w-5 mr-2 text-accent" />
+                          <span>{organizedEvent.time}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
+                        <div className="flex items-center bg-accent/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <Trophy className="h-4 w-4 text-accent mr-2" />
+                          <span className="text-white">{organizedEvent.prizePool}</span>
+                        </div>
+                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <Users className="h-4 w-4 text-accent mr-2" />
+                          <span className="text-white">{organizedEvent.attendees} Attendees</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-300 max-w-3xl mb-8">
+                        {organizedEvent.description}
+                      </p>
+                    </div>
                     
-                    {/* Animated gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-accent/40 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-1000"></div>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-10 md:px-16 py-14 bg-gradient-to-t from-[#080808] via-[#080808]/90 to-transparent">
-                    <div className="max-w-5xl mx-auto">
-                      {/* Event Badge and Type */}
-                      <div className="flex flex-wrap gap-3 mb-6">
-                        <div className="inline-flex rounded-full bg-accent text-white text-xs font-semibold px-3 py-1.5 items-center shadow-lg">
-                          <Trophy className="h-3.5 w-3.5 mr-1.5" />
-                          FEATURED EVENT
-                        </div>
-                        
-                        {organizedEvent.type && (
-                          <div className="inline-flex rounded-full bg-white/10 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 shadow-lg">
-                            {organizedEvent.type}
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex flex-wrap gap-4 mt-4 lg:mt-0">
+                      <button 
+                        onClick={openGallery}
+                        className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                      >
+                        <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                          <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+                        </span>
+                        <span className="relative flex items-center">
+                          <Camera className="h-5 w-5 mr-2 text-accent" />
+                          View Gallery
+                        </span>
+                      </button>
                       
-                      {/* Event Title and Date */}
-                      <div className="md:flex md:items-end md:justify-between">
-                        <div className="mb-8 md:mb-0">
-                          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h2>
-                          
-                          {/* Date, Location, and Time */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                            <div className="flex items-center text-white/90 bg-white/5 backdrop-blur-md rounded-lg py-2 px-3">
-                              <Calendar className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
-                              <span>{organizedEvent.date}</span>
-                            </div>
-                            
-                            <div className="flex items-center text-white/90 bg-white/5 backdrop-blur-md rounded-lg py-2 px-3">
-                              <Clock className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
-                              <span>{organizedEvent.time}</span>
-                            </div>
-                            
-                            <div className="flex items-center text-white/90 bg-white/5 backdrop-blur-md rounded-lg py-2 px-3 sm:col-span-2 md:col-span-1">
-                              <MapPin className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
-                              <span className="truncate">{organizedEvent.location}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Tags */}
-                          {organizedEvent.tags && (
-                            <div className="flex flex-wrap gap-2 mb-6">
-                              {organizedEvent.tags.map((tag, index) => (
-                                <span 
-                                  key={index}
-                                  className="bg-white/10 text-white/80 rounded-full px-3 py-1 text-xs font-medium"
-                                >
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Prize and Attendees */}
-                          <div className="flex flex-wrap gap-4 mb-8">
-                            {organizedEvent.prizePool && (
-                              <div className="flex items-center px-4 py-2 bg-gradient-to-r from-accent/20 to-accent/10 rounded-lg backdrop-blur-md">
-                                <Trophy className="h-5 w-5 text-accent mr-2" />
-                                <div>
-                                  <p className="text-xs text-white/60 uppercase">Prize Pool</p>
-                                  <p className="text-white font-semibold">{organizedEvent.prizePool}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {organizedEvent.attendees && (
-                              <div className="flex items-center px-4 py-2 bg-white/10 rounded-lg backdrop-blur-md">
-                                <Users className="h-5 w-5 text-accent mr-2" />
-                                <div>
-                                  <p className="text-xs text-white/60 uppercase">Attendees</p>
-                                  <p className="text-white font-semibold">{organizedEvent.attendees}</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 md:mt-4 sm:justify-end">
-                          <button 
-                            onClick={openGallery}
-                            className="relative overflow-hidden rounded-lg border border-white/20 bg-white/5 backdrop-blur-md px-6 py-3 text-base font-medium text-white transition-all duration-300 hover:bg-white/10 hover:scale-105"
-                          >
-                            <span className="flex items-center justify-center">
-                              <Camera className="h-5 w-5 mr-2" />
-                              View Gallery
-                            </span>
-                          </button>
-                          
-                          {organizedEvent.registrationUrl && (
-                            <a 
-                              href={organizedEvent.registrationUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="relative overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-6 py-3 text-base font-medium text-white transition-all duration-300 ease-out hover:shadow-lg hover:shadow-accent/20 hover:scale-105"
-                            >
-                              <span className="flex items-center justify-center">
-                                <Ticket className="h-5 w-5 mr-2" />
-                                Register Now
-                              </span>
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Description - conditionally rendered */}
-                      <div className="border-t border-white/10 mt-8 pt-8">
-                        <p className="text-white/70 max-w-4xl">
-                          {organizedEvent.description}
-                        </p>
-                      </div>
+                      {organizedEvent.registrationUrl && (
+                        <a 
+                          href={organizedEvent.registrationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative inline-flex items-center overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                        >
+                          <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                          <span className="absolute bottom-0 left-0 h-1 w-full bg-white opacity-10"></span>
+                          <span className="absolute right-0 -mt-3 h-16 w-16 rotate-45 translate-x-8 -translate-y-2 bg-white opacity-10"></span>
+                          <span className="relative flex items-center">
+                            <Ticket className="h-5 w-5 mr-2" />
+                            Register Now
+                          </span>
+                        </a>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* Gradient scan line effect */}
-                  <div className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent/50 to-transparent opacity-0 animate-scan-vertical"></div>
                 </div>
               </div>
             </div>
           </motion.div>
           
-          {/* Upcoming/Sponsored Events */}
-          <div className="mb-16">
-            <div className="flex items-center mb-10">
-              <div className="h-px flex-grow bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
-              <div className="mx-4 flex items-center">
-                <Calendar className="h-5 w-5 text-accent mr-2" />
-                <h3 className="text-2xl font-bold text-white">More Events</h3>
-              </div>
-              <div className="h-px flex-grow bg-gradient-to-r from-transparent via-accent/30 to-transparent"></div>
+          {/* Sponsored Events */}
+          <motion.div
+            variants={fadeIn('up', 'tween', 0.3, 1)}
+            className="mb-8"
+          >
+            <div className="flex items-center mb-8">
+              <div className="bg-gradient-to-r from-accent/30 to-transparent h-[1px] flex-grow mr-4"></div>
+              <h3 className="text-2xl font-bold text-white">
+                Our <span className="text-accent">Sponsored Events</span>
+              </h3>
+              <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Upcoming Event Card */}
-              {upcomingEvents.map((event, index) => (
-                <motion.div
-                  key={`upcoming-${index}`}
-                  variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-accent/10 shadow-xl"
-                >
-                  {/* Event Type Badge */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <div className="bg-accent text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg flex items-center">
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                      UPCOMING
-                    </div>
-                  </div>
-                  
-                  {/* Event Image */}
-                  <div className="h-48 relative overflow-hidden">
-                    <img 
-                      src={event.image}
-                      alt={event.title}
-                      className="absolute inset-0 w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/50 to-transparent"></div>
-                    
-                    {/* Type indicator */}
-                    {event.type && (
-                      <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
-                        {event.type}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Event Content */}
-                  <div className="p-6">
-                    <h4 className="text-xl font-bold mb-3 text-white group-hover:text-accent transition-colors duration-300">{event.title}</h4>
-                    
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-white/70 text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-accent/80" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center text-white/70 text-sm">
-                        <MapPin className="h-4 w-4 mr-2 text-accent/80" />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Tags */}
-                    {event.tags && (
-                      <div className="flex flex-wrap gap-1 mb-6">
-                        {event.tags.map((tag, tagIndex) => (
-                          <span 
-                            key={tagIndex}
-                            className="bg-white/5 text-white/60 rounded-full px-2 py-0.5 text-xs"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center mt-6">
-                      <button 
-                        onClick={(e) => openEventDetails(event, e)}
-                        className="text-accent hover:text-white font-medium text-sm flex items-center group-hover:underline"
-                      >
-                        View Details
-                        <ArrowRight className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
-                      </button>
-                      
-                      {event.registrationUrl && (
-                        <a 
-                          href={event.registrationUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white bg-accent/20 hover:bg-accent hover:text-white transition-colors duration-300 rounded-full p-2"
-                          aria-label="Register for event"
-                        >
-                          <Ticket className="h-5 w-5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-              
-              {/* Sponsored Events Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {sponsoredEvents.map((event, index) => (
                 <motion.div
-                  key={`sponsored-${index}`}
-                  variants={fadeIn('up', 'tween', 0.1 + (index + upcomingEvents.length) * 0.1, 1)}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="group relative bg-gradient-to-br from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] shadow-xl"
+                  key={index}
+                  variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-all duration-300 shadow-lg"
                 >
-                  {/* Event Type Badge */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <div className="bg-white/10 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg flex items-center">
-                      <Medal className="h-3.5 w-3.5 mr-1.5 text-accent" />
-                      SPONSORED
-                    </div>
-                  </div>
-                  
-                  {/* Prize indicator */}
-                  {event.prizePool && (
-                    <div className="absolute top-4 right-4 z-20">
-                      <div className="bg-accent/80 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
-                        {event.prizePool}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Event Image */}
-                  <div className="h-48 relative overflow-hidden">
+                  <div className="h-56 relative overflow-hidden">
                     <img 
                       src={event.image}
                       alt={event.title}
-                      className="absolute inset-0 w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
+                      className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/50 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] to-transparent"></div>
                     
-                    {/* Type indicator */}
-                    {event.type && (
-                      <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
-                        {event.type}
+                    {/* Event badge */}
+                    <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
+                      <div className="flex items-center">
+                        <Medal className="h-3 w-3 text-accent mr-1" />
+                        <span>Sponsored</span>
                       </div>
-                    )}
+                    </div>
+                    
+                    {/* Prize indicator */}
+                    <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
+                      {event.prizePool}
+                    </div>
                   </div>
                   
-                  {/* Event Content */}
                   <div className="p-6">
-                    <h4 className="text-xl font-bold mb-3 text-white group-hover:text-accent transition-colors duration-300">{event.title}</h4>
+                    <h4 className="text-xl font-bold mb-3 group-hover:text-accent transition-colors duration-300">{event.title}</h4>
                     
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-white/70 text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-accent/80" />
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div className="flex items-center text-gray-400 text-sm">
+                        <Calendar className="h-4 w-4 mr-2 text-accent/70" />
                         <span>{event.date}</span>
                       </div>
-                      <div className="flex items-center text-white/70 text-sm">
-                        <MapPin className="h-4 w-4 mr-2 text-accent/80" />
+                      <div className="flex items-center text-gray-400 text-sm">
+                        <Clock className="h-4 w-4 mr-2 text-accent/70" />
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center text-gray-400 text-sm col-span-2">
+                        <MapPin className="h-4 w-4 mr-2 text-accent/70" />
                         <span className="truncate">{event.location}</span>
                       </div>
                     </div>
                     
-                    {/* Tags */}
-                    {event.tags && (
-                      <div className="flex flex-wrap gap-1 mb-6">
-                        {event.tags.map((tag, tagIndex) => (
-                          <span 
-                            key={tagIndex}
-                            className="bg-white/5 text-white/60 rounded-full px-2 py-0.5 text-xs"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <p className="text-gray-300 mb-6 line-clamp-3 text-sm">
+                      {event.description}
+                    </p>
                     
-                    <div className="flex justify-between items-center mt-6">
-                      <button 
-                        onClick={(e) => openEventDetails(event, e)}
-                        className="text-accent hover:text-white font-medium text-sm flex items-center group-hover:underline"
-                      >
-                        View Details
-                        <ArrowRight className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" />
-                      </button>
-                      
-                      {event.registrationUrl && (
-                        <a 
-                          href={event.registrationUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white bg-accent/20 hover:bg-accent hover:text-white transition-colors duration-300 rounded-full p-2"
-                          aria-label="Register for event"
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                        </a>
+                    <div className="flex items-center justify-between">
+                      {event.attendees && (
+                        <div className="text-sm text-gray-400 flex items-center">
+                          <Users className="h-4 w-4 mr-1 text-accent/70" />
+                          {event.attendees} Attendees
+                        </div>
                       )}
+                      
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => openEventDetails(event, e)}
+                          className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+                          aria-label="View event details"
+                        >
+                          <ArrowRight className="h-5 w-5" />
+                        </button>
+                        
+                        {event.registrationUrl && (
+                          <a 
+                            href={event.registrationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-full bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors duration-300"
+                            aria-label="Register for event"
+                          >
+                            <ExternalLink className="h-5 w-5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
           
-          {/* CTA - Submit Your Event */}
+          {/* Upcoming events CTA */}
           <motion.div
-            variants={fadeIn('up', 'tween', 0.5, 1)}
-            className="mt-16 text-center bg-gradient-to-r from-accent/10 to-purple-500/10 p-8 rounded-2xl border border-accent/20"
+            variants={fadeIn('up', 'tween', 0.4, 1)}
+            className="mt-12 text-center"
           >
-            <div className="inline-flex items-center justify-center p-2 rounded-full bg-white/10 backdrop-blur-md mb-6">
-              <Flag className="h-6 w-6 text-accent" />
-            </div>
-            
-            <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white">
-              Want to <span className="text-accent">Host an Event</span> with Us?
-            </h3>
-            <p className="text-white/70 mb-6 max-w-2xl mx-auto">
-              If you're interested in organizing or sponsoring an anime event in your city, we'd love to collaborate with you!
-            </p>
-            
             <a 
               href="/events"
-              className="relative overflow-hidden inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-accent via-accent/90 to-accent px-8 py-3.5 text-lg font-bold text-white transition-all duration-300 hover:shadow-lg hover:shadow-accent/20 hover:scale-105"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-8 py-3 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105"
             >
-              <span className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                Submit Your Event
+              <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+              </span>
+              <span className="relative flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-accent" />
+                View All Events
               </span>
             </a>
           </motion.div>
         </motion.div>
       </div>
+      
+      {/* Animated elements */}
+      <div className="absolute top-1/4 left-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
+      <div className="absolute bottom-1/4 right-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+      <div className="absolute top-3/4 left-1/3 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
+      
+      {/* Accent glows */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-accent rounded-full opacity-[0.02] filter blur-[100px]"></div>
       
       {/* Popups */}
       <GalleryPopup
@@ -707,8 +493,6 @@ const EventsSection = () => {
         onClose={() => setSelectedEvent(null)}
         event={selectedEvent || organizedEvent} // Fallback to avoid type error
       />
-      
-      {/* Custom animations are defined in index.css */}
     </section>
   );
 };
