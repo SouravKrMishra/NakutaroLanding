@@ -193,9 +193,9 @@ body::before {
 .text-red-700,
 .text-red-800,
 .text-red-900,
-.text-[#FF3B30],
-.text-[#E53E3E],
-.text-[#FF0000],
+.text-\[#FF3B30\],
+.text-\[#E53E3E\],
+.text-\[#FF0000\],
 *[class*="text-red"],
 svg[fill="red"],
 svg[stroke="red"],
@@ -222,7 +222,7 @@ div[class*="statistics"] > *,
 .border-red-600,
 .border-red-700,
 .border-red-800,
-.border-[#FF3B30],
+.border-\[#FF3B30\],
 *[class*="border-red"] {
   border-color: hsl(var(--accent-primary)) !important;
 }

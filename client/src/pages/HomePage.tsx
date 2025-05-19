@@ -5,6 +5,7 @@ import EventsSection from "@/components/EventsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import FAQSection from "@/components/FAQSection";
 import CTASection from "@/components/CTASection";
+import ARTryOn from "@/components/ARTryOn";
 import { useEffect } from "react";
 
 const HomePage = () => {
@@ -18,6 +19,7 @@ const HomePage = () => {
       <HeroSection />
       <AboutSection />
       <ProductsSection />
+      <ARTryOn />
       <EventsSection />
       <TestimonialsSection />
       <FAQSection />
