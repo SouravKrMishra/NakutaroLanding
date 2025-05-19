@@ -501,9 +501,9 @@ const ProductsPage = () => {
                     <span>{filterSidebarOpen ? 'Hide Filters' : 'Show Filters'}</span>
                     <ChevronDown className={`h-3 w-3 ml-1 transition-transform duration-300 ${filterSidebarOpen ? 'rotate-180' : 'rotate-0'}`} />
                   </Button>
-                  <div className="relative">
+                  <div className="relative max-w-[140px] sm:max-w-none">
                     <select 
-                      className="bg-[#2D2D2D] text-gray-300 appearance-none rounded px-3 py-1 text-sm border border-[#3D3D3D] focus:outline-none focus:ring-1 focus:ring-[#FF3B30] pr-8"
+                      className="bg-[#2D2D2D] text-gray-300 appearance-none rounded px-2 sm:px-3 py-1 text-xs sm:text-sm border border-[#3D3D3D] focus:outline-none focus:ring-1 focus:ring-[#FF3B30] pr-6 sm:pr-8 w-full"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortOption)}
                     >
