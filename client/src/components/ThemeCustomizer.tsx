@@ -92,33 +92,23 @@ export const ThemeCustomizer: React.FC = () => {
                   {themeOptions.map((option) => (
                     <button
                       key={option.id}
-                      style={{ 
-                        backgroundColor: option.id === theme ? '#2D2D2D' : 'transparent',
-                        color: 'white',
-                        fontSize: '0.75rem',
-                        padding: '0.375rem 0.5rem',
-                        borderRadius: '0.25rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        textAlign: 'left'
-                      }}
+                      className="bg-[#2563EB] hover:bg-[#3070f0] rounded text-white text-sm py-1.5 px-3 flex items-center"
                       onClick={() => handleThemeChange(option.id)}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div 
+                      <div className="flex items-center w-full">
+                        <span 
+                          className="w-4 h-4 rounded-full mr-2 flex items-center justify-center"
                           style={{ 
-                            width: '0.75rem', 
-                            height: '0.75rem', 
-                            borderRadius: '9999px', 
                             backgroundColor: option.color,
-                            marginRight: '0.5rem'
+                            border: option.id === theme ? '2px solid white' : 'none',
                           }} 
-                        />
-                        {option.name}
+                        >
+                          {option.id === theme && (
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          )}
+                        </span>
+                        <span className="flex-1">{option.name}</span>
                       </div>
-                      {option.id === theme && <Check style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />}
                     </button>
                   ))}
                 </div>
