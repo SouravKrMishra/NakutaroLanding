@@ -66,17 +66,6 @@ const ContactPage = () => {
           animate="show"
           className="text-center max-w-3xl mx-auto"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block bg-accent/10 px-3 py-1 rounded-sm border-l-2 border-accent mb-4"
-          >
-            <span className="text-accent font-bold text-sm uppercase tracking-widest">
-              REACH OUT
-            </span>
-          </motion.div>
-          
           <motion.h1
             variants={fadeIn("up", "tween", 0.1, 1)}
             className="text-4xl font-bold mb-4"
