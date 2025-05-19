@@ -40,52 +40,22 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
       ]
     },
     {
-      title: 'Anime Accessories',
-      description: 'Complete your look with our curated selection of anime accessories',
-      price: '₹399 - ₹999',
+      title: 'Manga Collection',
+      description: 'Complete manga series in premium quality print with special edition covers',
+      price: '₹499 - ₹7,999',
       badge: 'Popular',
       images: [
-        'https://images.unsplash.com/photo-1519238359922-333183840e32?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-        'https://images.unsplash.com/photo-1628340814848-33bad6f2c031?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
+        'https://images.unsplash.com/photo-1535970147520-2a92162a5fe6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
+        'https://images.unsplash.com/photo-1577460551100-d3f84b6e4bf7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
       ]
     }
   ];
   
   const additionalProducts = [
     {
-      title: 'Manga Collection',
-      description: 'Extensive library of popular manga series and limited editions',
-      price: '₹499 - ₹1,999',
-      badge: 'Exclusive',
-      images: [
-        'https://images.unsplash.com/photo-1593492654845-a77c1fa186c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-        'https://images.unsplash.com/photo-1589642774083-a321310a71a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-      ]
-    },
-    {
       title: 'Anime Posters',
-      description: 'High-quality posters featuring artwork from your favorite anime series',
-      price: '₹299 - ₹899',
-      badge: 'Trending',
-      images: [
-        'https://images.unsplash.com/photo-1504237111663-37d862ef9cc4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-        'https://images.unsplash.com/photo-1511984805645-3723e8375a73?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-      ]
-    },
-    {
-      title: 'Anime Cosplay Costumes',
-      description: 'Premium quality cosplay costumes for your favorite anime characters',
-      price: '₹2,499 - ₹5,999',
-      badge: 'Pre-order',
-      images: [
-        'https://images.unsplash.com/photo-1599508705587-d32ba1672568?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-        'https://images.unsplash.com/photo-1550030085-00cee362ae48?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-      ]
-    },
-    {
-      title: 'Anime Stationery',
-      description: 'Notebooks, pens, and stationery inspired by popular anime series',
-      price: '₹199 - ₹599',
+      description: 'High-quality prints and posters to decorate your space with anime art',
+      price: '₹299 - ₹1,499',
       badge: 'New Collection',
       images: [
         'https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
@@ -110,44 +80,18 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
 
   return (
     <section id="products" className="py-20 relative overflow-hidden">
-      {/* Background elements */}
+      {/* Background elements - static, no animations */}
       <div className="absolute inset-0 bg-[#0A0A0A] overflow-hidden">
-        
-        {/* Static background elements - removed animations to reduce lag */}
-        <div 
-          className="absolute -top-40 -right-40 w-96 h-96 bg-accent/5 rounded-full"
-        />
-        
-        <div 
-          className="absolute -bottom-20 -left-20 w-80 h-80 bg-accent/5 rounded-full"
-        />
-        
-        {/* Static geometric elements - removed animations to reduce lag */}
+        {/* Static geometric elements */}
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent/5 rounded-full"></div>
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-accent/5 rounded-full"></div>
         <div className="absolute top-40 left-[15%] w-6 h-6 border border-accent/30 rounded-full"></div>
-        
         <div className="absolute bottom-40 right-[20%] w-8 h-8 border border-white/20 rounded-sm"></div>
-        
         <div className="absolute top-1/2 right-[10%] w-4 h-4 bg-accent/10 rounded-md"></div>
-          animate={{
-            y: [0, -10, 0],
-            x: [0, -10, 0],
-            rotate: [0, -90, 0],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 7,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-        />
-        
-        {/* Subtle accent elements */}
-        <div className="absolute top-1/3 left-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s' }}></div>
-        <div className="absolute bottom-1/4 right-12 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Collection Header */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -338,10 +282,10 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         )}
       </div>
       
-      {/* Animated elements */}
-      <div className="absolute top-1/4 left-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
-      <div className="absolute bottom-1/4 right-8 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
-      <div className="absolute top-3/4 left-1/3 w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }}></div>
+      {/* Static accent elements - removed animated elements */}
+      <div className="absolute top-1/4 left-8 w-2 h-2 bg-accent rounded-full opacity-30"></div>
+      <div className="absolute bottom-1/4 right-8 w-2 h-2 bg-accent rounded-full opacity-30"></div>
+      <div className="absolute top-3/4 left-1/3 w-2 h-2 bg-white rounded-full opacity-20"></div>
       
       {/* Accent glows */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-accent rounded-full opacity-[0.02] filter blur-[100px]"></div>
