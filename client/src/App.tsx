@@ -45,7 +45,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Header />
-          <main>
+          <main className="overflow-hidden">
             <Switch>
               <Route path="/" component={HomePage} />
               <Route path="/products" component={ProductsPage} />

@@ -3,8 +3,8 @@ import { fadeIn, staggerContainer } from '@/lib/animations';
 
 const HeroSection = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-20 hero-gradient overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section id="home" className="relative min-h-screen flex items-center pt-20 hero-gradient overflow-hidden w-full">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <motion.div
           variants={staggerContainer}
           initial="hidden"

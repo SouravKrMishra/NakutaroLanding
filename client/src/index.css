@@ -115,10 +115,18 @@
   @apply border-border;
 }
 
-body {
+html, body {
   @apply bg-[#121212] text-gray-200 font-sans antialiased overflow-x-hidden;
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
+  position: relative;
+  max-width: 100%;
+  width: 100%;
+}
+
+#root {
+  overflow-x: hidden;
+  width: 100%;
   position: relative;
 }
 
