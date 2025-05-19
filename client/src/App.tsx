@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch } from "wouter";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { ThemeCustomizer } from "./components/ThemeCustomizer";
+import { ModeToggle } from "./components/ModeToggle";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -26,9 +27,9 @@ function App() {
       const navbar = document.getElementById("navbar");
       if (navbar) {
         if (window.scrollY > 10) {
-          navbar.classList.add("bg-[#121212]", "shadow-lg");
+          navbar.classList.add("scrolled", "shadow-lg");
         } else {
-          navbar.classList.remove("bg-[#121212]", "shadow-lg");
+          navbar.classList.remove("scrolled", "shadow-lg");
         }
       }
     };
@@ -57,6 +58,7 @@ function App() {
           <Footer />
           <ScrollToTop />
           <ThemeCustomizer />
+          <ModeToggle />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
