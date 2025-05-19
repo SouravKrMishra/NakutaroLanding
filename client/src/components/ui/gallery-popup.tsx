@@ -66,7 +66,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
           onClick={onClose}
         >
           <motion.div 
-            className="bg-[#121212] overflow-hidden shadow-2xl max-w-2xl w-full mx-4 rounded-lg"
+            className="bg-[#121212] overflow-hidden shadow-2xl max-w-5xl w-full mx-4 rounded-lg"
             onClick={(e) => e.stopPropagation()}
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -74,7 +74,7 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
             transition={{ duration: 0.2 }}
           >
             {/* Full image at top */}
-            <div className="relative h-72 w-full">
+            <div className="relative w-full" style={{ aspectRatio: '4/3' }}>
               <img 
                 src={selectedImage.src}
                 alt={selectedImage.alt}
@@ -124,24 +124,39 @@ export function GalleryPopup({ isOpen, onClose, images, title }: GalleryPopupPro
               </div>
               
               {/* Thumbnail navigation */}
-              <div className="overflow-x-auto hide-scrollbar pb-2">
-                <div className="flex space-x-2 min-w-max">
-                  {images.map((image, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleThumbnailClick(index)}
-                      className={`cursor-pointer relative rounded overflow-hidden transition-all duration-200 
-                        ${index === selectedImageIndex 
-                          ? 'ring-2 ring-accent' 
-                          : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-accent/50'}`}
-                    >
-                      <img
-                        src={image.src}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-16 h-12 object-cover"
-                      />
+              <div className="mt-2 mb-3">
+                <div className="bg-black/40 rounded-lg p-3">
+                  <div className="overflow-x-auto hide-scrollbar pb-1">
+                    <div className="flex gap-3 min-w-max">
+                      {images.map((image, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleThumbnailClick(index)}
+                          className={`cursor-pointer relative rounded-lg overflow-hidden transition-all duration-200 
+                            ${index === selectedImageIndex 
+                              ? 'ring-2 ring-accent scale-105 z-10' 
+                              : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-accent/50 hover:scale-105'}`}
+                        >
+                          <img
+                            src={image.src}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-20 h-16 object-cover"
+                          />
+                          <div className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent ${index === selectedImageIndex ? 'opacity-0' : 'opacity-50'}`}></div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Thumbnail navigation indicator */}
+                  <div className="mt-2 flex justify-between items-center">
+                    <div className="h-1 bg-white/20 rounded-full flex-1 overflow-hidden">
+                      <div 
+                        className="h-full bg-accent rounded-full transition-all duration-300"
+                        style={{ width: `${((selectedImageIndex + 1) / images.length) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
               
