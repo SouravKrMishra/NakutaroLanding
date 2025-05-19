@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../lib/ThemeContext';
 import { Button } from '../components/ui/button';
-import { Settings, Check, ChevronDown } from 'lucide-react';
+import { Settings, ChevronDown } from 'lucide-react';
 
 interface ThemeOption {
   id: string;
@@ -76,7 +76,9 @@ export const ThemeCustomizer: React.FC = () => {
                     onClick={() => handleThemeChange(option.id)}
                     title={option.name}
                   >
-                    {option.id === theme && <Check className="h-3 w-3" style={{ color: 'white' }} />}
+                    {option.id === theme && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -90,26 +92,55 @@ export const ThemeCustomizer: React.FC = () => {
               }}>
                 <div className="flex flex-col gap-2">
                   {themeOptions.map((option) => (
-                    <button
+                    <div 
                       key={option.id}
-                      className="bg-[#2563EB] hover:bg-[#3070f0] rounded text-white text-sm py-1.5 px-3 flex items-center"
                       onClick={() => handleThemeChange(option.id)}
+                      className="cursor-pointer"
                     >
-                      <div className="flex items-center w-full">
-                        <span 
-                          className="w-4 h-4 rounded-full mr-2 flex items-center justify-center"
-                          style={{ 
-                            backgroundColor: option.color,
-                            border: option.id === theme ? '2px solid white' : 'none',
-                          }} 
-                        >
-                          {option.id === theme && (
-                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                          )}
-                        </span>
-                        <span className="flex-1">{option.name}</span>
+                      <div
+                        style={{
+                          backgroundColor: '#2563EB',
+                          color: 'white',
+                          borderRadius: '0.25rem',
+                          padding: '0.375rem 0.75rem',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#3070f0';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = '#2563EB';
+                        }}
+                      >
+                        <div className="flex items-center w-full">
+                          <span 
+                            style={{ 
+                              width: '1rem',
+                              height: '1rem',
+                              borderRadius: '9999px',
+                              backgroundColor: option.color,
+                              marginRight: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: option.id === theme ? '2px solid white' : 'none'
+                            }} 
+                          >
+                            {option.id === theme && (
+                              <div style={{ 
+                                width: '0.375rem', 
+                                height: '0.375rem', 
+                                borderRadius: '9999px', 
+                                backgroundColor: 'white' 
+                              }}></div>
+                            )}
+                          </span>
+                          <span style={{ flexGrow: 1 }}>{option.name}</span>
+                        </div>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
