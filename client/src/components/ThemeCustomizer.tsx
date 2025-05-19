@@ -43,9 +43,17 @@ export const ThemeCustomizer: React.FC = () => {
         </Button>
         
         {isOpen && (
-          <div className="absolute bottom-12 right-0 bg-[#1E1E1E] border border-[#2D2D2D] rounded-lg shadow-lg p-4 w-60 animate-in slide-in-from-bottom-5 duration-200">
+          <div 
+            className="absolute bottom-12 right-0 rounded-lg shadow-lg p-4 w-60 animate-in slide-in-from-bottom-5 duration-200"
+            style={{ 
+              backgroundColor: '#1E1E1E', 
+              borderColor: '#2D2D2D',
+              borderWidth: '1px',
+              borderStyle: 'solid'
+            }}
+          >
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-sm">Customize Appearance</h3>
+              <h3 className="font-bold text-sm" style={{ color: 'white' }}>Customize Appearance</h3>
               <button 
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-white"
@@ -55,37 +63,62 @@ export const ThemeCustomizer: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <p className="text-gray-400 text-xs mb-2">Accent Color</p>
+              <p style={{ color: '#9CA3AF', fontSize: '0.75rem', marginBottom: '0.5rem' }}>Accent Color</p>
               <div className="grid grid-cols-5 gap-2">
                 {themeOptions.map((option) => (
                   <button
                     key={option.id}
-                    className={`w-full aspect-square rounded-full flex items-center justify-center border-2 ${option.id === theme ? 'border-white' : 'border-transparent'}`}
-                    style={{ backgroundColor: option.color }}
+                    className="w-full aspect-square rounded-full flex items-center justify-center"
+                    style={{ 
+                      backgroundColor: option.color,
+                      border: `2px solid ${option.id === theme ? 'white' : 'transparent'}`
+                    }}
                     onClick={() => handleThemeChange(option.id)}
                     title={option.name}
                   >
-                    {option.id === theme && <Check className="h-3 w-3 text-white" />}
+                    {option.id === theme && <Check className="h-3 w-3" style={{ color: 'white' }} />}
                   </button>
                 ))}
               </div>
               
-              <div className="mt-4 pt-3 border-t border-[#2D2D2D]">
+              <div style={{ 
+                marginTop: '1rem', 
+                paddingTop: '0.75rem', 
+                borderTopWidth: '1px', 
+                borderTopStyle: 'solid', 
+                borderTopColor: '#2D2D2D' 
+              }}>
                 <div className="flex flex-col gap-2">
                   {themeOptions.map((option) => (
                     <button
                       key={option.id}
-                      className={`flex items-center justify-between text-xs py-1.5 px-2 rounded hover:bg-[#2D2D2D] transition-colors ${option.id === theme ? 'bg-[#2D2D2D]' : ''}`}
+                      style={{ 
+                        backgroundColor: option.id === theme ? '#2D2D2D' : 'transparent',
+                        color: 'white',
+                        fontSize: '0.75rem',
+                        padding: '0.375rem 0.5rem',
+                        borderRadius: '0.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
                       onClick={() => handleThemeChange(option.id)}
                     >
-                      <div className="flex items-center">
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
                         <div 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: option.color }} 
+                          style={{ 
+                            width: '0.75rem', 
+                            height: '0.75rem', 
+                            borderRadius: '9999px', 
+                            backgroundColor: option.color,
+                            marginRight: '0.5rem'
+                          }} 
                         />
                         {option.name}
                       </div>
-                      {option.id === theme && <Check className="h-3 w-3" />}
+                      {option.id === theme && <Check style={{ height: '0.75rem', width: '0.75rem', color: 'white' }} />}
                     </button>
                   ))}
                 </div>
