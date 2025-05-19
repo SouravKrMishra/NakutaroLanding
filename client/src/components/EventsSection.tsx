@@ -271,60 +271,53 @@ const EventsSection = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent"></div>
                 
                 {/* Event badge */}
-                <div className="absolute top-6 left-6 bg-accent/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center">
-                  <Trophy className="h-4 w-4 mr-2" />
+                <div className="absolute top-6 left-6 bg-accent text-white text-xs px-3 py-1.5 rounded-full shadow-lg flex items-center">
+                  <Trophy className="h-3 w-3 mr-1.5" />
                   FEATURED EVENT
                 </div>
                 
                 {/* Main content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
-                  <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                      <h4 className="text-3xl lg:text-4xl font-bold mb-4 text-white group-hover:text-accent transition-colors duration-300">{organizedEvent.title}</h4>
-                      
-                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
-                        <div className="flex items-center text-gray-300">
-                          <Calendar className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.date}</span>
-                        </div>
-                        <div className="flex items-center text-gray-300">
-                          <MapPin className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.location}</span>
-                        </div>
-                        <div className="flex items-center text-gray-300">
-                          <Clock className="h-5 w-5 mr-2 text-accent" />
-                          <span>{organizedEvent.time}</span>
-                        </div>
+                  <div>
+                    <h4 className="text-3xl lg:text-4xl font-bold mb-3 text-accent">{organizedEvent.title}</h4>
+                    
+                    {/* Event info in a row using icons that match the design */}
+                    <div className="flex flex-wrap items-center gap-4 mb-4">
+                      <div className="flex items-center text-white text-sm">
+                        <Calendar className="h-4 w-4 mr-2 text-accent" />
+                        {organizedEvent.date}
                       </div>
-                      
-                      <div className="flex flex-wrap gap-x-6 gap-y-3 mb-6">
-                        <div className="flex items-center bg-accent/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <Trophy className="h-4 w-4 text-accent mr-2" />
-                          <span className="text-white">{organizedEvent.prizePool}</span>
-                        </div>
-                        <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                          <Users className="h-4 w-4 text-accent mr-2" />
-                          <span className="text-white">{organizedEvent.attendees} Attendees</span>
-                        </div>
+                      <div className="flex items-center text-white text-sm">
+                        <MapPin className="h-4 w-4 mr-2 text-accent" />
+                        {organizedEvent.location}
                       </div>
-                      
-                      <p className="text-gray-300 max-w-3xl mb-8">
-                        {organizedEvent.description}
-                      </p>
+                      <div className="flex items-center text-white text-sm">
+                        <Clock className="h-4 w-4 mr-2 text-accent" />
+                        {organizedEvent.time}
+                      </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 mt-4 lg:mt-0">
+                    <div className="flex flex-wrap gap-4 mb-6">
+                      <div className="inline-flex items-center bg-accent px-3 py-1 rounded-full">
+                        <Trophy className="h-4 w-4 mr-2 text-white" />
+                        <span className="text-white text-sm">{organizedEvent.prizePool}</span>
+                      </div>
+                      <div className="inline-flex items-center bg-accent/20 px-3 py-1 rounded-full">
+                        <Users className="h-4 w-4 mr-2 text-accent" />
+                        <span className="text-white text-sm">{organizedEvent.attendees} Attendees</span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-white max-w-3xl mb-8 text-sm">
+                      {organizedEvent.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-4">
                       <button 
                         onClick={openGallery}
-                        className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                        className="bg-accent rounded-full text-white px-6 py-2 text-sm font-medium hover:bg-accent/90 transition-colors duration-300"
                       >
-                        <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
-                          <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
-                        </span>
-                        <span className="relative flex items-center">
-                          <Camera className="h-5 w-5 mr-2 text-accent" />
-                          View Gallery
-                        </span>
+                        View Gallery
                       </button>
                       
                       {organizedEvent.registrationUrl && (
@@ -332,15 +325,9 @@ const EventsSection = () => {
                           href={organizedEvent.registrationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group relative inline-flex items-center overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-6 py-2.5 text-base font-medium text-white transition-all duration-300 ease-out hover:scale-105"
+                          className="bg-accent rounded-full text-white px-6 py-2 text-sm font-medium inline-flex items-center hover:bg-accent/90 transition-colors duration-300"
                         >
-                          <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
-                          <span className="absolute bottom-0 left-0 h-1 w-full bg-white opacity-10"></span>
-                          <span className="absolute right-0 -mt-3 h-16 w-16 rotate-45 translate-x-8 -translate-y-2 bg-white opacity-10"></span>
-                          <span className="relative flex items-center">
-                            <Ticket className="h-5 w-5 mr-2" />
-                            Register Now
-                          </span>
+                          <span className="mr-1">Register Now</span>
                         </a>
                       )}
                     </div>
