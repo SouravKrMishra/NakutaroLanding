@@ -147,7 +147,7 @@ const ContactPage = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className="relative flex items-center py-2 px-4 rounded-md transition-all duration-300"
+                      className="relative flex items-center py-2 px-5 rounded-md transition-all duration-300"
                     >
                       <span className={`relative z-10 flex items-center ${
                         activeTab === tab.id 
@@ -160,7 +160,7 @@ const ContactPage = () => {
                       {activeTab === tab.id && (
                         <motion.span
                           layoutId="bubble"
-                          className="absolute inset-0 bg-accent rounded-md"
+                          className="absolute inset-0 bg-[#FF3B30] rounded-md"
                           style={{ zIndex: 1 }}
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                         />
