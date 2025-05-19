@@ -54,7 +54,7 @@ const EventsSection = () => {
         >
           <motion.span 
             variants={fadeIn('up', 'tween', 0.1, 1)}
-            className="text-[#FF3B30] font-semibold text-sm uppercase tracking-wider"
+            className="text-accent font-semibold text-sm uppercase tracking-wider"
           >
             Events & Collaborations
           </motion.span>
@@ -82,7 +82,7 @@ const EventsSection = () => {
             variants={fadeIn('up', 'tween', 0.2, 1)}
             className="mb-12"
           >
-            <h3 className="text-2xl font-bold mb-6 text-[#FF3B30]">Our Organized Event</h3>
+            <h3 className="text-2xl font-bold mb-6 text-accent">Our Organized Event</h3>
             <div className="bg-[#242424] rounded-xl overflow-hidden border border-[#2D2D2D] shadow-xl">
               <div className="grid grid-cols-1 lg:grid-cols-2">
                 <div className="h-64 lg:h-auto relative overflow-hidden">
@@ -116,7 +116,7 @@ const EventsSection = () => {
                   </p>
                   <a 
                     href="#" 
-                    className="inline-flex items-center text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium"
+                    className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
                   >
                     View Gallery
                     <Camera className="h-4 w-4 ml-2" />
@@ -129,13 +129,13 @@ const EventsSection = () => {
           <motion.div
             variants={fadeIn('up', 'tween', 0.3, 1)}
           >
-            <h3 className="text-2xl font-bold mb-6 text-[#FF3B30]">Our Sponsored Events</h3>
+            <h3 className="text-2xl font-bold mb-6 text-accent">Our Sponsored Events</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {sponsoredEvents.map((event, index) => (
                 <motion.div
                   key={index}
                   variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
-                  className="bg-[#242424] rounded-xl overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/20 transition-all duration-300"
+                  className="bg-[#242424] rounded-xl overflow-hidden border border-[#2D2D2D] hover:border-accent/20 transition-all duration-300"
                 >
                   <div className="h-48 relative overflow-hidden">
                     <img 
@@ -164,7 +164,7 @@ const EventsSection = () => {
                     </p>
                     <a 
                       href="#" 
-                      className="inline-flex items-center text-[#FF3B30] hover:text-[#FF6B61] transition duration-300 font-medium"
+                      className="inline-flex items-center text-accent hover:text-accent/80 transition duration-300 font-medium"
                     >
                       About Event
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,14 +180,14 @@ const EventsSection = () => {
       </div>
       
       {/* Anime-inspired decorative elements */}
-      <div className="absolute top-20 right-10 w-24 h-24 bg-[#FF3B30] rounded-full filter blur-3xl opacity-10 animate-pulse"></div>
-      <div className="absolute bottom-20 left-10 w-32 h-32 bg-[#FF3B30] rounded-full filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-[#FF3B30] rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-20 right-10 w-24 h-24 bg-accent rounded-full filter blur-3xl opacity-10 animate-pulse"></div>
+      <div className="absolute bottom-20 left-10 w-32 h-32 bg-accent rounded-full filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-accent rounded-full animate-ping"></div>
+      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-accent rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
       
       {/* Stylized anime-inspired shape */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 border-8 border-[#FF3B30]/10 rounded-full"></div>
-      <div className="absolute -bottom-10 -left-10 w-60 h-60 border-8 border-[#FF3B30]/5 rounded-full"></div>
+      <div className="absolute -top-10 -right-10 w-40 h-40 border-8 border-accent/10 rounded-full"></div>
+      <div className="absolute -bottom-10 -left-10 w-60 h-60 border-8 border-accent/5 rounded-full"></div>
     </section>
   );
 };
