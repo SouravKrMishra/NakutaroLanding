@@ -25,16 +25,20 @@
     --ring: 20 14.3% 4.1%;
     --radius: 0.5rem;
     
-    /* Custom colors for Nakutaro */
+    /* Custom colors for Anime India */
     --dark-900: 0 0% 7%;
     --dark-800: 0 0% 12%;
     --dark-700: 0 0% 18%;
     --dark-600: 0 0% 20%;
     --dark-500: 0 0% 29%;
     
-    --accent-primary: 3 100% 59%;
-    --accent-light: 3 100% 69%;
-    --accent-dark: 3 100% 47%;
+    --accent-red: 255, 59, 48;
+    --accent-blue: 0, 122, 255;
+    --accent-green: 52, 199, 89;
+    --accent-pink: 255, 45, 85;
+    --accent-purple: 175, 82, 222;
+    --accent-orange: 255, 149, 0;
+    --current-accent: var(--accent-red);
   }
 
   .dark {
@@ -65,24 +69,80 @@
 }
 
 body {
-  @apply bg-[#121212] text-gray-200 font-sans antialiased;
+  @apply bg-[#121212] text-gray-200 font-sans antialiased transition-colors duration-300;
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
+}
+
+/* Light mode styles */
+.light-mode body {
+  background-color: #f8f9fa;
+  color: #1a202c;
+}
+
+.light-mode .bg-\[\#121212\] {
+  background-color: #f8f9fa;
+}
+
+.light-mode .bg-\[\#1E1E1E\] {
+  background-color: #ffffff;
+}
+
+.light-mode .text-gray-200,
+.light-mode .text-gray-300 {
+  color: #1a202c;
+}
+
+.light-mode .text-gray-400 {
+  color: #4a5568;
+}
+
+.light-mode .border-\[\#2D2D2D\] {
+  border-color: #e2e8f0;
+}
+
+/* Accent color classes */
+.accent-red {
+  --current-accent: var(--accent-red);
+}
+
+.accent-blue {
+  --current-accent: var(--accent-blue);
+}
+
+.accent-green {
+  --current-accent: var(--accent-green);
+}
+
+.accent-pink {
+  --current-accent: var(--accent-pink);
+}
+
+.accent-purple {
+  --current-accent: var(--accent-purple);
+}
+
+.accent-orange {
+  --current-accent: var(--accent-orange);
 }
 
 .text-gradient {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  background-image: linear-gradient(45deg, hsl(3, 100%, 59%), hsl(3, 100%, 69%));
+  background-image: linear-gradient(45deg, rgb(var(--current-accent)), rgb(var(--current-accent) / 0.8));
 }
 
 .bg-gradient-subtle {
-  background-image: linear-gradient(rgba(255, 59, 48, 0.05), transparent);
+  background-image: linear-gradient(rgba(var(--current-accent), 0.05), transparent);
 }
 
 .hero-gradient {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 59, 48, 0.1), rgba(18, 18, 18, 0) 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(var(--current-accent), 0.1), rgba(18, 18, 18, 0) 70%);
+}
+
+.light-mode .hero-gradient {
+  background: radial-gradient(circle at 50% 50%, rgba(var(--current-accent), 0.1), rgba(248, 249, 250, 0) 70%);
 }
 
 .card-hover {
@@ -91,5 +151,26 @@ body {
 
 .card-hover:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(255, 59, 48, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(var(--current-accent), 0.1);
+}
+
+/* Dynamic accent colors */
+.text-\[\#FF3B30\] {
+  color: rgb(var(--current-accent));
+}
+
+.bg-\[\#FF3B30\] {
+  background-color: rgb(var(--current-accent));
+}
+
+.border-\[\#FF3B30\] {
+  border-color: rgb(var(--current-accent));
+}
+
+.from-\[\#FF3B30\] {
+  --tw-gradient-from: rgb(var(--current-accent));
+}
+
+.to-\[\#FF6B61\] {
+  --tw-gradient-to: rgb(var(--current-accent) / 0.8);
 }
