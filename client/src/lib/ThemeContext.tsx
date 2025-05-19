@@ -21,7 +21,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('anime-india-theme', theme);
     
     // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme === 'default' ? '' : theme);
+    if (theme === 'default') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    
+    // Update body class for any custom styling
+    document.body.className = `theme-${theme}`;
   }, [theme]);
 
   return (
