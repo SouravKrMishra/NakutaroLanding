@@ -235,7 +235,7 @@ const ContactSection = () => {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#FF3B30] hover:bg-[#CC2F26] text-white font-medium py-3 px-6 rounded-md transition duration-300 shadow-lg"
+                  className="w-full bg-accent hover:bg-accent/80 text-white font-medium py-3 px-6 rounded-md transition duration-300 shadow-lg"
                 >
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
@@ -256,7 +256,7 @@ const ContactSection = () => {
                 {contactInfo.map((item, index) => (
                   <div key={index} className="flex items-start">
                     <div className="flex-shrink-0 mt-1">
-                      <div className="flex items-center justify-center h-10 w-10 rounded-md bg-[#2D2D2D] text-[#FF3B30]">
+                      <div className="flex items-center justify-center h-10 w-10 rounded-md bg-[#2D2D2D] text-accent">
                         {item.icon}
                       </div>
                     </div>
@@ -277,7 +277,7 @@ const ContactSection = () => {
                     <a 
                       key={index}
                       href={link.href} 
-                      className="bg-[#2D2D2D] hover:bg-[#333333] text-[#FF3B30] h-10 w-10 rounded-full flex items-center justify-center transition duration-300"
+                      className="bg-[#2D2D2D] hover:bg-[#333333] text-accent h-10 w-10 rounded-full flex items-center justify-center transition duration-300"
                       aria-label={`Social media link ${index + 1}`}
                     >
                       {link.icon}
