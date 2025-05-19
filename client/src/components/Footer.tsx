@@ -10,20 +10,20 @@ const Footer = () => {
   
   const quickLinks = [
     { href: '#home', label: 'Home' },
-    { href: '#about', label: 'About Us' },
-    { href: '#services', label: 'Services' },
-    { href: '#features', label: 'Features' },
-    { href: '#testimonials', label: 'Testimonials' },
-    { href: '#contact', label: 'Contact' }
+    { href: '#products', label: 'Products' },
+    { href: '#events', label: 'Subscribe' },
+    { href: '#contact', label: 'Contact Us' },
+    { href: '#shop', label: 'Shop' },
+    { href: '#faq', label: 'FAQs' }
   ];
   
   const serviceLinks = [
-    { href: '#', label: 'Custom Software' },
-    { href: '#', label: 'Mobile App Development' },
-    { href: '#', label: 'Digital Strategy' },
-    { href: '#', label: 'Cloud Solutions' },
-    { href: '#', label: 'Cybersecurity' },
-    { href: '#', label: 'AI & Machine Learning' }
+    { href: '#', label: 'Action Figures' },
+    { href: '#', label: 'Anime Apparel' },
+    { href: '#', label: 'Manga & Books' },
+    { href: '#', label: 'Collectibles' },
+    { href: '#', label: 'Accessories' },
+    { href: '#', label: 'Special Editions' }
   ];
   
   const socialLinks = [
@@ -40,11 +40,11 @@ const Footer = () => {
           <div>
             <a href="#" className="flex items-center space-x-2 mb-5">
               <span className="font-bold text-2xl text-white">
-                Naku<span className="text-[#FF3B30]">taro</span>
+                Anime<span className="text-[#FF3B30]">India</span>
               </span>
             </a>
             <p className="mb-4">
-              Innovative solutions for tomorrow's challenges. We help businesses transform through technology and strategic innovation.
+              India's premier anime merchandise store. From action figures to apparel, we bring the best of Japanese animation to Indian fans.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((link, index) => (

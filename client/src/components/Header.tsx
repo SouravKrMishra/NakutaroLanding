@@ -16,11 +16,10 @@ const Header = () => {
 
   const navLinks = [
     { href: '#home', label: 'Home' },
-    { href: '#about', label: 'About' },
-    { href: '#services', label: 'Services' },
-    { href: '#features', label: 'Features' },
-    { href: '#testimonials', label: 'Testimonials' },
-    { href: '#contact', label: 'Contact' }
+    { href: '#products', label: 'Products' },
+    { href: '#events', label: 'Subscribe' },
+    { href: '#contact', label: 'Contact Us' },
+    { href: '#products-shop', label: 'Shop' }
   ];
 
   return (
@@ -28,8 +27,8 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <a href="#" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl text-white">
-              Anime<span className="text-[#FF3B30]">India</span>
+            <span className="text-2xl font-bold">
+              <span className="text-white">Anime</span> <span className="text-[#FF3B30]">India</span> <span className="text-white text-lg font-normal">Logo</span>
             </span>
           </a>
           
