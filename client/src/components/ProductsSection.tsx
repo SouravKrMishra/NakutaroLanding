@@ -85,7 +85,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
 
   return (
     <section id="products" className="py-20 bg-[#121212] relative overflow-hidden">
-      <div className="container max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -149,7 +149,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.25 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
         >
           {products.map((product, index) => (
             <motion.div
