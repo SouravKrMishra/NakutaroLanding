@@ -6,11 +6,22 @@ export function ThemeToggle() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   
   useEffect(() => {
-    // Check for saved theme preference
+    // Check for saved theme preference or use system preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'light') {
       setIsDarkMode(false);
       document.documentElement.classList.add('light-mode');
+    } else if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.remove('light-mode');
+    } else {
+      // Use system preference if no saved preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+      if (!prefersDark) {
+        document.documentElement.classList.add('light-mode');
+      }
+      localStorage.setItem('theme', prefersDark ? 'dark' : 'light');
     }
   }, []);
   

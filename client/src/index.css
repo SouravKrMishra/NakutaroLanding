@@ -88,6 +88,21 @@ body {
   background-color: #ffffff;
 }
 
+/* Enhanced contrast and aesthetics */
+.light-mode {
+  --bg-card: 255, 255, 255;
+  --text-primary: 26, 32, 44;
+  --text-secondary: 74, 85, 104;
+  --border-subtle: 226, 232, 240;
+}
+
+.dark-mode, :root {
+  --bg-card: 30, 30, 30;
+  --text-primary: 248, 250, 252;
+  --text-secondary: 160, 174, 192;
+  --border-subtle: 45, 45, 45;
+}
+
 /* Navbar styles */
 .navbar-scrolled {
   background-color: #121212;
@@ -166,7 +181,8 @@ body {
 /* Dynamic accent colors */
 .text-\[\#FF3B30\], .hover\:text-\[\#FF3B30\]:hover, 
 .focus\:text-\[\#FF3B30\]:focus, .active\:text-\[\#FF3B30\]:active,
-[class*="text-[#FF3B30]"] {
+[class*="text-[#FF3B30]"],
+.hover\:text-red-500:hover {
   color: rgb(var(--current-accent));
 }
 

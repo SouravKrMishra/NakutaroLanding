@@ -152,8 +152,8 @@ const TestimonialsSection = () => {
                 viewport={{ once: true, amount: 0.25 }}
                 className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative overflow-hidden group">
-                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative overflow-visible group">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                   <div className="flex items-center mb-4">
                     <div className="text-[#FF3B30] flex">
                       {renderStars(testimonial.rating)}
