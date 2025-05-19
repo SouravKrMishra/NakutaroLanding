@@ -99,7 +99,7 @@ export const ThemeCustomizer: React.FC = () => {
                       onClick={() => handleThemeChange(option.id)}
                       className="w-full rounded text-left text-white py-2 px-3 transition-colors flex items-center"
                       style={{
-                        backgroundColor: '#FF2D94'
+                        backgroundColor: '#333333'
                       }}
                     >
                       <div 
@@ -123,7 +123,7 @@ export const ThemeCustomizer: React.FC = () => {
               <Button
                 onClick={() => setIsOpen(false)}
                 className="rounded text-white text-sm py-2 px-4"
-                style={{ backgroundColor: '#FF2D94' }}
+                style={{ backgroundColor: '#444444' }}
               >
                 Close
               </Button>
