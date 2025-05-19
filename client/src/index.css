@@ -198,15 +198,13 @@ body::before {
   color: hsl(var(--accent-primary)) !important;
 }
 
-/* All red border colors and hover states */
+/* All red border colors */
 .border-red-500,
 .border-red-600,
 .border-red-700,
 .border-red-800,
 .border-[#FF3B30],
-*[class*="border-red"],
-*:hover[class*="hover:border"],
-.hover\:border-red-500:hover {
+*[class*="border-red"] {
   border-color: hsl(var(--accent-primary)) !important;
 }
 
@@ -257,12 +255,8 @@ button[class*="shop"]:hover,
   opacity: 0.9;
 }
 
-/* Handle tailwind hover variants and all hover states */
-*[class*="hover:bg-red"]:hover,
-*:hover[class*="hover:bg"],
-.bg-\[\#CC2F26\],
-.hover\:bg-\[\#CC2F26\]:hover,
-[class*="hover:bg-[#CC2F26]"]:hover {
+/* Handle tailwind hover variants */
+*[class*="hover:bg-red"]:hover {
   background-color: hsl(var(--accent-dark)) !important;
 }
 
