@@ -247,11 +247,12 @@ const EventsSection = () => {
               <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
             </div>
             
-            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_25px_rgba(0,0,0,0.3)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border border-[#333] hover:border-accent/30 transition-all duration-500">
+            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border-2 border-[#333] hover:border-accent/50 transition-all duration-500 mx-[-1rem] sm:mx-0">
               {/* Highlight glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-tr from-accent/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+              <div className="absolute -inset-1 bg-gradient-to-tr from-accent/30 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+              <div className="absolute -inset-px bg-accent/5 rounded-2xl"></div>
               
-              <div className="relative h-[380px] sm:h-[400px] md:h-[450px] lg:h-[500px] overflow-hidden">
+              <div className="relative h-[440px] sm:h-[430px] md:h-[470px] lg:h-[520px] overflow-hidden">
                 <img 
                   src={organizedEvent.featured_image || organizedEvent.image}
                   alt={organizedEvent.title}
@@ -260,8 +261,8 @@ const EventsSection = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent"></div>
                 
                 {/* Event badge */}
-                <div className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-accent/90 backdrop-blur-sm text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-lg flex items-center">
-                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <div className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-accent backdrop-blur-sm text-white text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-xl flex items-center animate-pulse">
+                  <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   FEATURED EVENT
                 </div>
                 
