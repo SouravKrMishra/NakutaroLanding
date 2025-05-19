@@ -406,17 +406,22 @@ const ProductsPage = () => {
                 <h3 className="font-bold text-lg mb-4">Filter By</h3>
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-3">Price Range</h4>
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-medium">Price Range</h4>
+                      <span className="text-sm text-accent font-medium">
+                        ₹{Math.round((priceRange / 100) * 10000)}
+                      </span>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <input 
                         type="range" 
                         min="0" 
                         max="100" 
-                        className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#FF3B30]"
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent"
                         value={priceRange}
                         onChange={(e) => setPriceRange(parseInt(e.target.value))}
                         style={{
-                          background: `linear-gradient(to right, #FF3B30 0%, #FF3B30 ${priceRange}%, #444 ${priceRange}%, #444 100%)`
+                          background: `linear-gradient(to right, var(--theme-color-hex) 0%, var(--theme-color-hex) ${priceRange}%, #444 ${priceRange}%, #444 100%)`
                         }}
                       />
                     </div>
@@ -456,7 +461,7 @@ const ProductsPage = () => {
                     variant="outline" 
                     size="sm"
                     onClick={clearFilters}
-                    className="w-full text-gray-300 border-gray-600 hover:bg-accent/10 hover:text-accent hover:border-accent"
+                    className="w-full text-white bg-accent/10 border-accent hover:bg-accent hover:text-white transition-all duration-300"
                   >
                     Clear Filters
                   </Button>
