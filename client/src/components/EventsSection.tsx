@@ -251,17 +251,17 @@ const EventsSection = () => {
               {/* Highlight glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-tr from-accent/20 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               
-              <div className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] overflow-hidden">
+              <div className="relative h-[380px] sm:h-[400px] md:h-[450px] lg:h-[500px] overflow-hidden">
                 <img 
                   src={organizedEvent.featured_image || organizedEvent.image}
                   alt={organizedEvent.title}
                   className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent"></div>
                 
                 {/* Event badge */}
-                <div className="absolute top-6 left-6 bg-accent/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center">
-                  <Trophy className="h-4 w-4 mr-2" />
+                <div className="absolute top-4 sm:top-6 left-4 sm:left-6 bg-accent/90 backdrop-blur-sm text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-lg flex items-center">
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   FEATURED EVENT
                 </div>
                 
