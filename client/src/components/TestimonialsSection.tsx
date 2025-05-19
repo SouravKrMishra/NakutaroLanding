@@ -152,10 +152,10 @@ const TestimonialsSection = () => {
                 viewport={{ once: true, amount: 0.25 }}
                 className="testimonial-slide w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-4"
               >
-                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-[#FF3B30]/5 hover:shadow-[#FF3B30]/10 transition-all duration-300 relative overflow-hidden group">
-                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-[#FF3B30]/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                <div className="bg-[#1E1E1E] p-8 rounded-xl border border-[#2D2D2D] h-full shadow-lg shadow-accent/5 hover:shadow-accent/10 transition-all duration-300 relative overflow-hidden group">
+                  <div className="absolute -top-16 -right-16 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                   <div className="flex items-center mb-4">
-                    <div className="text-[#FF3B30] flex">
+                    <div className="text-accent flex">
                       {renderStars(testimonial.rating)}
                     </div>
                   </div>
@@ -163,8 +163,8 @@ const TestimonialsSection = () => {
                     "{testimonial.content}"
                   </blockquote>
                   <div className="flex items-center">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#FF3B30]/30 to-[#FF3B30]/10 flex items-center justify-center mr-4 border-2 border-[#FF3B30]/20">
-                      <span className="text-xl font-bold text-[#FF3B30]">{testimonial.initials}</span>
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-accent/30 to-accent/10 flex items-center justify-center mr-4 border-2 border-accent/20">
+                      <span className="text-xl font-bold text-accent">{testimonial.initials}</span>
                     </div>
                     <div>
                       <h4 className="font-semibold">{testimonial.author}</h4>
@@ -182,7 +182,7 @@ const TestimonialsSection = () => {
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`h-3 w-3 rounded-full focus:outline-none ${
-                  index === currentSlide ? 'bg-[#FF3B30]' : 'bg-[#2D2D2D]'
+                  index === currentSlide ? 'bg-accent' : 'bg-[#2D2D2D]'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -207,9 +207,9 @@ const TestimonialsSection = () => {
       </div>
       
       {/* Anime-inspired decorative elements */}
-      <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#FF3B30] opacity-5 rounded-full"></div>
-      <div className="absolute top-1/4 right-10 w-40 h-40 bg-[#FF3B30] opacity-5 rounded-full"></div>
-      <div className="absolute bottom-20 left-1/3 w-32 h-32 bg-[#FF3B30] opacity-5 rounded-full"></div>
+      <div className="absolute -top-10 -left-10 w-20 h-20 bg-accent opacity-5 rounded-full"></div>
+      <div className="absolute top-1/4 right-10 w-40 h-40 bg-accent opacity-5 rounded-full"></div>
+      <div className="absolute bottom-20 left-1/3 w-32 h-32 bg-accent opacity-5 rounded-full"></div>
       
       {/* Animated stars */}
       <div className="absolute top-10 right-1/4 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '1.5s' }}></div>
@@ -217,8 +217,8 @@ const TestimonialsSection = () => {
       <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '1s' }}></div>
       
       {/* Anime-style accent shapes */}
-      <div className="absolute top-0 right-0 h-40 w-40 border-t-4 border-r-4 border-[#FF3B30]/20 rounded-tr-3xl"></div>
-      <div className="absolute bottom-0 left-0 h-40 w-40 border-b-4 border-l-4 border-[#FF3B30]/20 rounded-bl-3xl"></div>
+      <div className="absolute top-0 right-0 h-40 w-40 border-t-4 border-r-4 border-accent/20 rounded-tr-3xl"></div>
+      <div className="absolute bottom-0 left-0 h-40 w-40 border-b-4 border-l-4 border-accent/20 rounded-bl-3xl"></div>
     </section>
   );
 };
