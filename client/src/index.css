@@ -116,7 +116,7 @@
 }
 
 body {
-  @apply bg-[#121212] text-gray-200 font-sans antialiased;
+  @apply bg-[#121212] text-gray-200 font-sans antialiased overflow-x-hidden;
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
   position: relative;

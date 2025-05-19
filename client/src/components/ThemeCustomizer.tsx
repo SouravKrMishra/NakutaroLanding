@@ -49,12 +49,12 @@ export const ThemeCustomizer: React.FC = () => {
   const currentTheme = themeOptions.find(t => t.id === theme) || themeOptions[0];
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-20 right-8 z-50">
       <div className="relative" ref={customizerRef}>
         <Button
           variant="outline"
-          size="sm"
-          className="rounded-full p-2 bg-[#1E1E1E] border-[#2D2D2D] hover:bg-[#2D2D2D]"
+          size="icon"
+          className="rounded-full bg-[#1E1E1E] border-[#2D2D2D] hover:bg-[#2D2D2D] shadow-lg"
           onClick={toggleOpen}
         >
           <Settings className="h-5 w-5" style={{ color: currentTheme.color }} />
@@ -71,28 +71,17 @@ export const ThemeCustomizer: React.FC = () => {
             }}
           >
             <div className="mb-3">
-              <h3 className="font-bold text-sm" style={{ color: 'white' }}>Customize Appearance</h3>
+              <h3 className="font-bold text-sm text-white">Customize Appearance</h3>
             </div>
             
             <div className="space-y-3">
-              <p style={{ color: '#9CA3AF', fontSize: '0.75rem', marginBottom: '0.5rem' }}>Theme Color</p>
+              <p className="text-[#9CA3AF] text-xs mb-2">Theme Color</p>
               
               <div className="flex flex-col gap-1">
                 {themeOptions.map((option) => (
                   <button
                     key={option.id}
-                    style={{ 
-                      backgroundColor: 'transparent',
-                      color: 'white',
-                      fontSize: '0.875rem',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '0.25rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      width: '100%',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className={`text-white text-sm py-2 px-3 rounded hover:bg-[#2D2D2D] text-left transition-all ${theme === option.id ? 'bg-[#2D2D2D]' : ''}`}
                     onClick={() => handleThemeChange(option.id)}
                   >
                     {option.name}
