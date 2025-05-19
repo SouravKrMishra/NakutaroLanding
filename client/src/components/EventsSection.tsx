@@ -247,12 +247,12 @@ const EventsSection = () => {
               <div className="bg-gradient-to-l from-accent/30 to-transparent h-[1px] flex-grow ml-4"></div>
             </div>
             
-            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border-2 border-[#333] hover:border-accent/50 transition-all duration-500 mx-[-1rem] sm:mx-0">
+            <div className="relative rounded-2xl overflow-hidden group shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] border-2 border-[#333] hover:border-accent/50 transition-all duration-500">
               {/* Highlight glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-tr from-accent/30 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
               <div className="absolute -inset-px bg-accent/5 rounded-2xl"></div>
               
-              <div className="relative h-[440px] sm:h-[430px] md:h-[470px] lg:h-[520px] overflow-hidden">
+              <div className="relative h-[480px] sm:h-[450px] md:h-[480px] lg:h-[530px] overflow-hidden">
                 <img 
                   src={organizedEvent.featured_image || organizedEvent.image}
                   alt={organizedEvent.title}
