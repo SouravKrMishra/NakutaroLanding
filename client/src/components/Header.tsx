@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link, useLocation } from 'wouter';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [location] = useLocation();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -15,42 +17,44 @@ const Header = () => {
   };
 
   const navLinks = [
-    { href: '#home', label: 'Home' },
-    { href: '#products', label: 'Products' },
-    { href: '#events', label: 'Subscribe' },
-    { href: '#contact', label: 'Contact Us' },
-    { href: '#products-shop', label: 'Shop' }
+    { id: 'nav-home', href: '/', label: 'Home' },
+    { id: 'nav-products', href: '/products', label: 'Products' },
+    { id: 'nav-subscribe', href: '/subscribe', label: 'Subscribe' },
+    { id: 'nav-contact', href: '/contact', label: 'Contact Us' }
   ];
 
   return (
     <header className="fixed w-full z-50 transition-all duration-300" id="navbar">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <a href="#" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <span className="text-2xl font-bold">
               <span className="text-white">Anime</span> <span className="text-[#FF3B30]">India</span> <span className="text-white text-lg font-normal">Logo</span>
             </span>
-          </a>
+          </Link>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-10">
             {navLinks.map((link) => (
-              <a 
-                key={link.href}
+              <Link 
+                key={link.id}
                 href={link.href} 
-                className="text-gray-300 hover:text-white transition duration-200"
+                className={`transition duration-200 ${location === link.href ? 'text-white font-medium' : 'text-gray-300 hover:text-white'}`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
           
           <div className="hidden md:block">
             <a 
-              href="#contact" 
-              className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-6 py-2 rounded-md transition duration-300 inline-block"
+              href="https://shop.animeindia.org" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
             >
-              Get Started
+              <ShoppingCart className="h-4 w-4" />
+              <span>Shop</span>
             </a>
           </div>
           
@@ -77,21 +81,24 @@ const Header = () => {
           >
             <nav className="flex flex-col space-y-4">
               {navLinks.map((link) => (
-                <a 
-                  key={link.href}
+                <Link 
+                  key={link.id}
                   href={link.href} 
-                  className="text-gray-300 hover:text-white transition duration-200"
+                  className={`transition duration-200 ${location === link.href ? 'text-white font-medium' : 'text-gray-300 hover:text-white'}`}
                   onClick={closeMenu}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <a 
-                href="#contact" 
-                className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-4 py-2 rounded-md inline-block transition duration-300 text-center"
+                href="https://shop.animeindia.org" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#FF3B30] hover:bg-[#CC2F26] text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                 onClick={closeMenu}
               >
-                Get Started
+                <ShoppingCart className="h-4 w-4" />
+                <span>Shop</span>
               </a>
             </nav>
           </motion.div>
