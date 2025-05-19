@@ -51,7 +51,7 @@ const Header = () => {
               href="https://shop.animeindia.org" 
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+              className="bg-accent hover:opacity-90 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
             >
               <ShoppingCart className="h-4 w-4" />
               <span>Shop</span>
@@ -94,7 +94,7 @@ const Header = () => {
                 href="https://shop.animeindia.org" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                className="bg-accent hover:opacity-90 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                 onClick={closeMenu}
               >
                 <ShoppingCart className="h-4 w-4" />
