@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../lib/ThemeContext';
 import { Button } from './ui/button';
-import { Palette } from 'lucide-react';
+import { Palette, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+type Theme = 'default' | 'blue' | 'pink' | 'purple' | 'green';
 
 interface ThemeOption {
-  id: string;
+  id: Theme;
   name: string;
   color: string;
 }
@@ -21,60 +24,63 @@ export const ThemeCustomizer: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleOpen = () => setIsOpen(!isOpen);
+  // Close the menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isOpen && !target.closest('.theme-customizer-panel') && !target.closest('.theme-customizer-toggle')) {
+        setIsOpen(false);
+      }
+    };
 
-  const handleThemeChange = (themeId: string) => {
-    setTheme(themeId as any);
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className="relative">
-        <Button
-          size="sm"
-          className="rounded-full w-10 h-10 flex items-center justify-center bg-[#18181B] border-[#27272A] hover:bg-[#27272A]"
-          onClick={toggleOpen}
-        >
-          <Palette className="h-5 w-5 text-white" />
-        </Button>
-        
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="theme-customizer-toggle w-12 h-12 rounded-full bg-gray-900 border border-gray-700 shadow-lg flex items-center justify-center hover:bg-gray-800 transition-colors"
+      >
+        <Palette className="h-6 w-6 text-white" />
+      </button>
+      
+      {/* Theme Panel */}
+      <AnimatePresence>
         {isOpen && (
-          <div 
-            className="absolute bottom-12 right-0 rounded-xl shadow-xl overflow-hidden"
-            style={{
-              backgroundColor: '#18181B',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderColor: '#27272A',
-              width: '240px'
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="theme-customizer-panel absolute bottom-16 right-0 w-60 bg-[#111] border border-gray-800 rounded-xl overflow-hidden shadow-2xl"
           >
-            <div 
-              className="p-3 border-b border-[#27272A]"
-              style={{
-                backgroundColor: '#222222',
-              }}
-            >
-              <h3 className="text-sm font-medium text-white">Theme Color</h3>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900">
+              <h3 className="text-white font-medium">Theme Color</h3>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                <X size={14} className="text-gray-400" />
+              </button>
             </div>
             
-            <div className="p-3">
-              {/* Color circles for theme preview */}
-              <div className="grid grid-cols-5 gap-2 mb-4 px-1">
+            {/* Color Circles */}
+            <div className="p-4 pb-2">
+              <div className="grid grid-cols-5 gap-3">
                 {themeOptions.map((option) => (
                   <button
                     key={option.id}
-                    onClick={() => handleThemeChange(option.id)}
-                    className="relative rounded-full aspect-square flex items-center justify-center"
-                    style={{
-                      backgroundColor: option.id === 'default' ? '#FF3B30' : 
-                                      option.id === 'blue' ? '#007AFF' : 
-                                      option.id === 'pink' ? '#FF2D55' : 
-                                      option.id === 'purple' ? '#AF52DE' : 
-                                      option.id === 'green' ? '#34C759' : option.color,
-                    }}
+                    onClick={() => setTheme(option.id)}
+                    className="relative aspect-square rounded-full transition-transform hover:scale-110"
+                    style={{ backgroundColor: option.color }}
                   >
-                    {option.id === theme && (
+                    {theme === option.id && (
                       <div className="absolute inset-0 border-2 border-white rounded-full flex items-center justify-center">
                         <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                       </div>
@@ -82,55 +88,31 @@ export const ThemeCustomizer: React.FC = () => {
                   </button>
                 ))}
               </div>
-              
-              {/* Theme selection buttons */}
-              <div className="space-y-2">
-                {themeOptions.map((option) => {
-                  // Get the appropriate color for the current theme option
-                  const circleColor = option.id === 'default' ? '#FF3B30' : 
-                                      option.id === 'blue' ? '#007AFF' : 
-                                      option.id === 'pink' ? '#FF2D55' : 
-                                      option.id === 'purple' ? '#AF52DE' : 
-                                      option.id === 'green' ? '#34C759' : option.color;
-                  
-                  return (
-                    <button
-                      key={option.id}
-                      onClick={() => handleThemeChange(option.id)}
-                      className="w-full rounded text-left text-white py-2 px-3 transition-colors flex items-center"
-                      style={{
-                        backgroundColor: '#333333'
-                      }}
-                    >
-                      <div 
-                        className="w-4 h-4 rounded-full mr-3 flex items-center justify-center"
-                        style={{
-                          backgroundColor: circleColor
-                        }}
-                      >
-                        {option.id === theme && (
-                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                        )}
-                      </div>
-                      <span className="text-sm">{option.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
             
-            <div className="flex justify-end p-3">
-              <Button
-                onClick={() => setIsOpen(false)}
-                className="rounded text-white text-sm py-2 px-4"
-                style={{ backgroundColor: '#444444' }}
-              >
-                Close
-              </Button>
+            {/* Theme Buttons */}
+            <div className="px-3 pb-3">
+              {themeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setTheme(option.id)}
+                  className="w-full flex items-center px-3 py-2 my-1 rounded bg-gray-800 hover:bg-gray-700 text-white text-sm transition-colors"
+                >
+                  <span
+                    className="w-4 h-4 mr-3 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: option.color }}
+                  >
+                    {theme === option.id && (
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                    )}
+                  </span>
+                  {option.name}
+                </button>
+              ))}
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
