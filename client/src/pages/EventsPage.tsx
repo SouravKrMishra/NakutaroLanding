@@ -150,7 +150,7 @@ const EventsPage = () => {
               variants={staggerContainer}
               initial="hidden"
               animate="show"
-              className="text-center max-w-4xl mx-auto"
+              className="text-center max-w-4xl mx-auto px-4 sm:px-0"
             >
               <motion.div
                 initial={{ scale: 0 }}
