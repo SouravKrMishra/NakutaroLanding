@@ -27,94 +27,151 @@ const ContactPage = () => {
   ];
 
   return (
-    <div className="contact-page pt-28 pb-16 overflow-hidden relative">
-      {/* Animated background elements */}
-      {floatingElements.map((element, index) => (
-        <motion.div
-          key={index}
-          className="absolute opacity-20 pointer-events-none"
-          style={{
-            top: `${10 + (index * 20)}%`,
-            left: `${70 + (index * 5)}%`,
-            width: element.size,
-            height: element.size
-          }}
-          animate={{
-            y: [0, -15, 0],
-            x: [0, 10, 0],
-            rotate: [0, 5, 0]
-          }}
-          transition={{
-            duration: 5 + index,
-            ease: "easeInOut",
-            delay: element.delay,
-            repeat: Infinity
-          }}
-        >
-          {element.icon}
-        </motion.div>
-      ))}
-      
-      {/* Decorative gradient blobs */}
-      <div className="absolute top-20 -left-40 w-80 h-80 bg-accent/5 rounded-full filter blur-[80px] opacity-50"></div>
-      <div className="absolute bottom-40 -right-40 w-80 h-80 bg-accent/5 rounded-full filter blur-[80px] opacity-50"></div>
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 relative">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-          className="text-center max-w-3xl mx-auto"
-        >
-          <motion.h1
-            variants={fadeIn("up", "tween", 0.1, 1)}
-            className="text-4xl font-bold mb-4"
-          >
-            Get In Touch
-          </motion.h1>
-          <motion.p
-            variants={fadeIn("up", "tween", 0.2, 1)}
-            className="text-gray-400 text-lg"
-          >
-            Have questions or feedback? We'd love to hear from you. 
-            Contact our team at Anime India for any inquiries about our products or services.
-          </motion.p>
+    <div className="contact-page pt-28 pb-16 overflow-hidden">
+      {/* Hero Section with Animated Background */}
+      <div className="relative h-[70vh] min-h-[500px] mb-20 overflow-hidden bg-[#121212]">
+        <div className="absolute inset-0 opacity-20">
+          {/* Animated Grid Pattern */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
           
-          {/* Tab Switcher */}
+          {/* Anime-inspired decorative elements */}
+          <motion.div 
+            className="absolute top-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[80px]"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.3, 0.2]
+            }}
+            transition={{ 
+              duration: 6, 
+              repeat: Infinity,
+              ease: "easeInOut" 
+            }}
+          />
+          
+          <motion.div 
+            className="absolute bottom-1/3 right-1/4 w-60 h-60 bg-accent rounded-full filter blur-[100px]"
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.15, 0.25, 0.15]
+            }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+          
+          {/* Flying elements */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex justify-center mt-8 mb-4 relative z-10"
+            className="absolute -top-10 -left-10 w-20 h-20 text-accent/20"
+            animate={{
+              x: [0, window.innerWidth + 20],
+              y: [0, window.innerHeight + 20],
+              rotate: [0, 360]
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
           >
-            <div className="inline-flex bg-[#1E1E1E] p-1 rounded-lg shadow-md">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center py-2 px-4 rounded-md transition-all duration-300 ${
-                    activeTab === tab.id 
-                      ? "bg-accent text-white font-medium" 
-                      : "bg-transparent text-gray-300 hover:text-white hover:bg-[#252525]"
-                  }`}
-                >
-                  <span className="relative z-10 flex items-center">
-                    {tab.icon}
-                    {tab.label}
-                  </span>
-                  {activeTab === tab.id && (
-                    <motion.span
-                      layoutId="bubble"
-                      className="absolute inset-0 bg-accent rounded-md"
-                      style={{ zIndex: 1 }}
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
+            <Mail className="w-full h-full" />
           </motion.div>
-        </motion.div>
+          
+          <motion.div
+            className="absolute -bottom-10 -right-10 w-16 h-16 text-accent/15"
+            animate={{
+              x: [window.innerWidth, -20],
+              y: [window.innerHeight, -20],
+              rotate: [0, -360]
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          >
+            <MessageSquare className="w-full h-full" />
+          </motion.div>
+        </div>
+        
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="text-center max-w-4xl mx-auto"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, ease: "backOut" }}
+                className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6"
+              >
+                <span className="text-accent font-medium text-sm">Get In Touch</span>
+              </motion.div>
+              
+              <motion.h1
+                variants={fadeIn("up", "tween", 0.1, 1)}
+                className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
+              >
+                <div className="inline-block">
+                  <span className="text-accent">Contact Us</span>
+                  <motion.span 
+                    className="block h-1 bg-accent/30 rounded-full mt-1"
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  />
+                </div>
+                <div className="text-white block mt-2">We'd Love to Hear from You</div>
+              </motion.h1>
+              
+              <motion.p
+                variants={fadeIn("up", "tween", 0.2, 1)}
+                className="text-gray-400 text-xl mb-8 max-w-3xl mx-auto"
+              >
+                Have questions or feedback? Contact our team at Anime India for any inquiries
+                about our events, products, or services.
+              </motion.p>
+              
+              {/* Tab Switcher */}
+              <motion.div
+                variants={fadeIn("up", "tween", 0.3, 1)}
+                className="flex justify-center mt-8 mb-4 relative z-10"
+              >
+                <div className="inline-flex bg-[#1E1E1E] p-1 rounded-lg shadow-md">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`relative flex items-center py-2 px-4 rounded-md transition-all duration-300 ${
+                        activeTab === tab.id 
+                          ? "bg-accent text-white font-medium" 
+                          : "bg-transparent text-gray-300 hover:text-white hover:bg-[#252525]"
+                      }`}
+                    >
+                      <span className="relative z-10 flex items-center">
+                        {tab.icon}
+                        {tab.label}
+                      </span>
+                      {activeTab === tab.id && (
+                        <motion.span
+                          layoutId="bubble"
+                          className="absolute inset-0 bg-accent rounded-md"
+                          style={{ zIndex: 1 }}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
       </div>
 
       <div className="relative">
