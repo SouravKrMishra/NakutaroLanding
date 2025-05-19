@@ -322,8 +322,8 @@ const ProductsPage = () => {
             </a>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {filteredProducts.slice(0, 3).map(product => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+            {filteredProducts.slice(0, 4).map(product => (
               <div 
                 key={product.id}
                 className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
