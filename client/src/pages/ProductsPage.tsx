@@ -571,7 +571,7 @@ const ProductsPage = () => {
                 
                 {/* List View */}
                 {view === "list" && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {filteredProducts.map(product => (
                       <div 
                         key={product.id}
@@ -615,7 +615,7 @@ const ProductsPage = () => {
                             Premium quality {product.category.toLowerCase()} featuring your favorite anime characters.
                             Officially licensed merchandise with the best quality and authentic designs.
                           </p>
-                          <div className="flex justify-end">
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                             <button className="bg-[#2D2D2D] hover:bg-[#FF3B30] text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300">
                               <ShoppingBag className="h-4 w-4 mr-2" />
                               Add to Cart
