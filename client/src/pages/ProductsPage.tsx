@@ -4,7 +4,7 @@ import CTASection from "@/components/CTASection";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
 import { useEffect, useState } from "react";
-import { Filter, Grid, List, ChevronRight, Award, Star, ShoppingBag, ChevronDown } from "lucide-react";
+import { Filter, Grid, List, ChevronRight, Award, Star, ShoppingBag, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Category = {
@@ -27,14 +27,29 @@ const initialCategories: Category[] = [
   { name: "Hoodies", count: 8, active: false }
 ];
 
-const featuredProducts = [
+type Product = {
+  id: number;
+  name: string;
+  price: string;
+  rating: number;
+  reviews: number;
+  image: string;
+  category: string;
+  isNew?: boolean;
+  onSale?: boolean;
+};
+
+const allProducts: Product[] = [
+  // Action Figures
   {
     id: 1,
     name: "Naruto Uzumaki Sage Mode Figure",
     price: "₹3,999",
     rating: 4.8,
     reviews: 124,
-    image: "https://images.unsplash.com/photo-1608278047522-58806a6ac85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+    category: "Action Figures",
+    image: "https://images.unsplash.com/photo-1608278047522-58806a6ac85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    isNew: true
   },
   {
     id: 2,
@@ -42,15 +57,108 @@ const featuredProducts = [
     price: "₹5,499",
     rating: 4.9,
     reviews: 87,
+    category: "Action Figures",
     image: "https://images.unsplash.com/photo-1593642657768-a56ce2479fe0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
   },
   {
     id: 3,
+    name: "Attack on Titan Levi Figure",
+    price: "₹4,299",
+    rating: 4.7,
+    reviews: 92,
+    category: "Action Figures",
+    image: "https://images.unsplash.com/photo-1589642774083-a321310a71a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+  },
+  {
+    id: 4,
+    name: "Dragon Ball Goku Ultra Instinct Statue",
+    price: "₹6,999",
+    rating: 4.9,
+    reviews: 156,
+    category: "Action Figures",
+    image: "https://images.unsplash.com/photo-1607456648016-62021188884f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    isNew: true
+  },
+  
+  // T-Shirts
+  {
+    id: 5,
     name: "My Hero Academia All Might T-Shirt",
     price: "₹999",
     rating: 4.6,
     reviews: 212,
+    category: "T-Shirts",
     image: "https://images.unsplash.com/photo-1627237072130-a5f9d7e391c9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+  },
+  {
+    id: 6,
+    name: "One Piece Straw Hat Pirates Tee",
+    price: "₹1,199",
+    rating: 4.3,
+    reviews: 178,
+    category: "T-Shirts",
+    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    onSale: true
+  },
+  {
+    id: 7,
+    name: "Chainsaw Man Pochita T-Shirt",
+    price: "₹899",
+    rating: 4.4,
+    reviews: 89,
+    category: "T-Shirts",
+    image: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+  },
+  
+  // Accessories
+  {
+    id: 8,
+    name: "Anime Character Keychains Set",
+    price: "₹499",
+    rating: 4.2,
+    reviews: 124,
+    category: "Accessories",
+    image: "https://images.unsplash.com/photo-1519238359922-333183840e32?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+  },
+  {
+    id: 9,
+    name: "Anime Logo Enamel Pin Collection",
+    price: "₹799",
+    rating: 4.1,
+    reviews: 67,
+    category: "Accessories",
+    image: "https://images.unsplash.com/photo-1628340814848-33bad6f2c031?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+  },
+  {
+    id: 10,
+    name: "Anime Characters Phone Case",
+    price: "₹599",
+    rating: 3.9,
+    reviews: 152,
+    category: "Accessories",
+    image: "https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    isNew: true
+  },
+  
+  // Hoodies
+  {
+    id: 11,
+    name: "Naruto Akatsuki Clouds Hoodie",
+    price: "₹2,499",
+    rating: 4.7,
+    reviews: 203,
+    category: "Hoodies",
+    image: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+    onSale: true
+  },
+  {
+    id: 12,
+    name: "Attack on Titan Scout Regiment Hoodie",
+    price: "₹2,299",
+    rating: 4.5,
+    reviews: 156,
+    category: "Hoodies",
+    image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
   }
 ];
 
@@ -68,11 +176,60 @@ const ProductsPage = () => {
   const [sortBy, setSortBy] = useState<SortOption>("Featured");
   const [showingProducts, setShowingProducts] = useState<number>(12);
   const [totalProducts, setTotalProducts] = useState<number>(48);
+  const [filterSidebarOpen, setFilterSidebarOpen] = useState<boolean>(true);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(allProducts.slice(0, 3));
   
   // Reset scroll position when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+  
+  // Apply filters whenever filter settings change
+  useEffect(() => {
+    let filtered = [...allProducts];
+    
+    // Filter by active categories
+    const activeCategories = categories.filter(c => c.active).map(c => c.name);
+    if (activeCategories.length > 0) {
+      filtered = filtered.filter(product => activeCategories.includes(product.category));
+    }
+    
+    // Filter by price range
+    const maxPrice = 10000;
+    const priceThreshold = (priceRange / 100) * maxPrice;
+    filtered = filtered.filter(product => parseInt(product.price.replace(/[^\d]/g, '')) <= priceThreshold);
+    
+    // Filter by rating
+    const activeRatings = Object.entries(ratings)
+      .filter(([_, isActive]) => isActive)
+      .map(([rating, _]) => parseInt(rating));
+    
+    if (activeRatings.length > 0) {
+      filtered = filtered.filter(product => 
+        activeRatings.some(rating => product.rating >= rating)
+      );
+    }
+    
+    // Apply sorting
+    if (sortBy === "Price: Low to High") {
+      filtered.sort((a, b) => 
+        parseInt(a.price.replace(/[^\d]/g, '')) - parseInt(b.price.replace(/[^\d]/g, ''))
+      );
+    } else if (sortBy === "Price: High to Low") {
+      filtered.sort((a, b) => 
+        parseInt(b.price.replace(/[^\d]/g, '')) - parseInt(a.price.replace(/[^\d]/g, ''))
+      );
+    } else if (sortBy === "Rating: High to Low") {
+      filtered.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === "Newest First") {
+      filtered.sort((a, b) => (a.isNew ? -1 : 1) - (b.isNew ? -1 : 1));
+    }
+    
+    setFilteredProducts(filtered);
+    setShowingProducts(Math.min(filtered.length, 12));
+    setTotalProducts(filtered.length);
+  }, [categories, priceRange, ratings, sortBy]);
   
   const toggleCategory = (categoryName: string) => {
     setCategories(prev => prev.map(cat => 
@@ -85,9 +242,13 @@ const ProductsPage = () => {
   };
   
   const clearFilters = () => {
-    setCategories(initialCategories);
+    setCategories(initialCategories.map(cat => ({ ...cat, active: false })));
     setPriceRange(50);
     setRatings({5: false, 4: false, 3: false, 2: false, 1: false});
+  };
+  
+  const toggleFilterSidebar = () => {
+    setFilterSidebarOpen(!filterSidebarOpen);
   };
 
   return (
@@ -162,7 +323,7 @@ const ProductsPage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredProducts.map(product => (
+            {filteredProducts.slice(0, 3).map(product => (
               <div 
                 key={product.id}
                 className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
@@ -173,9 +334,16 @@ const ProductsPage = () => {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                   />
-                  <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
-                    NEW
-                  </div>
+                  {product.isNew && (
+                    <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                      NEW
+                    </div>
+                  )}
+                  {product.onSale && (
+                    <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
+                      SALE
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
@@ -205,9 +373,18 @@ const ProductsPage = () => {
         {/* Categories & All Products */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Sidebar - Categories */}
-          <div className="lg:col-span-1">
+          <div className={`lg:col-span-1 ${filterSidebarOpen ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-[#1E1E1E] rounded-lg p-6 border border-[#2D2D2D] sticky top-24">
-              <h3 className="font-bold text-lg mb-4">Product Categories</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">Product Categories</h3>
+                <button 
+                  onClick={toggleFilterSidebar}
+                  className="lg:hidden bg-[#2D2D2D] hover:bg-[#3D3D3D] p-1 rounded text-gray-400"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              
               <ul className="space-y-1">
                 {categories.map((category) => (
                   <li key={category.name}>
@@ -314,9 +491,14 @@ const ProductsPage = () => {
               
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" className="flex items-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center lg:hidden"
+                    onClick={toggleFilterSidebar}
+                  >
                     <Filter className="h-3 w-3 mr-1" />
-                    Filters
+                    {filterSidebarOpen ? 'Hide Filters' : 'Show Filters'}
                   </Button>
                   <div className="relative">
                     <select 
@@ -337,8 +519,113 @@ const ProductsPage = () => {
               </div>
               
               <div className="border-t border-[#2D2D2D] pt-6">
-                {/* Product Grid */}
-                <ProductsSection showFullCatalog={true} />
+                {/* Grid View */}
+                {view === "grid" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProducts.map(product => (
+                      <div 
+                        key={product.id}
+                        className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
+                      >
+                        <div className="h-48 overflow-hidden relative">
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                          />
+                          {product.isNew && (
+                            <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                              NEW
+                            </div>
+                          )}
+                          {product.onSale && (
+                            <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
+                              SALE
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-white group-hover:text-[#FF3B30] transition-colors duration-300">
+                              {product.name}
+                            </h3>
+                            <span className="font-bold text-[#FF3B30]">{product.price}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-400 mb-4">
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
+                              <span>{product.rating}</span>
+                            </div>
+                            <span className="mx-2">•</span>
+                            <span>{product.reviews} reviews</span>
+                          </div>
+                          <button className="w-full bg-[#2D2D2D] hover:bg-[#FF3B30] text-white py-2 rounded flex items-center justify-center transition-colors duration-300">
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                            Add to Cart
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* List View */}
+                {view === "list" && (
+                  <div className="space-y-6">
+                    {filteredProducts.map(product => (
+                      <div 
+                        key={product.id}
+                        className="flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-[#FF3B30]/30 transition-all duration-300 group"
+                      >
+                        <div className="md:w-1/4 h-48 md:h-auto overflow-hidden relative">
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                          />
+                          {product.isNew && (
+                            <div className="absolute top-2 right-2 bg-[#FF3B30] text-white text-xs font-bold px-2 py-1 rounded">
+                              NEW
+                            </div>
+                          )}
+                          {product.onSale && (
+                            <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
+                              SALE
+                            </div>
+                          )}
+                        </div>
+                        <div className="md:w-3/4 p-6 flex flex-col">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-xl font-semibold text-white group-hover:text-[#FF3B30] transition-colors duration-300">
+                              {product.name}
+                            </h3>
+                            <span className="font-bold text-xl text-[#FF3B30]">{product.price}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-400 mb-4">
+                            <div className="flex items-center">
+                              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
+                              <span>{product.rating}</span>
+                            </div>
+                            <span className="mx-2">•</span>
+                            <span>{product.reviews} reviews</span>
+                            <span className="mx-2">•</span>
+                            <span className="text-gray-500">{product.category}</span>
+                          </div>
+                          <p className="text-gray-400 mb-4 flex-grow">
+                            Premium quality {product.category.toLowerCase()} featuring your favorite anime characters.
+                            Officially licensed merchandise with the best quality and authentic designs.
+                          </p>
+                          <div className="flex justify-end">
+                            <button className="bg-[#2D2D2D] hover:bg-[#FF3B30] text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300">
+                              <ShoppingBag className="h-4 w-4 mr-2" />
+                              Add to Cart
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {/* Pagination */}
