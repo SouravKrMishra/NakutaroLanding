@@ -24,34 +24,34 @@
     --destructive-foreground: 60 9.1% 97.8%;
     --ring: 20 14.3% 4.1%;
     --radius: 0.5rem;
-    
+
     /* Custom theme colors for Anime India */
     --dark-900: 0 0% 7%;
     --dark-800: 0 0% 12%;
     --dark-700: 0 0% 18%;
     --dark-600: 0 0% 20%;
     --dark-500: 0 0% 29%;
-    
+
     /* Theme colors */
-    --theme-color: 3 100% 59%;
-    --theme-color-light: 3 100% 69%;
-    --theme-color-dark: 3 100% 47%;
-    
+    --theme-color: 357 70% 36%;
+    --theme-color-light: 357 70% 46%;
+    --theme-color-dark: 357 70% 26%;
+
     /* Default Red Theme */
     --accent-primary: var(--theme-color);
     --accent-light: var(--theme-color-light);
     --accent-dark: var(--theme-color-dark);
-    
+
     /* For compatibility with existing color names */
     --primary: var(--theme-color);
     --accent: var(--theme-color);
     --destructive: var(--theme-color);
-    
+
     /* Set theme color hex values for direct use */
-    --theme-color-hex: #ff3b30;
-    --theme-color-rgb: 255, 59, 48;
+    --theme-color-hex: #9c181d;
+    --theme-color-rgb: 156, 24, 29;
   }
-  
+
   /* Blue Theme */
   [data-theme="blue"] {
     --theme-color: 217 100% 59%;
@@ -60,7 +60,7 @@
     --theme-color-hex: #007aff;
     --theme-color-rgb: 0, 122, 255;
   }
-  
+
   /* Pink Theme */
   [data-theme="pink"] {
     --theme-color: 330 100% 59%;
@@ -69,7 +69,7 @@
     --theme-color-hex: #ff2d55;
     --theme-color-rgb: 255, 45, 85;
   }
-  
+
   /* Purple Theme */
   [data-theme="purple"] {
     --theme-color: 270 100% 59%;
@@ -78,7 +78,7 @@
     --theme-color-hex: #af52de;
     --theme-color-rgb: 175, 82, 222;
   }
-  
+
   /* Green Theme */
   [data-theme="green"] {
     --theme-color: 120 100% 35%;
@@ -117,22 +117,25 @@
 
 body {
   @apply bg-[#121212] text-gray-200 font-sans antialiased overflow-x-hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   scroll-behavior: smooth;
   position: relative;
 }
 
 /* Custom utility classes */
 .bg-grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+  background-image: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    ),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
 /* Create theme-specific background patterns for each theme */
 :root {
-  --theme-pattern-svg: url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpath id='kunai' d='M7,1 L1,7 L1,13 L7,19 L13,19 L19,13 L19,7 L13,1 L7,1 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='ramen' d='M3,3 C1.34,3 0,4.34 0,6 L0,13 C0,14.66 1.34,16 3,16 L17,16 C18.66,16 20,14.66 20,13 L20,6 C20,4.34 18.66,3 17,3 L3,3 Z M1.5,7 L18.5,7 L18.5,8 L1.5,8 L1.5,7 Z M6,4 C6.55,4 7,4.45 7,5 C7,5.55 6.55,6 6,6 C5.45,6 5,5.55 5,5 C5,4.45 5.45,4 6,4 Z M12,4 C12.55,4 13,4.45 13,5 C13,5.55 12.55,6 12,6 C11.45,6 11,5.55 11,5 C11,4.45 11.45,4 12,4 Z'/%3E%3Cpath id='katana' d='M19,1 L1,19 L3,19 L20,2 L19,1 Z'/%3E%3Cpath id='shuriken' d='M10,0 L13,7 L20,10 L13,13 L10,20 L7,13 L0,10 L7,7 L10,0 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='manga' d='M0,0 L0,20 L20,20 L20,0 L0,0 Z M1,1 L19,1 L19,19 L1,19 L1,1 Z M5,5 L15,5 L15,10 L5,10 L5,5 Z M5,12 L15,12 L15,15 L5,15 L5,12 Z'/%3E%3Cpath id='animeEyes' d='M2,10 C2,5.58 5.58,2 10,2 C14.42,2 18,5.58 18,10 C18,14.42 14.42,18 10,18 C5.58,18 2,14.42 2,10 Z M10,14 C12.2091,14 14,12.2091 14,10 C14,7.79086 12.2091,6 10,6 C7.79086,6 6,7.79086 6,10 C6,12.2091 7.79086,14 10,14 Z M10,12 C11.1046,12 12,11.1046 12,10 C12,8.89543 11.1046,8 10,8 C8.89543,8 8,8.89543 8,10 C8,11.1046 8.89543,12 10,12 Z M9,9 C9.55228,9 10,8.55228 10,8 C10,7.44772 9.55228,7 9,7 C8.44772,7 8,7.44772 8,8 C8,8.55228 8.44772,9 9,9 Z'/%3E%3C/defs%3E%3Cg%3E%3Cuse href='%23kunai' x='10' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='40' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='70' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='100' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='130' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='160' y='10' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='10' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='40' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='70' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='100' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='130' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='160' y='40' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='10' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='40' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='70' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='100' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='130' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='160' y='70' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='10' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='40' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='70' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='100' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='130' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='160' y='100' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='10' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='40' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='70' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='100' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='130' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='160' y='130' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='10' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='40' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='70' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='100' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='130' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='160' y='160' fill='%23ff3b30' fill-opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
+  --theme-pattern-svg: url("data:image/svg+xml,%3Csvg width='120' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpath id='kunai' d='M7,1 L1,7 L1,13 L7,19 L13,19 L19,13 L19,7 L13,1 L7,1 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='ramen' d='M3,3 C1.34,3 0,4.34 0,6 L0,13 C0,14.66 1.34,16 3,16 L17,16 C18.66,16 20,14.66 20,13 L20,6 C20,4.34 18.66,3 17,3 L3,3 Z M1.5,7 L18.5,7 L18.5,8 L1.5,8 L1.5,7 Z M6,4 C6.55,4 7,4.45 7,5 C7,5.55 6.55,6 6,6 C5.45,6 5,5.55 5,5 C5,4.45 5.45,4 6,4 Z M12,4 C12.55,4 13,4.45 13,5 C13,5.55 12.55,6 12,6 C11.45,6 11,5.55 11,5 C11,4.45 11.45,4 12,4 Z'/%3E%3Cpath id='katana' d='M19,1 L1,19 L3,19 L20,2 L19,1 Z'/%3E%3Cpath id='shuriken' d='M10,0 L13,7 L20,10 L13,13 L10,20 L7,13 L0,10 L7,7 L10,0 Z M8,8 L12,8 L12,12 L8,12 L8,8 Z'/%3E%3Cpath id='manga' d='M0,0 L0,20 L20,20 L20,0 L0,0 Z M1,1 L19,1 L19,19 L1,19 L1,1 Z M5,5 L15,5 L15,10 L5,10 L5,5 Z M5,12 L15,12 L15,15 L5,15 L5,12 Z'/%3E%3Cpath id='animeEyes' d='M2,10 C2,5.58 5.58,2 10,2 C14.42,2 18,5.58 18,10 C18,14.42 14.42,18 10,18 C5.58,18 2,14.42 2,10 Z M10,14 C12.2091,14 14,12.2091 14,10 C14,7.79086 12.2091,6 10,6 C7.79086,6 6,7.79086 6,10 C6,12.2091 7.79086,14 10,14 Z M10,12 C11.1046,12 12,11.1046 12,10 C12,8.89543 11.1046,8 10,8 C8.89543,8 8,8.89543 8,10 C8,11.1046 8.89543,12 10,12 Z M9,9 C9.55228,9 10,8.55228 10,8 C10,7.44772 9.55228,7 9,7 C8.44772,7 8,7.44772 8,8 C8,8.55228 8.44772,9 9,9 Z'/%3E%3C/defs%3E%3Cg%3E%3Cuse href='%23kunai' x='10' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='40' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='70' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='100' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='130' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='160' y='10' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='10' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='40' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='70' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='100' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='130' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='160' y='40' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='10' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='40' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='70' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='100' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='130' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='160' y='70' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='10' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='40' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='70' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='100' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='130' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='160' y='100' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='10' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='40' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='70' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='100' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='130' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='160' y='130' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23ramen' x='10' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23katana' x='40' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23shuriken' x='70' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23manga' x='100' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23animeEyes' x='130' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3Cuse href='%23kunai' x='160' y='160' fill='%239c181d' fill-opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 [data-theme="blue"] {
@@ -169,15 +172,26 @@ body::before {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  background-image: linear-gradient(45deg, hsl(var(--accent-primary)), hsl(var(--accent-light)));
+  background-image: linear-gradient(
+    45deg,
+    hsl(var(--accent-primary)),
+    hsl(var(--accent-light))
+  );
 }
 
 .bg-gradient-subtle {
-  background-image: linear-gradient(hsla(var(--accent-primary), 0.05), transparent);
+  background-image: linear-gradient(
+    hsla(var(--accent-primary), 0.05),
+    transparent
+  );
 }
 
 .hero-gradient {
-  background: radial-gradient(circle at 50% 50%, hsla(var(--accent-primary), 0.1), rgba(18, 18, 18, 0) 70%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    hsla(var(--accent-primary), 0.1),
+    rgba(18, 18, 18, 0) 70%
+  );
 }
 
 /* Accent color theming */
@@ -204,7 +218,8 @@ body::before {
 
 /* Custom animations */
 @keyframes bounce-slow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(3deg);
   }
   50% {
@@ -223,8 +238,11 @@ body::before {
 /* Background patterns */
 .bg-grid-pattern {
   background-size: 20px 20px;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+  background-image: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    ),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
@@ -234,14 +252,14 @@ body::before {
 .text-red-700,
 .text-red-800,
 .text-red-900,
-.text-\[#FF3B30\],
+.text-\[#ff382e\],
 .text-\[#E53E3E\],
 .text-\[#FF0000\],
 *[class*="text-red"],
 svg[fill="red"],
 svg[stroke="red"],
-svg[stroke="#FF3B30"],
-svg[fill="#FF3B30"] {
+svg[stroke="#ff382e"],
+svg[fill="#ff382e"] {
   color: hsl(var(--accent-primary)) !important;
   fill: hsl(var(--accent-primary)) !important;
   stroke: hsl(var(--accent-primary)) !important;
@@ -263,7 +281,7 @@ div[class*="statistics"] > *,
 .border-red-600,
 .border-red-700,
 .border-red-800,
-.border-\[#FF3B30\],
+.border-\[#ff382e\],
 *[class*="border-red"] {
   border-color: hsl(var(--accent-primary)) !important;
 }
@@ -286,12 +304,12 @@ h3 span,
 }
 
 /* Make buttons use accent color */
-.btn-primary, 
+.btn-primary,
 .bg-red-600,
 a[class*="shop"],
 button[class*="shop"],
 .shop,
-.bg-\[\#FF3B30\] {
+.bg-\[\#ff382e\] {
   background-color: hsl(var(--accent-primary)) !important;
   color: white !important;
 }
@@ -326,9 +344,9 @@ button[class*="shop"]:hover,
 }
 
 /* Background elements that should use the accent color */
-.bg-red-500, 
-.bg-red-600, 
-.bg-red-700, 
+.bg-red-500,
+.bg-red-600,
+.bg-red-700,
 .bg-red-800 {
   background-color: hsl(var(--accent-primary)) !important;
 }
@@ -336,7 +354,11 @@ button[class*="shop"]:hover,
 /* Hero and CTA sections */
 .hero-section,
 .cta-section {
-  background: linear-gradient(to bottom, transparent, hsla(var(--accent-primary), 0.05));
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    hsla(var(--accent-primary), 0.05)
+  );
 }
 
 .card-hover {
@@ -345,7 +367,7 @@ button[class*="shop"]:hover,
 
 .card-hover:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(255, 59, 48, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(156, 24, 29, 0.1);
 }
 
 /* Filter sidebar animations */

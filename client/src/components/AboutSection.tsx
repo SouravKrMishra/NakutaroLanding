@@ -1,20 +1,33 @@
-import { motion } from 'framer-motion';
-import { fadeIn, staggerContainer } from '@/lib/animations';
-import { Check, Star, Users, Calendar, Tag, BarChart4, MapPin, Award } from 'lucide-react';
+import { motion } from "framer-motion";
+import { fadeIn, staggerContainer } from "@/lib/animations";
+import {
+  Check,
+  Star,
+  Users,
+  Calendar,
+  Tag,
+  BarChart4,
+  MapPin,
+  Award,
+} from "lucide-react";
 
 const AboutSection = () => {
   const missionPoints = [
-    'Bringing fans and businesses together through anime events',
-    'Organizing immersive anime events celebrating Japanese pop culture',
-    'Providing B2B merchandise services for premium anime products',
-    'Creating memorable anime experiences through conventions and meetups'
+    "Bringing fans and businesses together through anime events",
+    "Organizing immersive anime events celebrating Japanese pop culture",
+    "Providing B2B merchandise services for premium anime products",
+    "Creating memorable anime experiences through conventions and meetups",
   ];
 
   const stats = [
-    { value: '2.7K+', label: 'Users', icon: <Users className="h-6 w-6" /> },
-    { value: '1.8K+', label: 'Deliveries', icon: <Tag className="h-6 w-6" /> },
-    { value: '112+', label: 'Daily Orders', icon: <BarChart4 className="h-6 w-6" /> },
-    { value: '15+', label: 'Events', icon: <Calendar className="h-6 w-6" /> }
+    { value: "2.7K+", label: "Users", icon: <Users className="h-6 w-6" /> },
+    { value: "1.8K+", label: "Deliveries", icon: <Tag className="h-6 w-6" /> },
+    {
+      value: "112+",
+      label: "Daily Orders",
+      icon: <BarChart4 className="h-6 w-6" />,
+    },
+    { value: "15+", label: "Events", icon: <Calendar className="h-6 w-6" /> },
   ];
 
   return (
@@ -22,36 +35,36 @@ const AboutSection = () => {
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
-        
+
         {/* Decorative elements */}
-        <motion.div 
+        <motion.div
           className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[120px] opacity-10"
-          animate={{ 
+          animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.05, 0.1, 0.05]
+            opacity: [0.05, 0.1, 0.05],
           }}
-          transition={{ 
-            duration: 8, 
-            repeat: Infinity,
-            ease: "easeInOut" 
-          }}
-        />
-        
-        <motion.div 
-          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
-          animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.05, 0.08, 0.05]
-          }}
-          transition={{ 
-            duration: 10, 
+          transition={{
+            duration: 8,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: 1
+          }}
+        />
+
+        <motion.div
+          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.08, 0.05],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
           }}
         />
       </div>
-      
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
@@ -69,22 +82,25 @@ const AboutSection = () => {
           >
             <span className="text-accent font-medium text-sm">Who We Are</span>
           </motion.div>
-          
-          <motion.h2 
-            variants={fadeIn('up', 'tween', 0.2, 1)}
+
+          <motion.h2
+            variants={fadeIn("up", "tween", 0.2, 1)}
             className="text-3xl md:text-4xl font-bold mt-2 mb-6"
           >
-            <span className="text-white">About</span> <span className="text-accent">Anime India</span>
+            <span className="text-white">About</span>{" "}
+            <span className="text-accent">Anime India</span>
           </motion.h2>
-          
-          <motion.p 
-            variants={fadeIn('up', 'tween', 0.3, 1)}
+
+          <motion.p
+            variants={fadeIn("up", "tween", 0.3, 1)}
             className="text-gray-300 text-lg leading-relaxed"
           >
-            At Anime India, we are a dedicated group of anime enthusiasts committed to bringing fans and businesses together through immersive experiences.
+            At Anime India, we are a dedicated group of anime enthusiasts
+            committed to bringing fans and businesses together through immersive
+            experiences.
           </motion.p>
         </motion.div>
-        
+
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -92,8 +108,8 @@ const AboutSection = () => {
           viewport={{ once: true, amount: 0.25 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
         >
-          <motion.div 
-            variants={fadeIn('right', 'tween', 0.2, 1)}
+          <motion.div
+            variants={fadeIn("right", "tween", 0.2, 1)}
             className="order-2 md:order-1"
           >
             <div className="relative">
@@ -103,44 +119,54 @@ const AboutSection = () => {
                   Our Mission
                 </span>
               </div>
-              
+
               <h3 className="text-2xl font-bold mb-4 text-white">What We Do</h3>
-              
+
               <div className="bg-gradient-to-r from-accent/30 to-transparent h-[1px] w-20 mb-6"></div>
-              
+
               <p className="text-gray-300 mb-6 leading-relaxed">
-                We organize immersive anime events that celebrate the vibrant world of Japanese pop culture. Our B2B merchandise services help companies access exclusive anime-related products, fostering partnerships within the anime industry.
+                We organize immersive anime events that celebrate the vibrant
+                world of Japanese pop culture. Our B2B merchandise services help
+                companies access exclusive anime-related products, fostering
+                partnerships within the anime industry.
               </p>
-              
+
               <p className="text-gray-300 mb-8 leading-relaxed">
-                We specialize in creating memorable anime experiences by hosting events that connect fans and brands. Our team handles everything from conventions and pop-up events to fan meetups, fostering a dynamic anime community.
+                We specialize in creating memorable anime experiences by hosting
+                events that connect fans and brands. Our team handles everything
+                from conventions and pop-up events to fan meetups, fostering a
+                dynamic anime community.
               </p>
             </div>
-            
+
             <div className="space-y-4 bg-[#1A1A1A] p-6 rounded-lg border border-[#333] mb-8">
               <div className="inline-block bg-[#222] px-3 py-1 rounded border border-[#444] mb-2">
-                <span className="text-gray-200 font-medium text-sm">Our Goals</span>
+                <span className="text-gray-200 font-medium text-sm">
+                  Our Goals
+                </span>
               </div>
-              
+
               {missionPoints.map((point, index) => (
-                <motion.div 
+                <motion.div
                   key={index}
-                  variants={fadeIn('up', 'tween', 0.3 + index * 0.1, 1)}
+                  variants={fadeIn("up", "tween", 0.3 + index * 0.1, 1)}
                   className="flex items-start group"
                 >
                   <div className="flex-shrink-0 mt-1 bg-accent/10 p-1 rounded group-hover:bg-accent/20 transition-colors duration-300">
                     <Check className="text-accent h-4 w-4" />
                   </div>
-                  <p className="ml-3 text-gray-300 group-hover:text-white transition-colors duration-300">{point}</p>
+                  <p className="ml-3 text-gray-300 group-hover:text-white transition-colors duration-300">
+                    {point}
+                  </p>
                 </motion.div>
               ))}
             </div>
-            
-            <motion.div 
-              variants={fadeIn('right', 'tween', 0.6, 1)}
+
+            <motion.div
+              variants={fadeIn("right", "tween", 0.6, 1)}
               className="mt-8"
             >
-              <a 
+              <a
                 href="#services"
                 className="group relative inline-flex items-center overflow-hidden rounded-lg border border-accent/40 bg-[#181818] px-6 py-3 text-base font-bold text-white transition-all duration-300 ease-out hover:scale-105"
               >
@@ -154,44 +180,47 @@ const AboutSection = () => {
               </a>
             </motion.div>
           </motion.div>
-          
-          <motion.div 
-            variants={fadeIn('left', 'tween', 0.4, 1)}
+
+          <motion.div
+            variants={fadeIn("left", "tween", 0.4, 1)}
             className="order-1 md:order-2"
           >
             <div className="relative group">
               {/* Animated glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-tr from-accent/30 to-transparent rounded-lg blur opacity-60 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              
+
               <div className="relative">
                 <div className="relative overflow-hidden rounded-lg p-1 bg-[#131313] border border-accent/20">
                   {/* Main image */}
-                  <img 
-                    src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80" 
-                    alt="Anime fans at convention" 
-                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition duration-700 z-10" 
+                  <img
+                    src="src/assets/about-us.jpg"
+                    alt="Anime fans at convention"
+                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition duration-700 z-10"
                   />
-                  
+
                   {/* Location tag */}
                   <div className="absolute top-4 left-4 bg-[#0A0A0A]/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-accent mr-1" />
-                      <span className="text-sm font-medium text-white">Delhi, India</span>
+                      <span className="text-sm font-medium text-white">
+                        NCUI Auditorium, Hauz Khas, Delhi, India
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* Image caption */}
               <div className="absolute -bottom-4 right-8 bg-[#0A0A0A]/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-[#333]">
                 <p className="text-sm text-white">
-                  <span className="text-accent font-medium">AnimeIndia</span> convention, 2024
+                  <span className="text-accent font-medium">Anime India's</span>{" "}
+                  Nakutaro Cosplay Royale, 2024
                 </p>
               </div>
             </div>
           </motion.div>
         </motion.div>
-        
+
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -200,19 +229,21 @@ const AboutSection = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20"
         >
           {stats.map((stat, index) => (
-            <motion.div 
+            <motion.div
               key={index}
-              variants={fadeIn('up', 'tween', 0.1 + index * 0.1, 1)}
+              variants={fadeIn("up", "tween", 0.1 + index * 0.1, 1)}
               className="bg-gradient-to-b from-[#1A1A1A] to-[#121212] p-6 rounded-lg text-center border border-[#333] group hover:border-accent/30 transition-colors duration-300 shadow-lg"
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
             >
               <div className="bg-accent/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 group-hover:bg-accent/20 transition-colors duration-300">
-                <div className="text-accent">
-                  {stat.icon}
-                </div>
+                <div className="text-accent">{stat.icon}</div>
               </div>
-              <div className="text-accent text-3xl font-bold mb-1">{stat.value}</div>
-              <div className="text-gray-300 text-sm font-medium">{stat.label}</div>
+              <div className="text-accent text-3xl font-bold mb-1">
+                {stat.value}
+              </div>
+              <div className="text-gray-300 text-sm font-medium">
+                {stat.label}
+              </div>
             </motion.div>
           ))}
         </motion.div>
