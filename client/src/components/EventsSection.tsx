@@ -26,6 +26,43 @@ interface Event {
   featured_image?: string;
 }
 
+// Import all gallery images
+import cosplay1 from "@assets/Newfolder/cosplay-royale (1)1.JPG";
+import cosplay2 from "@assets/Newfolder/cosplay-royale (2)2.JPG";
+import cosplay3 from "@assets/Newfolder/cosplay-royale (3)3.JPG";
+import cosplay4 from "@assets/Newfolder/cosplay-royale (4)4.JPG";
+import cosplay5 from "@assets/Newfolder/cosplay-royale (5)5.JPG";
+import cosplay6 from "@assets/Newfolder/cosplay-royale (6)6.JPG";
+import cosplay7 from "@assets/Newfolder/cosplay-royale (7)7.JPG";
+import cosplay8 from "@assets/Newfolder/cosplay-royale (8)8.JPG";
+import cosplay9 from "@assets/Newfolder/cosplay-royale (9)9.JPG";
+import cosplay10 from "@assets/Newfolder/cosplay-royale (10)10.JPG";
+import cosplay11 from "@assets/Newfolder/cosplay-royale (11)11.JPG";
+import cosplay12 from "@assets/Newfolder/cosplay-royale (12)12.JPG";
+import cosplay13 from "@assets/Newfolder/cosplay-royale (13)13.JPG";
+import cosplay14 from "@assets/Newfolder/cosplay-royale (14)14.JPG";
+import cosplay15 from "@assets/Newfolder/cosplay-royale (15)15.JPG";
+import cosplay16 from "@assets/Newfolder/cosplay-royale (16)16.JPG";
+import cosplay17 from "@assets/Newfolder/cosplay-royale (17)17.JPG";
+import cosplay18 from "@assets/Newfolder/cosplay-royale (18)18.JPG";
+import cosplay19 from "@assets/Newfolder/cosplay-royale (19)19.JPG";
+import cosplay20 from "@assets/Newfolder/cosplay-royale (20)20.JPG";
+import cosplay21 from "@assets/Newfolder/cosplay-royale (21)21.JPG";
+import cosplay22 from "@assets/Newfolder/cosplay-royale (22)22.JPG";
+import cosplay23 from "@assets/Newfolder/cosplay-royale (23)23.JPG";
+import cosplay24 from "@assets/Newfolder/cosplay-royale (24)24.JPG";
+import cosplay25 from "@assets/Newfolder/cosplay-royale (25)25.JPG";
+import cosplay26 from "@assets/Newfolder/cosplay-royale (26)26.JPG";
+import cosplay27 from "@assets/Newfolder/cosplay-royale (27)27.JPG";
+import cosplay28 from "@assets/Newfolder/cosplay-royale (28)28.JPG";
+import cosplay29 from "@assets/Newfolder/cosplay-royale (29)29.JPG";
+import cosplay30 from "@assets/Newfolder/cosplay-royale (30)30.JPG";
+
+// Import event images
+import ncrWinner from "@assets/ncrwinner.jpg";
+import iitDelhi from "@assets/iit-delhi.jpg";
+import pennywise from "@assets/Pennywise.jpg";
+
 const EventsSection = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -37,8 +74,8 @@ const EventsSection = () => {
     time: "10:00 AM - 6:00 PM",
     description:
       "Self-organized premier cosplay event featuring a prize pool of ₹50,000, attracting numerous cosplay enthusiasts to showcase their talents.",
-    image: "src/assets/ncrwinner.jpg",
-    featured_image: "src/assets/ncrwinner.jpg",
+    image: ncrWinner,
+    featured_image: ncrWinner,
     featured: true,
     prizePool: "₹50,000",
     attendees: "500+",
@@ -52,7 +89,7 @@ const EventsSection = () => {
       time: "All Day",
       description:
         "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
-      image: "src/assets/iit-delhi.jpg",
+      image: iitDelhi,
       prizePool: "₹30,000",
       attendees: "500+",
     },
@@ -63,7 +100,7 @@ const EventsSection = () => {
       time: "11:00 AM - 9:00 PM",
       description:
         "Nakutaro partnered as a sponsor for this horror-themed convention featuring a cosplay competition with a prize pool of ₹60,000, providing a platform for fans to immerse themselves in the genre.",
-      image: "src/assets/Pennywise.jpg",
+      image: pennywise,
       prizePool: "₹60,000",
       attendees: "600+",
     },
@@ -72,181 +109,181 @@ const EventsSection = () => {
   // Gallery images with different widths/heights for masonry layout
   const galleryImages = [
     {
-      src: "src/assets/Newfolder/cosplay-royale (1)1.JPG",
+      src: cosplay1,
       alt: "Anime cosplay event 1",
       width: 1200,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (2)2.JPG",
+      src: cosplay2,
       alt: "Anime cosplay event 2",
       width: 800,
       height: 1200,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (3)3.JPG",
+      src: cosplay3,
       alt: "Anime cosplay event 3",
       width: 1200,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (4)4.JPG",
+      src: cosplay4,
       alt: "Anime cosplay event 4",
       width: 800,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (5)5.JPG",
+      src: cosplay5,
       alt: "Anime cosplay event 5",
       width: 800,
       height: 600,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (6)6.JPG",
+      src: cosplay6,
       alt: "Anime cosplay event 6",
       width: 800,
       height: 1000,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (7)7.JPG",
+      src: cosplay7,
       alt: "Anime cosplay event 7",
       width: 800,
       height: 1200,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (8)8.JPG",
+      src: cosplay8,
       alt: "Anime cosplay event 8",
       width: 1000,
       height: 1500,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (9)9.JPG",
+      src: cosplay9,
       alt: "Anime cosplay event 9",
       width: 800,
       height: 600,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (10)10.JPG",
+      src: cosplay10,
       alt: "Anime cosplay event 10",
       width: 1200,
       height: 900,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (11)11.JPG",
+      src: cosplay11,
       alt: "Anime cosplay event 11",
       width: 800,
       height: 1100,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (12)12.JPG",
+      src: cosplay12,
       alt: "Anime cosplay event 12",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (13)13.JPG",
+      src: cosplay13,
       alt: "Anime cosplay event 13",
       width: 1200,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (14)14.JPG",
+      src: cosplay14,
       alt: "Anime cosplay event 14",
       width: 800,
       height: 1100,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (15)15.JPG",
+      src: cosplay15,
       alt: "Anime cosplay event 15",
       width: 900,
       height: 700,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (16)16.JPG",
+      src: cosplay16,
       alt: "Anime cosplay event 16",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (17)17.JPG",
+      src: cosplay17,
       alt: "Anime cosplay event 17",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (18)18.JPG",
+      src: cosplay18,
       alt: "Anime cosplay event 18",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (19)19.JPG",
+      src: cosplay19,
       alt: "Anime cosplay event 19",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (20)20.JPG",
+      src: cosplay20,
       alt: "Anime cosplay event 20",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (21)21.JPG",
+      src: cosplay21,
       alt: "Anime cosplay event 21",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (22)22.JPG",
+      src: cosplay22,
       alt: "Anime cosplay event 22",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (23)23.JPG",
+      src: cosplay23,
       alt: "Anime cosplay event 23",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (24)24.JPG",
+      src: cosplay24,
       alt: "Anime cosplay event 24",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (25)25.JPG",
+      src: cosplay25,
       alt: "Anime cosplay event 25",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (26)26.JPG",
+      src: cosplay26,
       alt: "Anime cosplay event 26",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (27)27.JPG",
+      src: cosplay27,
       alt: "Anime cosplay event 27",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (28)28.JPG",
+      src: cosplay28,
       alt: "Anime cosplay event 28",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (29)29.JPG",
+      src: cosplay29,
       alt: "Anime cosplay event 29",
       width: 1000,
       height: 800,
     },
     {
-      src: "src/assets/Newfolder/cosplay-royale (30)30.JPG",
+      src: cosplay30,
       alt: "Anime cosplay event 30",
       width: 1000,
       height: 800,
@@ -361,7 +398,7 @@ const EventsSection = () => {
                   alt={organizedEvent.title}
                   loading="eager"
                   decoding="async"
-                  className="absolute w-full h-full object-contain transform transition-all duration-700 group-hover:scale-105"
+                  className="absolute w-full h-full object-cover transform transition-all duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent"></div>
 

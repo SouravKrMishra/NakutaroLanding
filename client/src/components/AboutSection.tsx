@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
+import aboutUsImage from "@assets/about-us.jpg";
 import {
   Check,
   Star,
@@ -31,7 +32,7 @@ const AboutSection = () => {
   ];
 
   return (
-    <section id="about" className="py-20 relative">
+    <section id="about" className="py-20 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
@@ -193,8 +194,8 @@ const AboutSection = () => {
                 <div className="relative overflow-hidden rounded-lg p-1 bg-[#131313] border border-accent/20">
                   {/* Main image */}
                   <img
-                    src="src/assets/about-us.jpg"
-                    alt="Anime fans at convention"
+                    src={aboutUsImage}
+                    alt="About Anime India"
                     className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition duration-700 z-10"
                   />
 

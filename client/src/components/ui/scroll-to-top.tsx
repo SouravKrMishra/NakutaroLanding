@@ -41,7 +41,7 @@ const ScrollToTop = () => {
             onClick={scrollToTop}
             size="icon"
             className={cn(
-              "rounded-full bg-[#FF3B30] hover:bg-[#CC2F26] text-white shadow-lg"
+              "rounded-full bg-accent hover:bg-accent/90 text-white shadow-lg"
             )}
             aria-label="Scroll to top"
           >

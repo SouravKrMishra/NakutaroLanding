@@ -18,7 +18,6 @@ const Header = () => {
 
   const navLinks = [
     { id: "nav-home", href: "/", label: "Home" },
-    { id: "nav-products", href: "/products", label: "Products" },
     { id: "nav-events", href: "/events", label: "Events" },
     { id: "nav-contact", href: "/contact", label: "Contact Us" },
   ];
@@ -39,31 +38,57 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-10">
-            {navLinks.map((link) => (
-              <Link
-                key={link.id}
-                href={link.href}
-                className={`transition duration-200 ${
-                  location === link.href
-                    ? "text-white font-medium"
-                    : "text-gray-300 hover:text-white"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden md:block">
+            <Link
+              key="nav-home"
+              href="/"
+              className={`transition duration-200 ${
+                location === "/"
+                  ? "text-white font-medium"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              Home
+            </Link>
+            {/* External Products link */}
             <a
               href="https://shop.animeindia.org"
               target="_blank"
               rel="noopener noreferrer"
+              className="transition duration-200 text-gray-300 hover:text-white font-medium"
+            >
+              Products
+            </a>
+            <Link
+              key="nav-events"
+              href="/events"
+              className={`transition duration-200 ${
+                location === "/events"
+                  ? "text-white font-medium"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              Events
+            </Link>
+            <Link
+              key="nav-contact"
+              href="/contact"
+              className={`transition duration-200 ${
+                location === "/contact"
+                  ? "text-white font-medium"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              Contact Us
+            </Link>
+          </nav>
+
+          <div className="hidden md:block">
+            <Link
+              href="/business"
               className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
             >
-              <ShoppingCart className="h-4 w-4" />
-              <span>Shop</span>
-            </a>
+              <span>For Business</span>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -92,30 +117,59 @@ const Header = () => {
             className="md:hidden bg-[#1E1E1E] rounded-md mt-2 p-4"
           >
             <nav className="flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.id}
-                  href={link.href}
-                  className={`transition duration-200 ${
-                    location === link.href
-                      ? "text-white font-medium"
-                      : "text-gray-300 hover:text-white"
-                  }`}
-                  onClick={closeMenu}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              <Link
+                key="nav-home"
+                href="/"
+                className={`transition duration-200 ${
+                  location === "/"
+                    ? "text-white font-medium"
+                    : "text-gray-300 hover:text-white"
+                }`}
+                onClick={closeMenu}
+              >
+                Home
+              </Link>
+              {/* External Products link */}
               <a
                 href="https://shop.animeindia.org"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="transition duration-200 text-gray-300 hover:text-white font-medium text-center"
+                onClick={closeMenu}
+              >
+                Products
+              </a>
+              <Link
+                key="nav-events"
+                href="/events"
+                className={`transition duration-200 ${
+                  location === "/events"
+                    ? "text-white font-medium"
+                    : "text-gray-300 hover:text-white"
+                }`}
+                onClick={closeMenu}
+              >
+                Events
+              </Link>
+              <Link
+                key="nav-contact"
+                href="/contact"
+                className={`transition duration-200 ${
+                  location === "/contact"
+                    ? "text-white font-medium"
+                    : "text-gray-300 hover:text-white"
+                }`}
+                onClick={closeMenu}
+              >
+                Contact Us
+              </Link>
+              <Link
+                href="/business"
                 className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                 onClick={closeMenu}
               >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Shop</span>
-              </a>
+                <span>For Business</span>
+              </Link>
             </nav>
           </motion.div>
         )}

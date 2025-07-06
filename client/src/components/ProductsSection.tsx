@@ -9,14 +9,64 @@ import {
   Tag,
   TrendingUp,
   CircleArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
+
+// Import product images
+import actionFigures1 from "@assets/actionfigures.jpg";
+import kakashi from "@assets/kakashi.JPG";
+import tshirtBack from "@assets/tshirt-back.jpg";
+import tshirtFront from "@assets/tshirt-front.jpg";
+import hoodieBack from "@assets/hoodie-back.jpg";
+import hoodieFront from "@assets/hoodie-front.jpg";
+import beserk from "@assets/beserk.jpg";
+import vagabond from "@assets/vagabond.jpg";
 
 interface ProductsSectionProps {
   showFullCatalog?: boolean;
 }
 
 const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
+  // State to track current image index for each product
+  const [currentImageIndices, setCurrentImageIndices] = useState<{
+    [key: number]: number;
+  }>({});
+
+  const handleImageClick = (productIndex: number, totalImages: number) => {
+    setCurrentImageIndices((prev) => ({
+      ...prev,
+      [productIndex]: ((prev[productIndex] || 0) + 1) % totalImages,
+    }));
+  };
+
+  const handlePrevImage = (
+    productIndex: number,
+    totalImages: number,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    setCurrentImageIndices((prev) => ({
+      ...prev,
+      [productIndex]:
+        ((prev[productIndex] || 0) - 1 + totalImages) % totalImages,
+    }));
+  };
+
+  const handleNextImage = (
+    productIndex: number,
+    totalImages: number,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    setCurrentImageIndices((prev) => ({
+      ...prev,
+      [productIndex]: ((prev[productIndex] || 0) + 1) % totalImages,
+    }));
+  };
+
   const featuredProducts = [
     {
       title: "Action Figures",
@@ -24,7 +74,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         "Premium collectible action figures featuring your favorite anime characters",
       price: "₹1,299 - ₹4,599",
       badge: "New Arrivals",
-      images: ["src/assets/actionfigures.jpg", "src/assets/kakashi.JPG"],
+      images: [actionFigures1, kakashi],
     },
     {
       title: "Anime T-Shirts",
@@ -32,7 +82,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         "Stylish and comfortable t-shirts with exclusive anime designs",
       price: "₹599 - ₹999",
       badge: "Best Seller",
-      images: ["src/assets/tshirt-back.png", "src/assets/tshirt-front.png"],
+      images: [tshirtBack, tshirtFront],
     },
     {
       title: "Anime Hoodies",
@@ -40,7 +90,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         "Premium hoodies featuring iconic anime artwork and characters",
       price: "₹1,199 - ₹2,499",
       badge: "Limited Edition",
-      images: ["src/assets/hoodie-back.png", "src/assets/hoodie-front.png"],
+      images: [hoodieBack, hoodieFront],
     },
     {
       title: "Manga Collection",
@@ -48,27 +98,27 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
         "Complete manga series in premium quality print with special edition covers",
       price: "₹499 - ₹7,999",
       badge: "Popular",
-      images: ["src/assets/beserk.png", "src/assets/vagabond.png"],
+      images: [beserk, vagabond],
     },
   ];
 
-  const additionalProducts = [
-    {
-      title: "Anime Posters",
-      description:
-        "High-quality prints and posters to decorate your space with anime art",
-      price: "₹299 - ₹1,499",
-      badge: "New Collection",
-      images: [
-        "https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
-        "https://images.unsplash.com/photo-1540714323673-d74c355eb58e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
-      ],
-    },
-  ];
+  // const additionalProducts = [
+  //   {
+  //     title: "Anime Posters",
+  //     description:
+  //       "High-quality prints and posters to decorate your space with anime art",
+  //     price: "₹299 - ₹1,499",
+  //     badge: "New Collection",
+  //     images: [
+  //       "https://images.unsplash.com/photo-1543589067-47d16999c54f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+  //       "https://images.unsplash.com/photo-1540714323673-d74c355eb58e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80",
+  //     ],
+  //   },
+  // ];
 
   // Determine which products to show based on the showFullCatalog prop
   const products = showFullCatalog
-    ? [...featuredProducts, ...additionalProducts]
+    ? [...featuredProducts] //use spread operator to add additional products
     : featuredProducts;
 
   // Product categories for filters
@@ -191,7 +241,7 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
               className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden group hover:border-accent/30 transition-all duration-300 shadow-lg will-change-transform border border-accent/40"
             >
-              <div className="relative h-60 overflow-hidden">
+              <div className="relative h-60 sm:h-60 md:h-72 overflow-hidden">
                 {/* Badge */}
                 <div className="absolute top-3 left-3 z-20">
                   <div className="bg-accent/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
@@ -199,32 +249,72 @@ const ProductsSection = ({ showFullCatalog = false }: ProductsSectionProps) => {
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="absolute top-3 right-3 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {/* Favorite Actions */}
+                {/* <div className="absolute top-3 right-3 z-20 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <button className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white p-2 rounded-full shadow-lg transition-colors duration-300">
                     <Heart className="h-4 w-4" />
                   </button>
-                </div>
+                </div> */}
 
-                {/* Images with hover effect */}
-                <div className="relative h-full">
-                  <img
-                    src={product.images[0]}
-                    alt={`${product.title} 1`}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
-                  />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                {/* Images with slider functionality */}
+                <div
+                  className="relative h-full cursor-pointer"
+                  onClick={() => handleImageClick(index, product.images.length)}
+                >
+                  {/* Previous button */}
+                  <button
+                    onClick={(e) =>
+                      handlePrevImage(index, product.images.length, e)
+                    }
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+
+                  {/* Next button */}
+                  <button
+                    onClick={(e) =>
+                      handleNextImage(index, product.images.length, e)
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+
+                  {/* Current image with smooth transition */}
+                  <motion.div
+                    key={currentImageIndices[index] || 0}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    {/* Blurred background image */}
+                    <div className="absolute inset-0">
+                      <img
+                        src={product.images[currentImageIndices[index] || 0]}
+                        alt={`${product.title} background`}
+                        className="w-full h-full object-cover blur-sm opacity-20 scale-110"
+                      />
+                    </div>
+                    {/* Main product image */}
                     <img
-                      src={product.images[1]}
-                      alt={`${product.title} 2`}
+                      src={product.images[currentImageIndices[index] || 0]}
+                      alt={`${product.title} ${
+                        (currentImageIndices[index] || 0) + 1
+                      }`}
                       loading="lazy"
                       decoding="async"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="relative w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 will-change-transform"
                     />
+                  </motion.div>
+
+                  {/* Image counter */}
+                  <div className="absolute bottom-2 right-2 z-20 bg-black/50 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {(currentImageIndices[index] || 0) + 1} /{" "}
+                    {product.images.length}
                   </div>
-                  <div className="absolute inset-0 via-transparent to-transparent"></div>
                 </div>
               </div>
 

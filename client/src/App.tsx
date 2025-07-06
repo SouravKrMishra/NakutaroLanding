@@ -13,6 +13,7 @@ import ProductsPage from "@/pages/ProductsPage";
 import EventsPage from "@/pages/EventsPage";
 import ContactPage from "@/pages/ContactPage";
 import NotFoundPage from "@/pages/not-found";
+import BusinessPage from "@/pages/BusinessPage";
 
 // Shared components
 import Header from "@/components/Header";
@@ -51,6 +52,7 @@ function App() {
               <Route path="/products" component={ProductsPage} />
               <Route path="/events" component={EventsPage} />
               <Route path="/contact" component={ContactPage} />
+              <Route path="/business" component={BusinessPage} />
               <Route component={NotFoundPage} />
             </Switch>
           </main>

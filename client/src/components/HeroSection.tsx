@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
+import homeImage from "@assets/home.jpg";
 
 const HeroSection = () => {
   return (
@@ -200,7 +201,7 @@ const HeroSection = () => {
                 <div className="relative overflow-hidden rounded-lg p-1 bg-[#131313] border border-accent/30">
                   {/* Main image */}
                   <img
-                    src="src/assets/home.jpg"
+                    src={homeImage}
                     alt="Anime illustration"
                     loading="eager"
                     decoding="async"
