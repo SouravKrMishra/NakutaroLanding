@@ -1,4 +1,4 @@
-# Nakutaro Landing
+# Anime India Landing
 
 A modern landing page built with React, TypeScript, and Vite.
 
@@ -21,7 +21,7 @@ A modern landing page built with React, TypeScript, and Vite.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/NakutaroLanding.git
+git clone https://github.com/AnimeIndia-org/AnimeIndia-Home.git
 cd NakutaroLanding
 ```
 
@@ -50,10 +50,6 @@ npm run dev
 ```bash
 npm run build
 ```
-
-## Deployment
-
-The project includes a deployment script for AWS EC2. See `deploy.sh` for details.
 
 ## License
 

@@ -3,6 +3,19 @@ import { productService } from "../services/productService";
 import { createError } from "../middleware/errorHandler";
 import { ProductFilters, CategoryFilters } from "../types";
 
+export const getProductById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const product = await productService.getProductById(Number(req.params.id));
+    res.json(product);
+  } catch (error) {
+    next(createError("Failed to fetch product", 500));
+  }
+};
+
 export const getProducts = async (
   req: Request,
   res: Response,

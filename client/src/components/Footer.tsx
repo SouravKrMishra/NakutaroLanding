@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
+import { buildApiUrl } from "@/lib/api";
 
 const Footer = () => {
   const { toast } = useToast();
@@ -50,9 +51,12 @@ const Footer = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post("/api/newsletter/subscribe", {
-        email: email.trim(),
-      });
+      const response = await axios.post(
+        buildApiUrl("/api/newsletter/subscribe"),
+        {
+          email: email.trim(),
+        }
+      );
 
       if (response.data.success) {
         toast({

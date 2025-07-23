@@ -1,14 +1,10 @@
 import { Request, Response } from "express";
-
-// In a real application, you would store this in a database
-// For now, we'll use a simple in-memory array (this will reset when server restarts)
-const newsletterSubscribers: string[] = [];
+import { Newsletter } from "../../../shared/models/Newsletter";
 
 export const subscribeToNewsletter = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
-    // Validate email
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -16,7 +12,6 @@ export const subscribeToNewsletter = async (req: Request, res: Response) => {
       });
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -25,24 +20,31 @@ export const subscribeToNewsletter = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if email is already subscribed
-    if (newsletterSubscribers.includes(email.toLowerCase())) {
+    const existingSubscriber = await Newsletter.findOne({
+      email: email.toLowerCase(),
+      isActive: true,
+    });
+    if (existingSubscriber) {
       return res.status(409).json({
         success: false,
         message: "This email is already subscribed to our newsletter",
       });
     }
 
-    // Add email to subscribers list
-    newsletterSubscribers.push(email.toLowerCase());
+    // Create new newsletter subscription
+    const newSubscriber = new Newsletter({
+      email: email.toLowerCase(),
+      source: req.body.source || "footer",
+      metadata: {
+        userAgent: req.headers["user-agent"],
+        ip: req.ip,
+        timestamp: new Date(),
+      },
+    });
 
-    // In a real application, you would:
-    // 1. Save to database
-    // 2. Send welcome email
-    // 3. Integrate with email service (Mailchimp, SendGrid, etc.)
-    // 4. Add to CRM system
+    await newSubscriber.save();
 
-    console.log(`New newsletter subscription: ${email}`);
+    console.log(`New newsletter subscription: ${email} (saved to database)`);
 
     res.status(200).json({
       success: true,
@@ -59,15 +61,49 @@ export const subscribeToNewsletter = async (req: Request, res: Response) => {
 
 export const getSubscriberCount = async (req: Request, res: Response) => {
   try {
+    const count = await Newsletter.countDocuments({ isActive: true });
     res.status(200).json({
       success: true,
-      count: newsletterSubscribers.length,
+      count,
     });
   } catch (error) {
     console.error("Get subscriber count error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to get subscriber count",
+    });
+  }
+};
+
+export const getAllSubscribers = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 50, active = true } = req.query;
+
+    const query = active === "false" ? {} : { isActive: true };
+
+    const subscribers = await Newsletter.find(query)
+      .sort({ subscribedAt: -1 })
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
+      .select("-__v"); // Exclude version key
+
+    const total = await Newsletter.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      subscribers,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (error) {
+    console.error("Get all subscribers error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get subscribers",
     });
   }
 };

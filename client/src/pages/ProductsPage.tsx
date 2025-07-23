@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { buildApiUrl } from "@/lib/api";
 import {
   Filter,
   Grid,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProductSkeleton } from "@/components/ProductSkeleton";
 import { FeaturedProductsSkeleton } from "@/components/FeaturedProductsSkeleton";
+import { Link } from "wouter";
 
 type Category = {
   id: number;
@@ -108,7 +110,7 @@ const ProductsPage = () => {
     const fetchFeaturedProducts = async () => {
       setFeaturedLoading(true);
       try {
-        const response = await axios.get("/api/featured-products");
+        const response = await axios.get(buildApiUrl("/api/featured-products"));
         const mappedFeaturedProducts = response.data.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -132,7 +134,7 @@ const ProductsPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/api/categories", {
+        const response = await axios.get(buildApiUrl("/api/categories"), {
           params: {
             hide_empty: !includeOutOfStock,
           },
@@ -175,7 +177,7 @@ const ProductsPage = () => {
             break;
         }
 
-        const response = await axios.get("/api/products", {
+        const response = await axios.get(buildApiUrl("/api/products"), {
           params: {
             page: currentPage,
             per_page: pageSize,
@@ -352,23 +354,25 @@ const ProductsPage = () => {
                   key={product.id}
                   className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                 >
-                  <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
-                    />
-                    {product.isNew && (
-                      <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-                        NEW
-                      </div>
-                    )}
-                    {product.onSale && (
-                      <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
-                        SALE
-                      </div>
-                    )}
-                  </div>
+                  <Link href={`/product/${product.id}`}>
+                    <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
+                      />
+                      {product.isNew && (
+                        <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                          NEW
+                        </div>
+                      )}
+                      {product.onSale && (
+                        <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
+                          SALE
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                   <div className="p-3 sm:p-4 flex flex-col flex-grow">
                     <div className="flex-grow">
                       <div className="flex flex-col items-start mb-2">
@@ -649,23 +653,25 @@ const ProductsPage = () => {
                           key={product.id}
                           className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                         >
-                          <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
-                            />
-                            {product.isNew && (
-                              <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-                                NEW
-                              </div>
-                            )}
-                            {product.onSale && (
-                              <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
-                                SALE
-                              </div>
-                            )}
-                          </div>
+                          <Link href={`/product/${product.id}`}>
+                            <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
+                              />
+                              {product.isNew && (
+                                <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                                  NEW
+                                </div>
+                              )}
+                              {product.onSale && (
+                                <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
+                                  SALE
+                                </div>
+                              )}
+                            </div>
+                          </Link>
                           <div className="p-3 sm:p-4 flex flex-col flex-grow">
                             <div className="flex-grow">
                               <div className="flex flex-col items-start mb-2">
@@ -707,7 +713,10 @@ const ProductsPage = () => {
                           key={product.id}
                           className="flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
                         >
-                          <div className="md:w-1/4 h-48 md:h-auto overflow-hidden relative">
+                          <Link
+                            href={`/product/${product.id}`}
+                            className="md:w-1/4 h-48 md:h-auto overflow-hidden relative cursor-pointer"
+                          >
                             <img
                               src={product.image}
                               alt={product.name}
@@ -723,7 +732,7 @@ const ProductsPage = () => {
                                 SALE
                               </div>
                             )}
-                          </div>
+                          </Link>
                           <div className="md:w-3/4 p-6 flex flex-col">
                             <div className="flex flex-col items-start mb-2">
                               <h3 className="text-xl font-semibold text-white group-hover:text-accent transition-colors duration-300 mb-1">

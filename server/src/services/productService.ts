@@ -112,6 +112,13 @@ class ProductService {
     });
     return response.data;
   }
+
+  async getProductById(id: number): Promise<Product> {
+    const response = await axios.get(`${this.baseUrl}/products/${id}`, {
+      auth: this.auth,
+    });
+    return response.data;
+  }
 }
 
 export const productService = new ProductService();

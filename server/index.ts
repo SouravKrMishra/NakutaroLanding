@@ -1,10 +1,11 @@
 import express from "express";
 import { createServer } from "http";
-import { config } from "./src/config";
+import { config } from "./src/config/index";
 import { logger } from "./src/middleware/logger";
 import { errorHandler } from "./src/middleware/errorHandler";
-import apiRoutes from "./src/routes";
+import apiRoutes from "./src/routes/index";
 import { setupVite, serveStatic } from "./vite";
+import connectDB from "../shared/db";
 
 const app = express();
 
@@ -20,6 +21,9 @@ app.use("/api", apiRoutes);
 app.use(errorHandler);
 
 (async () => {
+  // Connect to MongoDB
+  await connectDB();
+
   const server = createServer(app);
 
   if (config.nodeEnv === "development") {
