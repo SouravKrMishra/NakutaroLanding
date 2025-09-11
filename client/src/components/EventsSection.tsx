@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import {
   Calendar,
   MapPin,
@@ -10,8 +10,8 @@ import {
   Users,
   Medal,
 } from "lucide-react";
-import { GalleryPopup } from "./ui/gallery-popup";
-import { EventPopup } from "./ui/event-popup";
+import { GalleryPopup } from "./ui/gallery-popup.tsx";
+import { EventPopup } from "./ui/event-popup.tsx";
 
 interface Event {
   title: string;

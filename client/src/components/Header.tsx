@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Menu, X, ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  X,
+  ShoppingCart,
+  LogIn,
+  Building2,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/lib/AuthContext.tsx";
+import { useCart } from "@/lib/CartContext.tsx";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { itemCount } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -82,13 +93,55 @@ const Header = () => {
             </Link>
           </nav>
 
-          <div className="hidden md:block">
-            <Link
-              href="/business"
-              className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
-            >
-              <span>For Business</span>
-            </Link>
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Cart Icon - Only show for authenticated users */}
+            {isAuthenticated && (
+              <Link
+                href="/cart"
+                className="relative p-2 text-gray-300 hover:text-white transition-colors duration-200"
+              >
+                <ShoppingCart className="w-6 h-6" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Dashboard</span>
+              </Link>
+            ) : location === "/business" || location === "/products" ? (
+              <div className="flex items-center space-x-2">
+                <Link
+                  href={`/login?from=${location}`}
+                  className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Login</span>
+                </Link>
+                <Link
+                  href={`/register?from=${location}`}
+                  className="border border-accent text-white hover:bg-accent hover:text-white px-4 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>Register</span>
+                </Link>
+              </div>
+            ) : (
+              <Link
+                href="/business"
+                className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
+              >
+                <span>For Business</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -117,6 +170,18 @@ const Header = () => {
             className="md:hidden bg-[#1E1E1E] rounded-md mt-2 p-4"
           >
             <nav className="flex flex-col space-y-4">
+              {/* Cart Link for Mobile - Only show for authenticated users */}
+              {isAuthenticated && (
+                <Link
+                  href="/cart"
+                  className="flex items-center justify-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200"
+                  onClick={closeMenu}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>Cart ({itemCount})</span>
+                </Link>
+              )}
+
               <Link
                 key="nav-home"
                 href="/"
@@ -163,13 +228,43 @@ const Header = () => {
               >
                 Contact Us
               </Link>
-              <Link
-                href="/business"
-                className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
-                onClick={closeMenu}
-              >
-                <span>For Business</span>
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                  onClick={closeMenu}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Link>
+              ) : location === "/business" || location === "/products" ? (
+                <div className="flex flex-col space-y-2">
+                  <Link
+                    href={`/login?from=${location}`}
+                    className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                    onClick={closeMenu}
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Login</span>
+                  </Link>
+                  <Link
+                    href={`/register?from=${location}`}
+                    className="border border-accent text-white hover:bg-accent hover:text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                    onClick={closeMenu}
+                  >
+                    <Building2 className="w-4 h-4" />
+                    <span>Register</span>
+                  </Link>
+                </div>
+              ) : (
+                <Link
+                  href="/business"
+                  className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
+                  onClick={closeMenu}
+                >
+                  <span>For Business</span>
+                </Link>
+              )}
             </nav>
           </motion.div>
         )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button.tsx";
+import { cn } from "@/lib/utils.ts";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ScrollToTop = () => {

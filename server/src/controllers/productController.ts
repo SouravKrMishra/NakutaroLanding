@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { productService } from "../services/productService";
-import { createError } from "../middleware/errorHandler";
-import { ProductFilters, CategoryFilters } from "../types";
+import { productService } from "../services/productService.ts";
+import { createError } from "../middleware/errorHandler.ts";
+import { ProductFilters, CategoryFilters } from "../types/index.ts";
 
 export const getProductById = async (
   req: Request,

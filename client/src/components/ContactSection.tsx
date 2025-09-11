@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
-import { useToast } from "@/hooks/use-toast";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
+import { useToast } from "@/hooks/use-toast.ts";
 import {
   MapPin,
   Mail,
@@ -22,10 +22,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { Button } from "@/components/ui/button.tsx";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -106,7 +106,7 @@ const ContactSection = () => {
       title: "Working Hours",
       content: (
         <>
-          Monday - Saturday: 10AM - 7PM
+          Monday - Friday: 10AM - 6PM
           <br />
           Sunday: By Appointment Only
         </>
@@ -470,53 +470,27 @@ const ContactSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="relative w-full h-64 bg-[#121212]">
+                <div className="relative w-full h-80 bg-[#121212]">
                   {/* Real Google Map Integration */}
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3505.8940244320237!2d77.16067357440605!3d28.51019077565602!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d1e13c12fc77b%3A0xa66e9879f6c19cfa!2sRajpur%20Khurd%20Extension%2C%20Chhatarpur%2C%20New%20Delhi%2C%20Delhi%20110068!5e0!3m2!1sen!2sin!4v1683912345678!5m2!1sen!2sin"
+                    src="https://www.google.com/maps?q=Anime+India,+Gr.+Fl.,+129,+Rajpur+Khurd+Extension,+Chhatarpur,+New+Delhi,+Delhi+110068&z=16&output=embed"
                     width="100%"
-                    height="100%"
+                    height="325"
                     style={{ border: 0 }}
                     allowFullScreen={true}
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Google Maps location of Anime India office"
+                    title="Anime India Headquarters - Gr. Fl., 129, Rajpur Khurd Extension, Chhatarpur, New Delhi"
                     className="filter brightness-[0.85] contrast-[1.1]"
                   ></iframe>
 
                   {/* Overlay for branding */}
-                  <div className="absolute bottom-3 right-3 bg-[#121212]/90 px-3 py-2 rounded-md text-xs text-gray-300 border border-accent/20 shadow-md backdrop-blur-sm">
+                  <div className="absolute bottom-3 right-12 bg-[#121212]/90 px-3 py-2 rounded-md text-xs text-gray-300 border border-accent/20 shadow-md backdrop-blur-sm">
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-accent mr-1" />
                       <span>Anime India HQ</span>
                     </div>
                   </div>
-
-                  {/* Interactive location marker */}
-                  <motion.div
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                    initial={{ scale: 0 }}
-                    animate={{
-                      scale: [0.9, 1.1, 0.9],
-                      opacity: [0.7, 1, 0.7],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <div className="w-16 h-16 rounded-full border-4 border-accent opacity-50"></div>
-                  </motion.div>
-                </div>
-
-                {/* Location details card */}
-                <div className="absolute bottom-4 left-4 text-white bg-[#121212]/90 px-3 py-2 rounded-lg shadow-lg border border-accent/20 text-sm max-w-[200px] backdrop-blur-sm">
-                  <p className="font-medium flex items-center">
-                    <span>Chattarpur</span>
-                    <span className="inline-block w-2 h-2 bg-accent rounded-full ml-2"></span>
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">DLF Farms</p>
                 </div>
               </motion.div>
 

@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
-import EventsSection from "@/components/EventsSection";
-import FAQSection from "@/components/FAQSection";
-import CTASection from "@/components/CTASection";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
+import EventsSection from "@/components/EventsSection.tsx";
+import FAQSection from "@/components/FAQSection.tsx";
+import CTASection from "@/components/CTASection.tsx";
 
 const EventsPage = () => {
   // Reset scroll position when page loads
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   return (
@@ -30,8 +30,9 @@ const EventsPage = () => {
             variants={fadeIn("up", "tween", 0.2, 1)}
             className="text-gray-400 text-lg"
           >
-            Join us at our upcoming anime conventions, cosplay competitions, and exclusive 
-            screenings. Experience the vibrant community of anime enthusiasts across India.
+            Join us at our upcoming anime conventions, cosplay competitions, and
+            exclusive screenings. Experience the vibrant community of anime
+            enthusiasts across India.
           </motion.p>
         </motion.div>
       </div>

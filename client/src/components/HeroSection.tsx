@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import homeImage from "@assets/home.jpg";
 
 const HeroSection = () => {
@@ -238,18 +238,18 @@ const HeroSection = () => {
               />
 
               {/* Floating badge */}
-              <div className="absolute -right-3 top-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform rotate-3 animate-bounce-slow">
+              {/* <div className="absolute -right-3 top-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform rotate-3 animate-bounce-slow">
                 <span className="text-accent text-xs font-medium">
                   Top Collection
                 </span>
-              </div>
+              </div> */}
 
               {/* Floating badge */}
-              <div className="absolute -left-3 bottom-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform -rotate-3 animate-bounce-slow animation-delay-1000">
+              {/* <div className="absolute -left-3 bottom-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform -rotate-3 animate-bounce-slow animation-delay-1000">
                 <span className="text-accent text-xs font-medium">
                   Limited Edition
                 </span>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </motion.div>

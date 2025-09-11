@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
-import { fadeIn } from '@/lib/animations';
-import { ShoppingBag, Calendar, Users, Mail } from 'lucide-react';
+import { motion } from "framer-motion";
+import { fadeIn } from "@/lib/animations.ts";
+import { ShoppingBag, Calendar, Users, Mail } from "lucide-react";
 
 const CTASection = () => {
   return (
@@ -8,42 +8,42 @@ const CTASection = () => {
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
-        
+
         {/* Decorative elements */}
-        <motion.div 
+        <motion.div
           className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[120px] opacity-10"
-          animate={{ 
+          animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.05, 0.1, 0.05]
+            opacity: [0.05, 0.1, 0.05],
           }}
-          transition={{ 
-            duration: 8, 
-            repeat: Infinity,
-            ease: "easeInOut" 
-          }}
-        />
-        
-        <motion.div 
-          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
-          animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.05, 0.08, 0.05]
-          }}
-          transition={{ 
-            duration: 10, 
+          transition={{
+            duration: 8,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: 1
+          }}
+        />
+
+        <motion.div
+          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.05, 0.08, 0.05],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
           }}
         />
       </div>
-      
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="relative bg-[#0C0C0C]/70 backdrop-blur-lg rounded-2xl p-10 lg:p-14 shadow-2xl border border-accent/30 overflow-hidden max-w-5xl mx-auto">
           {/* Accent glow */}
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/10 rounded-full filter blur-3xl"></div>
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full filter blur-3xl"></div>
-          
+
           {/* Content */}
           <div className="relative z-10">
             {/* Heading section */}
@@ -55,72 +55,87 @@ const CTASection = () => {
                 transition={{ duration: 0.6, ease: "backOut" }}
                 className="inline-block bg-gradient-to-r from-white/10 to-white/5 px-4 py-1.5 rounded-full border border-white/20 mb-6"
               >
-                <span className="text-white font-medium text-sm">JOIN OUR COMMUNITY</span>
+                <span className="text-white font-medium text-sm">
+                  JOIN OUR COMMUNITY
+                </span>
               </motion.div>
-              
-              <motion.h2 
+
+              <motion.h2
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true }}
-                variants={fadeIn('up', 'tween', 0.1, 1)}
+                variants={fadeIn("up", "tween", 0.1, 1)}
                 className="text-3xl md:text-5xl font-bold mb-6 text-white"
               >
                 Your <span className="text-accent">Anime Adventure</span>
                 <br />
                 Starts Here!
               </motion.h2>
-              
-              <motion.p 
+
+              <motion.p
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true }}
-                variants={fadeIn('up', 'tween', 0.2, 1)}
+                variants={fadeIn("up", "tween", 0.2, 1)}
                 className="text-xl text-gray-300 max-w-2xl mx-auto"
               >
-                Discover premium anime merchandise and connect with fellow 
-                enthusiasts across India. From action figures to exclusive apparel!
+                Discover premium anime merchandise and connect with fellow
+                enthusiasts across India. From action figures to exclusive
+                apparel!
               </motion.p>
             </div>
-            
+
             {/* Features grid */}
-            <motion.div 
+            <motion.div
               initial="hidden"
               whileInView="show"
               viewport={{ once: true }}
-              variants={fadeIn('up', 'tween', 0.3, 1)}
+              variants={fadeIn("up", "tween", 0.3, 1)}
               className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
             >
               <div className="bg-[#181818]/70 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-center">
                 <div className="bg-accent/20 w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center">
                   <ShoppingBag className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Premium Products</h3>
-                <p className="text-gray-400">Authentic anime merch, premium quality, best prices</p>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Premium Products
+                </h3>
+                <p className="text-gray-400">
+                  Authentic anime merch, premium quality, best prices
+                </p>
               </div>
-              
+
               <div className="bg-[#181818]/70 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-center">
                 <div className="bg-accent/20 w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center">
                   <Calendar className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Exciting Events</h3>
-                <p className="text-gray-400">Join conventions, meet-ups, and exclusive fan gatherings</p>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Exciting Events
+                </h3>
+                <p className="text-gray-400">
+                  Join conventions, meet-ups, and exclusive fan gatherings
+                </p>
               </div>
-              
+
               <div className="bg-[#181818]/70 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-center">
                 <div className="bg-accent/20 w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center">
                   <Users className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Vibrant Community</h3>
-                <p className="text-gray-400">Connect with passionate anime fans across the country</p>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  Vibrant Community
+                </h3>
+                <p className="text-gray-400">
+                  Connect with passionate anime fans across the country
+                </p>
               </div>
             </motion.div>
-            
+
             {/* CTA buttons */}
-            <motion.div 
+            <motion.div
               initial="hidden"
               whileInView="show"
               viewport={{ once: true }}
-              variants={fadeIn('up', 'tween', 0.4, 1)}
+              variants={fadeIn("up", "tween", 0.4, 1)}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <a
@@ -137,7 +152,7 @@ const CTASection = () => {
                   Shop Now
                 </span>
               </a>
-              
+
               <a
                 href="#contact"
                 className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg border border-white/30 bg-[#181818]/70 px-8 py-3.5 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105 w-full sm:w-auto"

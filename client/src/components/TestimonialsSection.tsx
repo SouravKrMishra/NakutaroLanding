@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import {
   ChevronLeft,
   ChevronRight,

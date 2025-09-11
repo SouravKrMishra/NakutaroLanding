@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import { useRoute } from "wouter";
 import {
   Star,
@@ -16,9 +16,14 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
 import axios from "axios";
-import { buildApiUrl } from "@/lib/api";
+import { buildApiUrl } from "@/lib/api.ts";
+import { useWishlist } from "@/lib/WishlistContext.tsx";
+import { useCart } from "@/lib/CartContext.tsx";
+import { useAuth } from "@/lib/AuthContext.tsx";
+import { useToast } from "@/hooks/use-toast.ts";
 
 type Product = {
   id: number;
@@ -35,6 +40,7 @@ type Product = {
   sizes?: string[];
   colors?: string[];
   images?: { src: string }[];
+  variations?: any[]; // WooCommerce variations
   stock_status?: string;
   deliveryInfo?: string;
   returnPolicy?: string;
@@ -56,26 +62,50 @@ const ProductDetailPage = () => {
     "description" | "specifications" | "reviews"
   >("description");
   const [activeImage, setActiveImage] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState<{
+    [key: string]: string;
+  }>({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [colorImages, setColorImages] = useState<{ [key: string]: string }>({});
+
+  // Wishlist functionality
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  const fetchProduct = async () => {
+    if (!productId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(
+        buildApiUrl(`/api/products/${productId}`)
+      );
+      setProduct(response.data);
+    } catch (err) {
+      setError("Failed to fetch product details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!productId) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get(
-          buildApiUrl(`/api/products/${productId}`)
-        );
-        setProduct(response.data);
-      } catch (err) {
-        setError("Failed to fetch product details.");
-      }
-      setLoading(false);
-    };
-
     fetchProduct();
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [productId]);
+
+  // Reset image index when product changes
+  useEffect(() => {
+    if (product) {
+      setCurrentImageIndex(0);
+      setActiveImage(0);
+      setSelectedVariants({});
+      setImageLoading(false);
+      setColorImages({});
+    }
+  }, [product]);
 
   if (loading) {
     return (
@@ -134,6 +164,336 @@ const ProductDetailPage = () => {
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
+  const handleVariantChange = (attributeName: string, option: string) => {
+    setSelectedVariants((prev) => ({
+      ...prev,
+      [attributeName]: option,
+    }));
+
+    // Handle color change to update product image
+    if (attributeName.toLowerCase().includes("color") && product?.images) {
+      setImageLoading(true);
+
+      // First, try to find image from variations
+      const variationImage = findImageFromVariations(option);
+      if (variationImage) {
+        setColorImages((prev) => ({ ...prev, [option]: variationImage }));
+        setCurrentImageIndex(-1);
+        setActiveImage(-1);
+      } else {
+        // Try to find an image that matches the selected color
+        const colorImageIndex = findImageForColor(option, product.images);
+
+        if (colorImageIndex !== -1 && colorImageIndex !== currentImageIndex) {
+          setCurrentImageIndex(colorImageIndex);
+          setActiveImage(colorImageIndex);
+        } else {
+          // Try to generate a color-specific image URL
+          if (product.images && product.images.length > 0) {
+            const baseImageUrl = product.images[0].src;
+            const colorImageUrl = generateColorImageUrl(baseImageUrl, option);
+            setColorImages((prev) => ({ ...prev, [option]: colorImageUrl }));
+            setCurrentImageIndex(-1);
+            setActiveImage(-1);
+          } else {
+            // Fallback: cycle to next image
+            const nextIndex = (currentImageIndex + 1) % product.images.length;
+            setCurrentImageIndex(nextIndex);
+            setActiveImage(nextIndex);
+          }
+        }
+      }
+
+      // Reset loading state after a short delay
+      setTimeout(() => setImageLoading(false), 300);
+    }
+  };
+
+  // Function to get a fallback index for colors when no filename match is found
+  const getColorIndex = (color: string): number => {
+    const colorOrder = [
+      "black",
+      "white",
+      "red",
+      "blue",
+      "green",
+      "yellow",
+      "pink",
+      "purple",
+      "orange",
+      "gray",
+      "brown",
+      "navy",
+      "beige",
+      "cream",
+      "maroon",
+      "teal",
+    ];
+    return colorOrder.indexOf(color);
+  };
+
+  // Function to get color value for color swatches
+  const getColorValue = (colorName: string): string => {
+    const colorMap: { [key: string]: string } = {
+      red: "#ef4444",
+      blue: "#3b82f6",
+      green: "#22c55e",
+      black: "#000000",
+      white: "#ffffff",
+      yellow: "#eab308",
+      pink: "#ec4899",
+      purple: "#a855f7",
+      orange: "#f97316",
+      gray: "#6b7280",
+      grey: "#6b7280",
+      navy: "#1e3a8a",
+      brown: "#a3a3a3",
+      beige: "#f5f5dc",
+      cream: "#f5f5dc",
+      maroon: "#800000",
+      teal: "#14b8a6",
+      cyan: "#06b6d4",
+      lime: "#84cc16",
+      indigo: "#6366f1",
+      violet: "#8b5cf6",
+      magenta: "#d946ef",
+      coral: "#ff7f50",
+      gold: "#fbbf24",
+      silver: "#9ca3af",
+      bronze: "#cd7f32",
+      copper: "#b87333",
+    };
+
+    const normalizedColor = colorName.toLowerCase().trim();
+    return colorMap[normalizedColor] || "#6b7280"; // Default to gray if color not found
+  };
+
+  // Function to generate color-specific image URL
+  const generateColorImageUrl = (
+    baseImageUrl: string,
+    color: string
+  ): string => {
+    const colorLower = color.toLowerCase().trim();
+    const baseUrl = baseImageUrl.split("?")[0]; // Remove query parameters
+
+    // Try different patterns
+    const patterns = [
+      `${baseUrl}?color=${colorLower}`,
+      `${baseUrl}?variant=${colorLower}`,
+      `${baseUrl}_${colorLower}`,
+      `${baseUrl}-${colorLower}`,
+      baseUrl.replace(/(\.[^.]+)$/, `_${colorLower}$1`),
+      baseUrl.replace(/(\.[^.]+)$/, `-${colorLower}$1`),
+    ];
+
+    return patterns[0]; // Return the first pattern as default
+  };
+
+  // Function to find image from variations
+  const findImageFromVariations = (color: string): string | null => {
+    if (!product?.variations) return null;
+
+    const colorLower = color.toLowerCase().trim();
+
+    for (const variation of product.variations) {
+      // Check if this variation has the selected color
+      if (variation.attributes) {
+        for (const attr of variation.attributes) {
+          if (
+            attr.name.toLowerCase().includes("color") &&
+            attr.option.toLowerCase().includes(colorLower)
+          ) {
+            // Check if variation has images
+            if (variation.image && variation.image.src) {
+              return variation.image.src;
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // Function to find the best matching image for a color
+  const findImageForColor = (
+    color: string,
+    images: { src: string }[]
+  ): number => {
+    if (!images || images.length === 0) return 0;
+
+    const colorLower = color.toLowerCase().trim();
+
+    // First, try to find an image with the exact color in the filename
+    for (let i = 0; i < images.length; i++) {
+      const imageSrc = images[i].src.toLowerCase();
+      if (imageSrc.includes(colorLower)) {
+        return i;
+      }
+    }
+
+    // If no exact match, try common color variations and synonyms
+    const colorVariations: { [key: string]: string[] } = {
+      red: ["red", "crimson", "scarlet", "burgundy", "cherry", "ruby"],
+      blue: ["blue", "navy", "royal", "sky", "azure", "cobalt"],
+      green: ["green", "emerald", "forest", "lime", "mint", "sage"],
+      black: ["black", "dark", "charcoal", "ebony", "jet", "onyx"],
+      white: ["white", "cream", "ivory", "pearl", "snow", "bone"],
+      yellow: ["yellow", "gold", "amber", "lemon", "canary", "mustard"],
+      pink: ["pink", "rose", "magenta", "coral", "salmon", "fuchsia"],
+      purple: ["purple", "violet", "lavender", "plum", "mauve", "lilac"],
+      orange: ["orange", "tangerine", "peach", "apricot", "pumpkin", "carrot"],
+      gray: ["gray", "grey", "silver", "ash", "slate", "pewter"],
+      brown: ["brown", "tan", "beige", "coffee", "chocolate", "mocha"],
+    };
+
+    const variations = colorVariations[colorLower] || [colorLower];
+
+    // Try each variation
+    for (const variation of variations) {
+      for (let i = 0; i < images.length; i++) {
+        const imageSrc = images[i].src.toLowerCase();
+        if (imageSrc.includes(variation)) {
+          return i;
+        }
+      }
+    }
+
+    // Try partial matches (e.g., "dark blue" should match "blue")
+    for (let i = 0; i < images.length; i++) {
+      const imageSrc = images[i].src.toLowerCase();
+      if (
+        colorLower
+          .split(" ")
+          .some((word) => word.length > 2 && imageSrc.includes(word))
+      ) {
+        return i;
+      }
+    }
+
+    // If still no match, try to cycle through images based on color selection
+    const colorIndex = getColorIndex(colorLower);
+    if (colorIndex !== -1 && colorIndex < images.length) {
+      return colorIndex;
+    }
+
+    // If still no match, return the first image
+    return 0;
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!product) return;
+
+    try {
+      if (isInWishlist(product.id)) {
+        await removeFromWishlist(product.id);
+        toast({
+          title: "Removed from Wishlist",
+          description: `${product.name} has been removed from your wishlist.`,
+          variant: "destructive",
+        });
+      } else {
+        await addToWishlist({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.images?.[0]?.src || "",
+          category: product.categories?.[0]?.name || "Uncategorized",
+          rating: parseFloat(product.average_rating) || 0,
+          reviews: product.rating_count || 0,
+        });
+        toast({
+          title: "Added to Wishlist ❤️",
+          description: `${product.name} has been added to your wishlist.`,
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if all required variants are selected
+    const requiredAttributes =
+      product.attributes?.filter(
+        (attr) =>
+          attr.name.toLowerCase().includes("size") ||
+          attr.name.toLowerCase().includes("color") ||
+          attr.name.toLowerCase().includes("variant")
+      ) || [];
+
+    const missingVariants = requiredAttributes.filter(
+      (attr) => !selectedVariants[attr.name]
+    );
+
+    if (missingVariants.length > 0) {
+      toast({
+        title: "Please Select Options",
+        description: `Please select ${missingVariants
+          .map((attr) => attr.name)
+          .join(", ")} before adding to cart.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create a unique cart item ID that includes variants
+      const variantString = Object.entries(selectedVariants)
+        .map(([key, value]) => `${key}:${value}`)
+        .join("|");
+      const cartItemId = `${product.id}_${variantString}`;
+
+      await addToCart(
+        {
+          id: cartItemId,
+          productId: product.id, // Keep original product ID for reference
+          name: product.name,
+          price: product.price,
+          image: product.images?.[0]?.src || "",
+          category: product.categories?.[0]?.name || "Uncategorized",
+          inStock: product.stock_status === "instock",
+          variants: selectedVariants, // Include selected variants
+        },
+        quantity
+      );
+
+      const variantText = Object.entries(selectedVariants)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(", ");
+
+      toast({
+        title: "Added to Cart 🛒",
+        description: `${quantity}x ${product.name}${
+          variantText ? ` (${variantText})` : ""
+        } has been added to your cart.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="product-detail-page pt-28 pb-16 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -154,11 +514,58 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div>
             <div className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] h-80 sm:h-96 md:h-[450px] lg:h-[500px] mb-4 relative">
+              {imageLoading && (
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+                  <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
               <img
-                src={images?.[activeImage]?.src || ""}
+                src={
+                  currentImageIndex === -1 && selectedVariants
+                    ? colorImages[
+                        Object.entries(selectedVariants).find(([key]) =>
+                          key.toLowerCase().includes("color")
+                        )?.[1] || ""
+                      ] ||
+                      images?.[0]?.src ||
+                      ""
+                    : images?.[currentImageIndex]?.src || ""
+                }
                 alt={name}
-                className="w-full h-full object-contain"
+                className={`w-full h-full object-contain transition-all duration-300 ${
+                  imageLoading ? "opacity-70" : "opacity-100"
+                }`}
+                onError={() => {
+                  // Fallback to original image if color-specific image fails
+                  if (currentImageIndex === -1) {
+                    setCurrentImageIndex(0);
+                    setActiveImage(0);
+                  }
+                }}
               />
+              {/* Color indicator overlay */}
+              {selectedVariants &&
+                Object.keys(selectedVariants).some((key) =>
+                  key.toLowerCase().includes("color")
+                ) && (
+                  <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2">
+                    <span
+                      className="w-4 h-4 rounded-full border border-white/30"
+                      style={{
+                        backgroundColor: getColorValue(
+                          Object.entries(selectedVariants).find(([key]) =>
+                            key.toLowerCase().includes("color")
+                          )?.[1] || ""
+                        ),
+                      }}
+                    />
+                    <span className="text-white text-sm font-medium">
+                      {Object.entries(selectedVariants).find(([key]) =>
+                        key.toLowerCase().includes("color")
+                      )?.[1] || ""}
+                    </span>
+                  </div>
+                )}
             </div>
 
             {images && images.length > 1 && (
@@ -166,9 +573,12 @@ const ProductDetailPage = () => {
                 {images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setActiveImage(index)}
+                    onClick={() => {
+                      setActiveImage(index);
+                      setCurrentImageIndex(index);
+                    }}
                     className={`bg-[#1E1E1E] rounded-md overflow-hidden border h-20 sm:h-24 hover:border-accent transition-colors ${
-                      activeImage === index
+                      currentImageIndex === index
                         ? "border-accent"
                         : "border-[#2D2D2D]"
                     }`}
@@ -229,16 +639,44 @@ const ProductDetailPage = () => {
                 <div className="mb-4" key={attr.name}>
                   <label className="block text-sm font-medium mb-2">
                     {attr.name}
+                    {attr.name.toLowerCase().includes("size") ||
+                    attr.name.toLowerCase().includes("color") ||
+                    attr.name.toLowerCase().includes("variant") ? (
+                      <span className="text-red-500 ml-1">*</span>
+                    ) : null}
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {attr.options.map((option) => (
-                      <button
-                        key={option}
-                        className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors border-[#2D2D2D] text-gray-300 hover:border-gray-400`}
-                      >
-                        {option}
-                      </button>
-                    ))}
+                    {attr.options.map((option) => {
+                      const isSelected = selectedVariants[attr.name] === option;
+                      const isColorAttribute = attr.name
+                        .toLowerCase()
+                        .includes("color");
+
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => handleVariantChange(attr.name, option)}
+                          className={`px-4 py-2 border rounded-md text-sm font-medium transition-all duration-300 ${
+                            isSelected
+                              ? "border-accent bg-accent/10 text-accent shadow-lg shadow-accent/20"
+                              : "border-[#2D2D2D] text-gray-300 hover:border-gray-400 hover:bg-[#2D2D2D]/50"
+                          }`}
+                        >
+                          {isColorAttribute && (
+                            <span
+                              className="inline-block w-4 h-4 rounded-full mr-2 border border-gray-600"
+                              style={{
+                                backgroundColor: getColorValue(option),
+                                boxShadow: isSelected
+                                  ? "0 0 0 2px rgba(59, 130, 246, 0.5)"
+                                  : "none",
+                              }}
+                            />
+                          )}
+                          {option}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -265,16 +703,29 @@ const ProductDetailPage = () => {
                 </div>
               </div>
               <div className="flex flex-wrap gap-4">
-                <Button className="flex-1 bg-accent hover:bg-accent/90 text-white font-medium py-2 h-12 rounded-md transition-all duration-300">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={product.stock_status !== "instock"}
+                  className="flex-1 bg-accent hover:bg-accent/90 text-white font-medium py-2 h-12 rounded-md transition-all duration-300"
+                >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Add to Cart
                 </Button>
 
                 <Button
-                  className="w-12 h-12 bg-[#1E1E1E] border border-[#2D2D2D] hover:border-accent text-gray-300 rounded-md flex items-center justify-center transition-colors"
+                  onClick={handleWishlistToggle}
+                  className={`w-12 h-12 rounded-md flex items-center justify-center transition-all duration-300 ${
+                    isInWishlist(product.id)
+                      ? "bg-red-500 border border-red-500 text-white hover:bg-red-600"
+                      : "bg-[#1E1E1E] border border-[#2D2D2D] hover:border-red-500 hover:bg-red-500/10 text-gray-300 hover:text-red-500"
+                  }`}
                   variant="outline"
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart
+                    className={`h-5 w-5 ${
+                      isInWishlist(product.id) ? "fill-current" : ""
+                    }`}
+                  />
                 </Button>
 
                 <Button

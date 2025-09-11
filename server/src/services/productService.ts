@@ -1,16 +1,17 @@
 import axios from "axios";
+import { config } from "../config/index.ts";
 import {
   Product,
   ProductFilters,
   ProductResponse,
   CategoryFilters,
-} from "../types";
+} from "../types/index.ts";
 
 class ProductService {
-  private readonly baseUrl = "https://shop.animeindia.org/wp-json/wc/v3";
+  private readonly baseUrl = config.wooCommerce.baseUrl;
   private readonly auth = {
-    username: process.env.CONSUMER_KEY!,
-    password: process.env.CONSUMER_SECRET!,
+    username: config.wooCommerce.consumerKey,
+    password: config.wooCommerce.consumerSecret,
   };
 
   async getProducts(filters: ProductFilters): Promise<ProductResponse> {

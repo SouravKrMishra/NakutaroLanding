@@ -4,7 +4,7 @@ import {
   getFeaturedProducts,
   getCategories,
   getProductById,
-} from "../controllers/productController";
+} from "../controllers/productController.ts";
 
 const router = Router();
 

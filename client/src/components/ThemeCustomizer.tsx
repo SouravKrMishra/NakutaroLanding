@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useTheme } from "../lib/ThemeContext";
-import { Button } from "../components/ui/button";
+import { useTheme } from "../lib/ThemeContext.tsx";
+import { Button } from "../components/ui/button.tsx";
 import { Settings } from "lucide-react";
 
 interface ThemeOption {
@@ -12,7 +12,7 @@ interface ThemeOption {
 const themeOptions: ThemeOption[] = [
   { id: "default", name: "Red", color: "#9c181d" },
   { id: "blue", name: "Blue", color: "#007AFF" },
-  { id: "pink", name: "Pink", color: "#FF2D55" },
+  { id: "pink", name: "Pink", color: "#FF2E96" },
   { id: "purple", name: "Purple", color: "#AF52DE" },
   { id: "green", name: "Green", color: "#34C759" },
 ];
@@ -83,17 +83,22 @@ export const ThemeCustomizer: React.FC = () => {
             <div className="space-y-3">
               <p className="text-[#9CA3AF] text-xs mb-2">Theme Color</p>
 
-              <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
                 {themeOptions.map((option) => (
-                  <button
+                  <div
                     key={option.id}
-                    className={`text-white text-sm py-2 px-3 rounded hover:bg-[#2D2D2D] text-left transition-all ${
-                      theme === option.id ? "bg-[#2D2D2D]" : ""
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 cursor-pointer ${
+                      theme === option.id
+                        ? "border-white shadow-lg"
+                        : "border-[#2D2D2D] hover:border-[#4D4D4D]"
                     }`}
+                    style={{
+                      backgroundColor: option.color,
+                      background: option.color,
+                    }}
                     onClick={() => handleThemeChange(option.id)}
-                  >
-                    {option.name}
-                  </button>
+                    title={option.name}
+                  />
                 ))}
               </div>
             </div>

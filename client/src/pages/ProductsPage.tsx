@@ -1,11 +1,11 @@
 import axios from "axios";
-import FAQSection from "@/components/FAQSection";
-import CTASection from "@/components/CTASection";
-import { motion } from "framer-motion";
-import { fadeIn, staggerContainer } from "@/lib/animations";
+import FAQSection from "@/components/FAQSection.tsx";
+import CTASection from "@/components/CTASection.tsx";
+import { motion, AnimatePresence } from "framer-motion";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import { useEffect, useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
-import { buildApiUrl } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce.ts";
+import { buildApiUrl } from "@/lib/api.ts";
 import {
   Filter,
   Grid,
@@ -17,20 +17,24 @@ import {
   ChevronDown,
   X,
   Tag,
-  Shirt,
   CheckSquare,
+  Heart,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button.tsx";
+import { Slider } from "@/components/ui/slider.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ProductSkeleton } from "@/components/ProductSkeleton";
-import { FeaturedProductsSkeleton } from "@/components/FeaturedProductsSkeleton";
-import { Link } from "wouter";
+} from "@/components/ui/dropdown-menu.tsx";
+import { ProductSkeleton } from "@/components/ProductSkeleton.tsx";
+import { FeaturedProductsSkeleton } from "@/components/FeaturedProductsSkeleton.tsx";
+import { Link, useLocation } from "wouter";
+import { useWishlist } from "@/lib/WishlistContext.tsx";
+import { useCart } from "@/lib/CartContext.tsx";
+import { useAuth } from "@/lib/AuthContext.tsx";
+import { useToast } from "@/hooks/use-toast.ts";
 
 type Category = {
   id: number;
@@ -63,9 +67,11 @@ type Product = {
   category: string;
   isNew?: boolean;
   onSale?: boolean;
+  attributes?: { name: string; options: string[] }[];
 };
 
 const ProductsPage = () => {
+  const [, setLocation] = useLocation();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<number[]>([]);
@@ -80,13 +86,6 @@ const ProductsPage = () => {
     2: false,
     1: false,
   });
-  const [sizes, setSizes] = useState<{ [key: string]: boolean }>({
-    S: false,
-    M: false,
-    L: false,
-    XL: false,
-    XXL: false,
-  });
   const [sortBy, setSortBy] = useState<SortOption>("Relevance");
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState<number>(0);
@@ -97,13 +96,196 @@ const ProductsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [includeOutOfStock, setIncludeOutOfStock] = useState(false);
+  const [selectedAttributes, setSelectedAttributes] = useState<{
+    [productId: number]: { [attributeName: string]: string };
+  }>({});
+  const [showAttributeSelection, setShowAttributeSelection] = useState<{
+    [productId: number]: boolean;
+  }>({});
   const pageSize = 12;
+
+  // Wishlist functionality
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  const handleWishlistToggle = async (product: Product) => {
+    try {
+      if (isInWishlist(product.id)) {
+        await removeFromWishlist(product.id);
+        toast({
+          title: "Removed from Wishlist",
+          description: `${product.name} has been removed from your wishlist.`,
+          variant: "destructive",
+        });
+      } else {
+        await addToWishlist({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          rating: product.rating,
+          reviews: product.reviews,
+        });
+        toast({
+          title: "Added to Wishlist ❤️",
+          description: `${product.name} has been added to your wishlist.`,
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddToCart = async (product: Product) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if product has required attributes (size, color, etc.)
+    const requiredAttributes =
+      product.attributes?.filter(
+        (attr) =>
+          attr.name.toLowerCase().includes("size") ||
+          attr.name.toLowerCase().includes("color") ||
+          attr.name.toLowerCase().includes("variant")
+      ) || [];
+
+    if (requiredAttributes.length > 0) {
+      // Product has required attributes, show attribute selection
+      setShowAttributeSelection((prev) => ({ ...prev, [product.id]: true }));
+      return;
+    }
+
+    try {
+      await addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        inStock: true,
+        variants: {}, // No variants selected from product listing
+      });
+      toast({
+        title: "Added to Cart 🛒",
+        description: `${product.name} has been added to your cart.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAttributeSelect = (
+    productId: number,
+    attributeName: string,
+    value: string
+  ) => {
+    setSelectedAttributes((prev) => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [attributeName]: value,
+      },
+    }));
+  };
+
+  const handleAddToCartWithAttributes = async (product: Product) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const requiredAttributes =
+      product.attributes?.filter(
+        (attr) =>
+          attr.name.toLowerCase().includes("size") ||
+          attr.name.toLowerCase().includes("color") ||
+          attr.name.toLowerCase().includes("variant")
+      ) || [];
+
+    // Check if all required attributes are selected
+    const productAttributes = selectedAttributes[product.id] || {};
+    const missingAttributes = requiredAttributes.filter(
+      (attr) => !productAttributes[attr.name]
+    );
+
+    if (missingAttributes.length > 0) {
+      toast({
+        title: "Selection Required",
+        description: `Please select ${missingAttributes
+          .map((attr) => attr.name)
+          .join(", ")}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create variant ID with selected attributes
+      const variantId = `${product.id}_${Object.entries(productAttributes)
+        .map(([key, value]) => `${key}:${value}`)
+        .join("|")}`;
+
+      await addToCart({
+        id: variantId,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        inStock: true,
+        variants: productAttributes,
+      });
+
+      toast({
+        title: "Added to Cart 🛒",
+        description: `${product.name} has been added to your cart.`,
+        variant: "default",
+      });
+
+      // Hide attribute selection and reset selections
+      setShowAttributeSelection((prev) => ({ ...prev, [product.id]: false }));
+      setSelectedAttributes((prev) => ({ ...prev, [product.id]: {} }));
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelAttributeSelection = (productId: number) => {
+    setShowAttributeSelection((prev) => ({ ...prev, [productId]: false }));
+    setSelectedAttributes((prev) => ({ ...prev, [productId]: {} }));
+  };
 
   const debouncedPriceRange = useDebounce(committedPriceRange, 1000);
   const debouncedRatings = useDebounce(ratings, 1000);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   useEffect(() => {
@@ -121,6 +303,7 @@ const ProductsPage = () => {
           category: item.categories[0]?.name || "Uncategorized",
           isNew: false,
           onSale: item.on_sale,
+          attributes: item.attributes || [],
         }));
         setFeaturedProducts(mappedFeaturedProducts);
       } catch (err) {
@@ -219,6 +402,7 @@ const ProductsPage = () => {
             category: item.categories[0]?.name || "Uncategorized",
             isNew: false,
             onSale: item.on_sale,
+            attributes: item.attributes || [],
           }));
 
         setProducts(mappedProducts);
@@ -255,24 +439,6 @@ const ProductsPage = () => {
     setCurrentPage(1);
   };
 
-  const isClothingCategorySelected = () => {
-    const clothingKeywords = ["clothing", "hoodie", "t-shirt", "oversized"];
-    return activeCategory.some((catId) => {
-      const category = categories.find((cat) => cat.id === catId);
-      return (
-        category &&
-        clothingKeywords.some((keyword) =>
-          category.name.toLowerCase().includes(keyword)
-        )
-      );
-    });
-  };
-
-  const handleSizeChange = (size: string) => {
-    setSizes((prev) => ({ ...prev, [size]: !prev[size] }));
-    setCurrentPage(1);
-  };
-
   const clearFilters = () => {
     // Check if filters are already in default state
     const isDefaultState =
@@ -282,7 +448,6 @@ const ProductsPage = () => {
       committedPriceRange[0] === 0 &&
       committedPriceRange[1] === 10000 &&
       Object.values(ratings).every((rating) => !rating) &&
-      Object.values(sizes).every((size) => !size) &&
       sortBy === "Relevance" &&
       !includeOutOfStock;
 
@@ -292,7 +457,6 @@ const ProductsPage = () => {
       setPriceRange([0, 10000]);
       setCommittedPriceRange([0, 10000]);
       setRatings({ 5: false, 4: false, 3: false, 2: false, 1: false });
-      setSizes({ S: false, M: false, L: false, XL: false, XXL: false });
       setSortBy("Relevance");
       setCurrentPage(1);
       setIncludeOutOfStock(false);
@@ -362,27 +526,41 @@ const ProductsPage = () => {
                         className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                       />
                       {product.isNew && (
-                        <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                        <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                           NEW
                         </div>
                       )}
-                      {product.onSale && (
-                        <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
-                          SALE
-                        </div>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleWishlistToggle(product);
+                        }}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+                          isInWishlist(product.id)
+                            ? "bg-red-500 text-white"
+                            : "bg-black/50 text-white hover:bg-red-500"
+                        }`}
+                      >
+                        <Heart
+                          className={`h-4 w-4 ${
+                            isInWishlist(product.id) ? "fill-current" : ""
+                          }`}
+                        />
+                      </button>
                     </div>
                   </Link>
                   <div className="p-3 sm:p-4 flex flex-col flex-grow">
                     <div className="flex-grow">
-                      <div className="flex flex-col items-start mb-2">
-                        <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
-                          {product.name}
-                        </h3>
-                        <span className="font-bold text-accent">
-                          ₹{product.price}
-                        </span>
-                      </div>
+                      <Link href={`/product/${product.id}`}>
+                        <div className="flex flex-col items-start mb-2">
+                          <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
+                            {product.name}
+                          </h3>
+                          <span className="font-bold text-accent">
+                            ₹{product.price}
+                          </span>
+                        </div>
+                      </Link>
                       <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                         <div className="flex items-center">
                           <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
@@ -392,7 +570,10 @@ const ProductsPage = () => {
                         <span>{product.reviews} reviews</span>
                       </div>
                     </div>
-                    <button className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base"
+                    >
                       <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Add to Cart
                     </button>
@@ -521,31 +702,6 @@ const ProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* Size Filter - Only show for clothing categories */}
-                  {isClothingCategorySelected() && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                        <Shirt className="h-4 w-4 text-accent" />
-                        Size
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.keys(sizes).map((size) => (
-                          <button
-                            key={size}
-                            onClick={() => handleSizeChange(size)}
-                            className={`px-4 py-2 rounded-full border-2 transition-all duration-300 text-sm font-medium ${
-                              sizes[size]
-                                ? "bg-accent text-white border-accent shadow-lg shadow-accent/25"
-                                : "bg-[#181818] text-gray-300 border-[#2D2D2D] hover:bg-accent/10 hover:text-accent hover:border-accent/50"
-                            }`}
-                          >
-                            {size}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Availability Filter */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
@@ -651,7 +807,7 @@ const ProductsPage = () => {
                     : products.map((product) => (
                         <div
                           key={product.id}
-                          className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
+                          className="relative bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                         >
                           <Link href={`/product/${product.id}`}>
                             <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
@@ -661,27 +817,43 @@ const ProductsPage = () => {
                                 className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                               />
                               {product.isNew && (
-                                <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                                <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                                   NEW
                                 </div>
                               )}
-                              {product.onSale && (
-                                <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
-                                  SALE
-                                </div>
-                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleWishlistToggle(product);
+                                }}
+                                className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+                                  isInWishlist(product.id)
+                                    ? "bg-red-500 text-white"
+                                    : "bg-black/50 text-white hover:bg-red-500"
+                                }`}
+                              >
+                                <Heart
+                                  className={`h-4 w-4 ${
+                                    isInWishlist(product.id)
+                                      ? "fill-current"
+                                      : ""
+                                  }`}
+                                />
+                              </button>
                             </div>
                           </Link>
                           <div className="p-3 sm:p-4 flex flex-col flex-grow">
                             <div className="flex-grow">
-                              <div className="flex flex-col items-start mb-2">
-                                <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
-                                  {product.name}
-                                </h3>
-                                <span className="font-bold text-accent">
-                                  ₹{product.price}
-                                </span>
-                              </div>
+                              <Link href={`/product/${product.id}`}>
+                                <div className="flex flex-col items-start mb-2">
+                                  <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
+                                    {product.name}
+                                  </h3>
+                                  <span className="font-bold text-accent">
+                                    ₹{product.price}
+                                  </span>
+                                </div>
+                              </Link>
                               <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
                                 <div className="flex items-center">
                                   <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
@@ -691,10 +863,137 @@ const ProductsPage = () => {
                                 <span>{product.reviews} reviews</span>
                               </div>
                             </div>
-                            <button className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base">
-                              <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                              Add to Cart
-                            </button>
+
+                            <div className="relative">
+                              {showAttributeSelection[product.id] ? (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0, y: -10 }}
+                                  animate={{ opacity: 1, height: "auto", y: 0 }}
+                                  exit={{ opacity: 0, height: 0, y: -10 }}
+                                  transition={{
+                                    duration: 0.4,
+                                    ease: [0.4, 0, 0.2, 1],
+                                  }}
+                                  className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                                      Select Options
+                                    </h4>
+                                    <button
+                                      onClick={() =>
+                                        handleCancelAttributeSelection(
+                                          product.id
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  {product.attributes
+                                    ?.filter(
+                                      (attr) =>
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("size") ||
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("color") ||
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("variant")
+                                    )
+                                    .map((attr) => (
+                                      <div
+                                        key={attr.name}
+                                        className="space-y-2"
+                                      >
+                                        <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                                          {attr.name
+                                            .toLowerCase()
+                                            .includes("size") && (
+                                            <svg
+                                              className="w-4 h-4 text-accent"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                              />
+                                            </svg>
+                                          )}
+                                          {attr.name
+                                            .toLowerCase()
+                                            .includes("color") && (
+                                            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
+                                          )}
+                                          {attr.name}
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                          {attr.options.map((option) => (
+                                            <button
+                                              key={option}
+                                              onClick={() =>
+                                                handleAttributeSelect(
+                                                  product.id,
+                                                  attr.name,
+                                                  option
+                                                )
+                                              }
+                                              className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
+                                                selectedAttributes[
+                                                  product.id
+                                                ]?.[attr.name] === option
+                                                  ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
+                                                  : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
+                                              }`}
+                                            >
+                                              {option}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  <div className="flex gap-3 pt-3 border-t border-accent/20">
+                                    <button
+                                      onClick={() =>
+                                        handleAddToCartWithAttributes(product)
+                                      }
+                                      className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    >
+                                      <ShoppingBag className="w-4 h-4" />
+                                      Add to Cart
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              ) : (
+                                <button
+                                  onClick={() => handleAddToCart(product)}
+                                  className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base"
+                                >
+                                  <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                  Add to Cart
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -711,7 +1010,7 @@ const ProductsPage = () => {
                     : products.map((product) => (
                         <div
                           key={product.id}
-                          className="flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
+                          className="relative flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
                         >
                           <Link
                             href={`/product/${product.id}`}
@@ -723,15 +1022,27 @@ const ProductsPage = () => {
                               className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                             />
                             {product.isNew && (
-                              <div className="absolute top-2 right-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                              <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
                                 NEW
                               </div>
                             )}
-                            {product.onSale && (
-                              <div className="absolute top-2 right-2 bg-[#ff7b00] text-white text-xs font-bold px-2 py-1 rounded">
-                                SALE
-                              </div>
-                            )}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleWishlistToggle(product);
+                              }}
+                              className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+                                isInWishlist(product.id)
+                                  ? "bg-red-500 text-white"
+                                  : "bg-black/50 text-white hover:bg-red-500"
+                              }`}
+                            >
+                              <Heart
+                                className={`h-4 w-4 ${
+                                  isInWishlist(product.id) ? "fill-current" : ""
+                                }`}
+                              />
+                            </button>
                           </Link>
                           <div className="md:w-3/4 p-6 flex flex-col">
                             <div className="flex flex-col items-start mb-2">
@@ -760,11 +1071,135 @@ const ProductsPage = () => {
                               Officially licensed merchandise with the best
                               quality and authentic designs.
                             </p>
-                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                              <button className="bg-[#2D2D2D] hover:bg-accent text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300">
-                                <ShoppingBag className="h-4 w-4 mr-2" />
-                                Add to Cart
-                              </button>
+                            <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                              {showAttributeSelection[product.id] ? (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0, y: -10 }}
+                                  animate={{ opacity: 1, height: "auto", y: 0 }}
+                                  exit={{ opacity: 0, height: 0, y: -10 }}
+                                  transition={{
+                                    duration: 0.4,
+                                    ease: [0.4, 0, 0.2, 1],
+                                  }}
+                                  className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                                      Select Options
+                                    </h4>
+                                    <button
+                                      onClick={() =>
+                                        handleCancelAttributeSelection(
+                                          product.id
+                                        )
+                                      }
+                                      className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
+                                    >
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  {product.attributes
+                                    ?.filter(
+                                      (attr) =>
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("size") ||
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("color") ||
+                                        attr.name
+                                          .toLowerCase()
+                                          .includes("variant")
+                                    )
+                                    .map((attr) => (
+                                      <div
+                                        key={attr.name}
+                                        className="space-y-2"
+                                      >
+                                        <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                                          {attr.name
+                                            .toLowerCase()
+                                            .includes("size") && (
+                                            <svg
+                                              className="w-4 h-4 text-accent"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                              />
+                                            </svg>
+                                          )}
+                                          {attr.name
+                                            .toLowerCase()
+                                            .includes("color") && (
+                                            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
+                                          )}
+                                          {attr.name}
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                          {attr.options.map((option) => (
+                                            <button
+                                              key={option}
+                                              onClick={() =>
+                                                handleAttributeSelect(
+                                                  product.id,
+                                                  attr.name,
+                                                  option
+                                                )
+                                              }
+                                              className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
+                                                selectedAttributes[
+                                                  product.id
+                                                ]?.[attr.name] === option
+                                                  ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
+                                                  : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
+                                              }`}
+                                            >
+                                              {option}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  <div className="flex gap-3 pt-3 border-t border-accent/20">
+                                    <button
+                                      onClick={() =>
+                                        handleAddToCartWithAttributes(product)
+                                      }
+                                      className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    >
+                                      <ShoppingBag className="w-4 h-4" />
+                                      Add to Cart
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              ) : (
+                                <button
+                                  onClick={() => handleAddToCart(product)}
+                                  className="bg-[#2D2D2D] hover:bg-accent text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300"
+                                >
+                                  <ShoppingBag className="h-4 w-4 mr-2" />
+                                  Add to Cart
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>

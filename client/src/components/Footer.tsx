@@ -2,8 +2,8 @@ import { Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import axios from "axios";
-import { useToast } from "@/hooks/use-toast";
-import { buildApiUrl } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast.ts";
+import { buildApiUrl } from "@/lib/api.ts";
 
 const Footer = () => {
   const { toast } = useToast();

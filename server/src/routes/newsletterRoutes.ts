@@ -3,7 +3,7 @@ import {
   subscribeToNewsletter,
   getSubscriberCount,
   getAllSubscribers,
-} from "../controllers/newsletterController";
+} from "../controllers/newsletterController.ts";
 
 const router = Router();
 

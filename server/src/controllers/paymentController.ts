@@ -1,0 +1,493 @@
+// PhonePe Payment Controller using Official SDK
+// Following official documentation: https://developer.phonepe.com/payment-gateway/backend-sdk/nodejs-be-sdk/integration-steps
+
+import { Request, Response } from "express";
+import { phonepeClient, hasPhonepeCredentials } from "../config/phonepe.js";
+
+import Transaction from "../../../shared/models/Transaction.js";
+import { Order } from "../../../shared/models/Order.js";
+import { Cart } from "../../../shared/models/Cart.js";
+import {
+  StandardCheckoutPayRequest,
+  RefundRequest,
+  PhonePeException,
+  StandardCheckoutClient,
+} from "pg-sdk-node";
+
+// Initialize PhonePe payment
+export const initiatePhonepePayment = async (req: Request, res: Response) => {
+  try {
+    console.log("PhonePe payment initiation started using official SDK");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("User from request:", req.user);
+
+    // Check if we have real PhonePe credentials
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      console.log("No real PhonePe credentials found. Using demo mode.");
+      return res.status(400).json({
+        success: false,
+        message:
+          "PhonePe credentials not configured. Please set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET environment variables with your real PhonePe merchant credentials.",
+        demo_mode: true,
+        instructions:
+          "Visit https://business.phonepe.com/ to get your PhonePe merchant credentials.",
+      });
+    }
+
+    // Check if user is authenticated
+    if (!req.user?.id) {
+      console.log("No user found in request");
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    const {
+      amount,
+      merchantTransactionId,
+      merchantUserId,
+      mobileNumber,
+      callbackUrl,
+      redirectUrl,
+      merchantOrderId,
+    } = req.body;
+
+    // Validate required fields
+    if (!amount || !merchantTransactionId || !merchantUserId || !mobileNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    // Validate amount (minimum ₹1)
+    if (amount < 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Minimum amount should be ₹1",
+      });
+    }
+
+    // Validate redirect URL
+    if (!redirectUrl || !redirectUrl.startsWith("http")) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid redirect URL is required",
+      });
+    }
+
+    console.log("Initiating PhonePe payment using official SDK...");
+    console.log("Payment request details:", {
+      merchantOrderId: merchantOrderId || merchantTransactionId,
+      amount,
+      redirectUrl,
+      callbackUrl,
+    });
+
+    // Build payment request using PhonePe SDK
+    // Following the official documentation for Initiate Payment
+    let payRequest;
+    try {
+      console.log("Building PhonePe request with parameters:", {
+        merchantOrderId: merchantOrderId || merchantTransactionId,
+        amount,
+        redirectUrl,
+      });
+
+      payRequest = StandardCheckoutPayRequest.builder()
+        .merchantOrderId(merchantOrderId || merchantTransactionId)
+        .amount(amount) // Amount in paise
+        .redirectUrl(redirectUrl)
+        .build();
+
+      console.log("PhonePe payment request built successfully:", payRequest);
+    } catch (buildError: any) {
+      console.error("Error building PhonePe request:", buildError);
+      console.error("Build error stack:", buildError.stack);
+      throw new Error(`Failed to build payment request: ${buildError.message}`);
+    }
+
+    // Initiate payment using PhonePe SDK
+    let response;
+    try {
+      console.log("Calling phonepeClient.pay()...");
+      response = await phonepeClient.pay(payRequest);
+      console.log("PhonePe SDK response received:", response);
+    } catch (sdkError: any) {
+      console.error("PhonePe SDK error:", sdkError);
+      console.error("SDK error details:", {
+        message: sdkError.message,
+        type: sdkError.type,
+        httpStatusCode: sdkError.httpStatusCode,
+        code: sdkError.code,
+        data: sdkError.data,
+      });
+      throw sdkError;
+    }
+
+    console.log("PhonePe SDK response:", response);
+
+    // Find the order by merchantOrderId and link it to the transaction
+    let orderId = null;
+    if (merchantOrderId) {
+      const order = await Order.findOne({ orderNumber: merchantOrderId });
+      if (order) {
+        orderId = order._id;
+      }
+    }
+
+    // Store transaction details in database
+    const transaction = new Transaction({
+      userId: req.user?.id,
+      orderId,
+      merchantTransactionId,
+      phonepeTransactionId:
+        (response as any).merchantTransactionId || merchantTransactionId,
+      amount,
+      currency: "INR",
+      paymentMethod: "PHONEPE",
+      status: "PENDING",
+      redirectUrl,
+      callbackUrl,
+    });
+
+    await transaction.save();
+
+    return res.json({
+      success: true,
+      message: "Payment initiated successfully",
+      merchantTransactionId:
+        (response as any).merchantTransactionId || merchantTransactionId,
+      checkout_url: response.redirectUrl,
+      instrument_response: response,
+    });
+  } catch (error: any) {
+    console.error("PhonePe payment initiation error:", error);
+
+    // Handle PhonePe SDK exceptions
+    if (error instanceof PhonePeException) {
+      console.error("PhonePe SDK Exception:", {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "PhonePe SDK error",
+      });
+    }
+
+    // Handle other errors
+    console.error("Error stack:", error.stack);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during payment initiation",
+    });
+  }
+};
+
+// Check PhonePe payment status
+export const checkPhonepePaymentStatus = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { transactionId } = req.params;
+
+    if (!transactionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction ID is required",
+      });
+    }
+
+    console.log(
+      "Checking PhonePe payment status for transaction:",
+      transactionId
+    );
+
+    // Check if we have real PhonePe credentials
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      return res.status(400).json({
+        success: false,
+        message: "PhonePe credentials not configured",
+        demo_mode: true,
+      });
+    }
+
+    // Check order status using PhonePe SDK
+    // Following the official documentation for Check Order Status
+    const orderStatus = await phonepeClient.getOrderStatus(transactionId);
+
+    console.log("PhonePe order status response:", orderStatus);
+
+    return res.json({
+      success: true,
+      state: orderStatus.state,
+      amount: orderStatus.amount,
+      paymentDetails: orderStatus.paymentDetails,
+    });
+  } catch (error: any) {
+    console.error("PhonePe order status check error:", error);
+
+    // Handle PhonePe SDK exceptions
+    if (error instanceof PhonePeException) {
+      console.error("PhonePe SDK Exception:", {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "PhonePe SDK error",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during status check",
+    });
+  }
+};
+
+// Handle PhonePe callback/webhook
+export const phonepeCallback = async (req: Request, res: Response) => {
+  try {
+    console.log("PhonePe callback received");
+    console.log("Callback body:", JSON.stringify(req.body, null, 2));
+    console.log("Callback headers:", req.headers);
+
+    const { response } = req.body;
+
+    if (!response) {
+      return res.status(400).json({
+        success: false,
+        message: "No response data in callback",
+      });
+    }
+
+    // Check if we have real PhonePe credentials
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      return res.status(400).json({
+        success: false,
+        message: "PhonePe credentials not configured",
+        demo_mode: true,
+      });
+    }
+
+    // Validate callback using PhonePe SDK
+    // Following the official documentation for Webhook Handling
+    const callbackResponse = phonepeClient.validateCallback(
+      process.env.PHONEPE_CALLBACK_USERNAME || "default_username",
+      process.env.PHONEPE_CALLBACK_PASSWORD || "default_password",
+      req.headers.authorization || "",
+      JSON.stringify(req.body)
+    );
+
+    console.log("PhonePe callback validation result:", callbackResponse);
+
+    // Update transaction status in database
+    const transaction = await Transaction.findOne({
+      phonepeTransactionId:
+        (callbackResponse.payload as any)?.merchantTransactionId ||
+        callbackResponse.payload?.orderId,
+    });
+
+    if (transaction) {
+      transaction.status =
+        callbackResponse.payload?.state === "COMPLETED" ? "SUCCESS" : "FAILED";
+      transaction.phonepeCode = (callbackResponse.payload as any)?.code || "";
+      transaction.phonepeMessage =
+        (callbackResponse.payload as any)?.message || "";
+      transaction.callbackData = callbackResponse;
+      await transaction.save();
+
+      // Update order status if linked
+      if (transaction.orderId) {
+        const order = await Order.findById(transaction.orderId);
+        if (order) {
+          order.paymentStatus =
+            transaction.status === "SUCCESS" ? "COMPLETED" : "FAILED";
+          order.status =
+            transaction.status === "SUCCESS" ? "PAID" : "PENDING_PAYMENT";
+          await order.save();
+
+          // Clear the user's cart if payment was successful
+          if (transaction.status === "SUCCESS") {
+            try {
+              const cart = await Cart.findOne({ userId: transaction.userId });
+              if (cart) {
+                cart.items.splice(0, cart.items.length);
+                await cart.save();
+                console.log(
+                  `Cart cleared for user ${transaction.userId} after successful payment`
+                );
+              }
+            } catch (cartError) {
+              console.error(
+                "Error clearing cart after successful payment:",
+                cartError
+              );
+              // Don't fail the callback if cart clearing fails
+            }
+          }
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Callback processed successfully",
+      orderId: callbackResponse.payload?.orderId,
+      state: callbackResponse.payload?.state,
+    });
+  } catch (error: any) {
+    console.error("PhonePe callback processing error:", error);
+
+    // Handle PhonePe SDK exceptions
+    if (error instanceof PhonePeException) {
+      console.error("PhonePe SDK Exception:", {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "PhonePe SDK error",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during callback processing",
+    });
+  }
+};
+
+// Initiate PhonePe refund
+export const refundPhonepePayment = async (req: Request, res: Response) => {
+  try {
+    const { orderId, refundId, amount } = req.body;
+
+    if (!orderId || !refundId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Order ID, refund ID, and amount are required",
+      });
+    }
+
+    console.log("Initiating PhonePe refund:", { orderId, refundId, amount });
+
+    // Check if we have real PhonePe credentials
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      return res.status(400).json({
+        success: false,
+        message: "PhonePe credentials not configured",
+        demo_mode: true,
+      });
+    }
+
+    // Build refund request using PhonePe SDK
+    // Following the official documentation for Initiate Refund
+    const refundRequest = RefundRequest.builder()
+      .originalMerchantOrderId(orderId)
+      .merchantRefundId(refundId)
+      .amount(amount) // Amount in paise
+      .build();
+
+    console.log("PhonePe refund request built:", refundRequest);
+
+    // Initiate refund using PhonePe SDK
+    const response = await phonepeClient.refund(refundRequest);
+
+    console.log("PhonePe refund response:", response);
+
+    return res.json({
+      success: true,
+      message: "Refund initiated successfully",
+      refundId: response.refundId || refundId,
+      amount: response.amount,
+      state: response.state,
+    });
+  } catch (error: any) {
+    console.error("PhonePe refund initiation error:", error);
+
+    // Handle PhonePe SDK exceptions
+    if (error instanceof PhonePeException) {
+      console.error("PhonePe SDK Exception:", {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "PhonePe SDK error",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during refund initiation",
+    });
+  }
+};
+
+// Check refund status
+export const checkRefundStatus = async (req: Request, res: Response) => {
+  try {
+    const { refundId } = req.params;
+
+    if (!refundId) {
+      return res.status(400).json({
+        success: false,
+        message: "Refund ID is required",
+      });
+    }
+
+    console.log("Checking PhonePe refund status for refund:", refundId);
+
+    // Check if we have real PhonePe credentials
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      return res.status(400).json({
+        success: false,
+        message: "PhonePe credentials not configured",
+        demo_mode: true,
+      });
+    }
+
+    // Check refund status using PhonePe SDK
+    const refundStatus = await phonepeClient.getRefundStatus(refundId);
+
+    console.log("PhonePe refund status response:", refundStatus);
+
+    return res.json({
+      success: true,
+      refundId: (refundStatus as any).refundId || refundId,
+      amount: refundStatus.amount,
+      state: refundStatus.state,
+      paymentDetails: refundStatus.paymentDetails,
+    });
+  } catch (error: any) {
+    console.error("PhonePe refund status check error:", error);
+
+    // Handle PhonePe SDK exceptions
+    if (error instanceof PhonePeException) {
+      console.error("PhonePe SDK Exception:", {
+        message: error.message,
+        stack: error.stack,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: error.message || "PhonePe SDK error",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during refund status check",
+    });
+  }
+};
