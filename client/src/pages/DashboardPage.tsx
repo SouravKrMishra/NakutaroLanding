@@ -907,7 +907,7 @@ const DashboardPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
                   onClick={() => setLocation("/products")}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -979,7 +979,7 @@ const DashboardPage = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-green-500 text-green-400 hover:bg-green-500/20 hover:text-green-400"
+                          className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
                           onClick={() => handleMoveToCart(item)}
                           disabled={!item.inStock}
                         >
@@ -989,7 +989,7 @@ const DashboardPage = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-red-500 text-red-400 hover:bg-red-500/20 hover:text-red-400"
+                          className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
                           onClick={async () => {
                             try {
                               await removeFromWishlist(item.id);
@@ -1024,7 +1024,7 @@ const DashboardPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
                   onClick={() => setLocation("/products")}
                 >
                   View All Products
@@ -1151,7 +1151,7 @@ const DashboardPage = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-green-500 text-green-400 hover:bg-green-500/20 hover:text-green-400 text-xs"
+                              className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
                               disabled={!product.inStock}
                             >
                               <ShoppingCart className="w-3 h-3" />

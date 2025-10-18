@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Admin privileges
+  power: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

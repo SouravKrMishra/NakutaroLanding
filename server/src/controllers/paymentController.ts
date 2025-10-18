@@ -21,16 +21,16 @@ export const initiatePhonepePayment = async (req: Request, res: Response) => {
     console.log("Request body:", JSON.stringify(req.body, null, 2));
     console.log("User from request:", req.user);
 
-    // Check if we have real PhonePe credentials
+    // Check if we have PhonePe credentials
     if (!hasPhonepeCredentials || !phonepeClient) {
-      console.log("No real PhonePe credentials found. Using demo mode.");
+      console.log("No PhonePe credentials found.");
       return res.status(400).json({
         success: false,
         message:
-          "PhonePe credentials not configured. Please set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET environment variables with your real PhonePe merchant credentials.",
+          "PhonePe credentials not configured. Please set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET environment variables.",
         demo_mode: true,
         instructions:
-          "Visit https://business.phonepe.com/ to get your PhonePe merchant credentials.",
+          "For testing, you can use the default test credentials. For production, visit https://business.phonepe.com/ to get your PhonePe merchant credentials.",
       });
     }
 
@@ -208,7 +208,7 @@ export const checkPhonepePaymentStatus = async (
       transactionId
     );
 
-    // Check if we have real PhonePe credentials
+    // Check if we have PhonePe credentials
     if (!hasPhonepeCredentials || !phonepeClient) {
       return res.status(400).json({
         success: false,
@@ -252,6 +252,94 @@ export const checkPhonepePaymentStatus = async (
   }
 };
 
+// Handle PhonePe redirect (user browser returns here after payment)
+export const phonepeRedirect = async (req: Request, res: Response) => {
+  try {
+    const { orderId, merchantTransactionId } = req.query as {
+      orderId?: string;
+      merchantTransactionId?: string;
+    };
+
+    if (!merchantTransactionId) {
+      return res.status(400).send("Missing merchantTransactionId");
+    }
+
+    if (!hasPhonepeCredentials || !phonepeClient) {
+      return res.redirect(`/dashboard`);
+    }
+
+    // Verify order status with PhonePe
+    let orderStatus;
+    try {
+      orderStatus = await phonepeClient.getOrderStatus(merchantTransactionId);
+    } catch (e) {
+      console.error("Error verifying PhonePe order status on redirect:", e);
+      return res.redirect(`/dashboard`);
+    }
+
+    // Update transaction in DB
+    const transaction = await Transaction.findOne({
+      $or: [
+        { phonepeTransactionId: merchantTransactionId },
+        { merchantTransactionId: merchantTransactionId },
+      ],
+    });
+
+    if (transaction) {
+      transaction.status =
+        orderStatus.state === "COMPLETED"
+          ? "SUCCESS"
+          : orderStatus.state === "FAILED"
+          ? "FAILED"
+          : "PENDING";
+      (transaction as any).phonepeCode =
+        (orderStatus as any)?.code || (transaction as any).phonepeCode;
+      (transaction as any).phonepeMessage =
+        (orderStatus as any)?.message || (transaction as any).phonepeMessage;
+      (transaction as any).callbackData = orderStatus;
+      await transaction.save();
+
+      // If linked to order, update order status
+      if (transaction.orderId) {
+        const order = await Order.findById(transaction.orderId);
+        if (order) {
+          if (transaction.status === "SUCCESS") {
+            order.paymentStatus = "COMPLETED";
+            order.status = "PAID";
+          } else if (transaction.status === "FAILED") {
+            order.paymentStatus = "FAILED";
+            order.status = "PENDING_PAYMENT";
+          }
+          await order.save();
+        }
+      }
+    }
+
+    // Prefer provided orderId, else try derive from transaction
+    let finalOrderId = orderId as string | undefined;
+    if (!finalOrderId && transaction?.orderId) {
+      finalOrderId = transaction.orderId.toString();
+    }
+
+    if (orderStatus.state === "COMPLETED" && finalOrderId) {
+      return res.redirect(`/order-success?orderId=${finalOrderId}`);
+    }
+
+    if (orderStatus.state === "COMPLETED") {
+      return res.redirect(
+        `/order-success?transactionId=${encodeURIComponent(
+          merchantTransactionId
+        )}`
+      );
+    }
+
+    return res.redirect(`/dashboard`);
+  } catch (error) {
+    console.error("PhonePe redirect handler error:", error);
+    return res.redirect(`/dashboard`);
+  }
+};
+
 // Handle PhonePe callback/webhook
 export const phonepeCallback = async (req: Request, res: Response) => {
   try {
@@ -268,7 +356,7 @@ export const phonepeCallback = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if we have real PhonePe credentials
+    // Check if we have PhonePe credentials
     if (!hasPhonepeCredentials || !phonepeClient) {
       return res.status(400).json({
         success: false,
@@ -380,7 +468,7 @@ export const refundPhonepePayment = async (req: Request, res: Response) => {
 
     console.log("Initiating PhonePe refund:", { orderId, refundId, amount });
 
-    // Check if we have real PhonePe credentials
+    // Check if we have PhonePe credentials
     if (!hasPhonepeCredentials || !phonepeClient) {
       return res.status(400).json({
         success: false,
@@ -448,7 +536,7 @@ export const checkRefundStatus = async (req: Request, res: Response) => {
 
     console.log("Checking PhonePe refund status for refund:", refundId);
 
-    // Check if we have real PhonePe credentials
+    // Check if we have PhonePe credentials
     if (!hasPhonepeCredentials || !phonepeClient) {
       return res.status(400).json({
         success: false,

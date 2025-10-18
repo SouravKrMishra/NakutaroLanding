@@ -226,7 +226,6 @@ export const verify = async (req: Request, res: Response) => {
   }
 };
 
-// Get user profile
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;

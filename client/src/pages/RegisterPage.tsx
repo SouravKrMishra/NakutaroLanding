@@ -31,10 +31,12 @@ import {
 } from "lucide-react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useAuth } from "@/lib/AuthContext.tsx";
+import { useDebounce } from "@/hooks/use-debounce.ts";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     companyName: "",
     phoneNumber: "",
@@ -50,6 +52,8 @@ const RegisterPage = () => {
     website: "",
     description: "",
   });
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
@@ -58,6 +62,8 @@ const RegisterPage = () => {
   const [, setLocation] = useLocation();
   const { executeRecaptcha } = useGoogleReCaptcha();
   const { isAuthenticated, isLoading: authLoading, setUserData } = useAuth();
+  const debouncedPincode = useDebounce(formData.pincode, 500);
+  const errorRef = React.useRef<HTMLDivElement | null>(null);
 
   // Scroll to top when component mounts
   React.useEffect(() => {
@@ -86,6 +92,73 @@ const RegisterPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Utility to set error and force-scroll to the alert immediately
+  const showError = (message: string) => {
+    setError(message);
+    // Ensure scroll even if the message is identical (effect won't rerun)
+    setTimeout(() => {
+      if (errorRef.current) {
+        errorRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        errorRef.current.focus?.();
+      }
+    }, 0);
+  };
+
+  // When an error appears, scroll it into view and focus for accessibility
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Focus after scroll for screen readers
+      errorRef.current.focus?.();
+    }
+  }, [error]);
+
+  // Auto-fill city and state from Indian Postal API when pincode is entered
+  React.useEffect(() => {
+    const pincode = debouncedPincode?.trim();
+    setPincodeError("");
+    if (!pincode || pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
+      setIsPincodeLoading(false);
+      return;
+    }
+    let aborted = false;
+    const fetchLocation = async () => {
+      try {
+        setIsPincodeLoading(true);
+        const res = await fetch(
+          `https://api.postalpincode.in/pincode/${pincode}`
+        );
+        const data = await res.json();
+        if (aborted) return;
+        if (
+          Array.isArray(data) &&
+          data[0]?.Status === "Success" &&
+          data[0]?.PostOffice?.length
+        ) {
+          const po = data[0].PostOffice[0];
+          setFormData((prev) => ({
+            ...prev,
+            city: po.District || prev.city,
+            state: po.State || prev.state,
+          }));
+        } else {
+          setPincodeError("Invalid pincode");
+        }
+      } catch (e) {
+        setPincodeError("Failed to fetch location");
+      } finally {
+        if (!aborted) setIsPincodeLoading(false);
+      }
+    };
+    fetchLocation();
+    return () => {
+      aborted = true;
+    };
+  }, [debouncedPincode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -94,18 +167,26 @@ const RegisterPage = () => {
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      showError("Passwords do not match");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      showError("Password must be at least 8 characters long");
       setIsLoading(false);
       return;
     }
 
     try {
+      // Validate phone number (Indian 10-digit, starts with 6-9)
+      const phoneDigits = formData.phoneNumber.replace(/\D/g, "");
+      if (!(phoneDigits.length === 10 && /^[6-9]/.test(phoneDigits))) {
+        showError("Enter a valid 10-digit mobile number");
+        setIsLoading(false);
+        return;
+      }
+
       let recaptchaToken = "";
 
       // Execute reCAPTCHA if available
@@ -113,11 +194,13 @@ const RegisterPage = () => {
         recaptchaToken = await executeRecaptcha("register");
       }
 
-      // Remove confirmPassword from the data sent to backend
-      const { confirmPassword, ...registrationData } = formData;
+      // Build request body: combine first and last name into single name field
+      const { confirmPassword, firstName, lastName, ...rest } = formData;
 
       const bodyData = {
-        ...registrationData,
+        ...rest,
+        name: `${firstName} ${lastName}`.trim(),
+        phoneNumber: phoneDigits,
         ...(recaptchaToken && { recaptchaToken }),
       };
 
@@ -143,10 +226,10 @@ const RegisterPage = () => {
         }, 1500);
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Registration failed");
+        showError(errorData.message || "Registration failed");
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      showError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -227,9 +310,16 @@ const RegisterPage = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <div
+                  ref={errorRef}
+                  tabIndex={-1}
+                  aria-live="assertive"
+                  role="alert"
+                >
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                </div>
               )}
 
               {success && (
@@ -246,20 +336,37 @@ const RegisterPage = () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-white">
-                      Full Name *
+                    <Label htmlFor="firstName" className="text-white">
+                      First Name *
                     </Label>
                     <Input
-                      id="name"
-                      value={formData.name}
+                      id="firstName"
+                      value={formData.firstName}
                       onChange={(e) =>
-                        handleInputChange("name", e.target.value)
+                        handleInputChange("firstName", e.target.value)
                       }
-                      placeholder="Enter your full name"
+                      placeholder="Enter your first name"
                       className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-white">
+                      Last Name *
+                    </Label>
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        handleInputChange("lastName", e.target.value)
+                      }
+                      placeholder="Enter your last name"
+                      className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
                       Email Address *
@@ -276,8 +383,6 @@ const RegisterPage = () => {
                       required
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phoneNumber" className="text-white">
                       Phone Number *
@@ -286,27 +391,34 @@ const RegisterPage = () => {
                       id="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={(e) =>
-                        handleInputChange("phoneNumber", e.target.value)
+                        handleInputChange(
+                          "phoneNumber",
+                          e.target.value.replace(/[^\d]/g, "").slice(0, 10)
+                        )
                       }
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       placeholder="Enter your phone number"
                       className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="website" className="text-white">
-                      Website (Optional)
-                    </Label>
-                    <Input
-                      id="website"
-                      value={formData.website}
-                      onChange={(e) =>
-                        handleInputChange("website", e.target.value)
-                      }
-                      placeholder="https://yourwebsite.com"
-                      className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
-                    />
-                  </div>
+                </div>
+
+                {/* Website - full width */}
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="text-white">
+                    Website (Optional)
+                  </Label>
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) =>
+                      handleInputChange("website", e.target.value)
+                    }
+                    placeholder="https://yourwebsite.com"
+                    className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
+                  />
                 </div>
               </div>
 
@@ -441,6 +553,31 @@ const RegisterPage = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="pincode" className="text-white">
+                      Pincode *
+                    </Label>
+                    <Input
+                      id="pincode"
+                      value={formData.pincode}
+                      onChange={(e) =>
+                        handleInputChange("pincode", e.target.value)
+                      }
+                      placeholder="Enter pincode"
+                      className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
+                      required
+                    />
+                    {isPincodeLoading && (
+                      <span className="text-xs text-gray-400">
+                        Looking up location…
+                      </span>
+                    )}
+                    {pincodeError && (
+                      <span className="text-xs text-red-400">
+                        {pincodeError}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="city" className="text-white">
                       City *
                     </Label>
@@ -466,21 +603,6 @@ const RegisterPage = () => {
                         handleInputChange("state", e.target.value)
                       }
                       placeholder="Enter state"
-                      className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode" className="text-white">
-                      Pincode *
-                    </Label>
-                    <Input
-                      id="pincode"
-                      value={formData.pincode}
-                      onChange={(e) =>
-                        handleInputChange("pincode", e.target.value)
-                      }
-                      placeholder="Enter pincode"
                       className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
                       required
                     />

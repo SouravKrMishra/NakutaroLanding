@@ -32,6 +32,9 @@ yarn-error.log*
 # OS
 Thumbs.db
 
+# Admin Panel
+AnimeIndiaAdmin/
+
 server/public
 vite.config.ts.*
 *.tar.gz

@@ -180,7 +180,7 @@ const CartPage = () => {
           <Button
             variant="outline"
             onClick={handleClearCart}
-            className="border-red-500 text-red-400 hover:bg-red-500/20 hover:text-red-400"
+            className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Clear Cart
@@ -261,7 +261,7 @@ const CartPage = () => {
                               onClick={() =>
                                 handleQuantityChange(item.id, item.quantity - 1)
                               }
-                              className="w-8 h-8 p-0 border-[#444] text-gray-300 hover:bg-[#333]"
+                              className="w-8 h-8 p-0 border-[#444] text-gray-600 hover:bg-[#333]"
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
@@ -274,7 +274,7 @@ const CartPage = () => {
                               onClick={() =>
                                 handleQuantityChange(item.id, item.quantity + 1)
                               }
-                              className="w-8 h-8 p-0 border-[#444] text-gray-300 hover:bg-[#333]"
+                              className="w-8 h-8 p-0 border-[#444] text-gray-600 hover:bg-[#333]"
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
@@ -283,7 +283,7 @@ const CartPage = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleRemoveItem(item.id, item.name)}
-                            className="border-red-500 text-red-400 hover:bg-red-500/20 hover:text-red-400"
+                            className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

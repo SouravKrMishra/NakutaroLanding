@@ -13,6 +13,13 @@ export class OrderCleanupService {
     cancelledOrders: any[];
   }> {
     try {
+      // Check if database is connected
+      const mongoose = await import("mongoose");
+      if (mongoose.default.connection.readyState !== 1) {
+        console.log("Database not connected, skipping order cleanup");
+        return { cancelledCount: 0, cancelledOrders: [] };
+      }
+
       // Calculate the cutoff time (2 hours ago)
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
@@ -59,7 +66,8 @@ export class OrderCleanupService {
       };
     } catch (error) {
       console.error("Error cancelling expired pending orders:", error);
-      throw createError("Failed to cancel expired pending orders", 500);
+      // Return default values instead of throwing error to prevent scheduler crashes
+      return { cancelledCount: 0, cancelledOrders: [] };
     }
   }
 
@@ -72,6 +80,17 @@ export class OrderCleanupService {
     recentPending: number;
   }> {
     try {
+      // Check if database is connected
+      const mongoose = await import("mongoose");
+      if (mongoose.default.connection.readyState !== 1) {
+        console.log("Database not connected, skipping order stats");
+        return {
+          totalPending: 0,
+          expiredPending: 0,
+          recentPending: 0,
+        };
+      }
+
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
       const [totalPending, expiredPending, recentPending] = await Promise.all([
@@ -93,7 +112,12 @@ export class OrderCleanupService {
       };
     } catch (error) {
       console.error("Error getting pending order stats:", error);
-      throw createError("Failed to get pending order statistics", 500);
+      // Return default values instead of throwing error to prevent scheduler crashes
+      return {
+        totalPending: 0,
+        expiredPending: 0,
+        recentPending: 0,
+      };
     }
   }
 

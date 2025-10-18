@@ -13,8 +13,10 @@ const router = express.Router();
 // Validation middleware for adding to wishlist
 const addToWishlistValidation = [
   body("productId")
-    .isInt({ min: 1 })
-    .withMessage("Product ID must be a positive integer"),
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Product ID is required"),
   body("name")
     .trim()
     .isLength({ min: 1 })
@@ -61,8 +63,10 @@ const addToWishlistValidation = [
 // Validation middleware for updating wishlist item
 const updateWishlistValidation = [
   param("productId")
-    .isInt({ min: 1 })
-    .withMessage("Product ID must be a positive integer"),
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Product ID is required"),
   body("priority")
     .optional()
     .isIn(["High", "Medium", "Low"])
@@ -80,8 +84,10 @@ const updateWishlistValidation = [
 // Validation middleware for removing from wishlist
 const removeFromWishlistValidation = [
   param("productId")
-    .isInt({ min: 1 })
-    .withMessage("Product ID must be a positive integer"),
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Product ID is required"),
 ];
 
 // All wishlist routes require authentication

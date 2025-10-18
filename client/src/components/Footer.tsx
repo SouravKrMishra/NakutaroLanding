@@ -30,10 +30,18 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: <Twitter className="h-5 w-5" />, href: "#" },
-    { icon: <Linkedin className="h-5 w-5" />, href: "#" },
-    { icon: <Facebook className="h-5 w-5" />, href: "#" },
-    { icon: <Instagram className="h-5 w-5" />, href: "#" },
+    { icon: <Twitter className="h-5 w-5" />, href: "#", target: "_blank" },
+    {
+      icon: <Linkedin className="h-5 w-5" />,
+      href: "https://www.linkedin.com/in/animeindia/",
+      target: "_blank",
+    },
+    { icon: <Facebook className="h-5 w-5" />, href: "#", target: "_blank" },
+    {
+      icon: <Instagram className="h-5 w-5" />,
+      href: "https://www.instagram.com/shop.animeindia/",
+      target: "_blank",
+    },
   ];
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
@@ -100,6 +108,7 @@ const Footer = () => {
                   href={link.href}
                   className="text-gray-400 hover:text-accent transition duration-300"
                   aria-label={`Social media link ${index + 1}`}
+                  target={link.target}
                 >
                   {link.icon}
                 </a>

@@ -15,8 +15,10 @@ const router = express.Router();
 // Validation middleware
 const addToCartValidation = [
   body("productId")
-    .isInt({ min: 1 })
-    .withMessage("Product ID must be a positive integer"),
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Product ID is required"),
   body("name")
     .trim()
     .isLength({ min: 1 })
@@ -52,8 +54,10 @@ const updateCartItemValidation = [
 const syncCartValidation = [
   body("items").isArray().withMessage("Items must be an array"),
   body("items.*.productId")
-    .isInt({ min: 1 })
-    .withMessage("Product ID must be a positive integer"),
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Product ID is required"),
   body("items.*.name")
     .trim()
     .isLength({ min: 1 })

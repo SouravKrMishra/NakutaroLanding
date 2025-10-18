@@ -1,124 +1,266 @@
-import axios from "axios";
-import { config } from "../config/index.ts";
 import {
   Product,
   ProductFilters,
   ProductResponse,
   CategoryFilters,
 } from "../types/index.ts";
+import { Product as ProductModel } from "../../../shared/models/Product.ts";
 
 class ProductService {
-  private readonly baseUrl = config.wooCommerce.baseUrl;
-  private readonly auth = {
-    username: config.wooCommerce.consumerKey,
-    password: config.wooCommerce.consumerSecret,
-  };
-
   async getProducts(filters: ProductFilters): Promise<ProductResponse> {
-    const params: any = {
-      page: filters.page || 1,
-      per_page: filters.per_page || 12,
-      category: filters.category,
-      min_price: filters.min_price,
-      max_price: filters.max_price,
-    };
+    const page = filters.page || 1;
+    const per_page = filters.per_page || 12;
+    const skip = (page - 1) * per_page;
 
-    if (filters.stock_status && filters.stock_status !== "any") {
-      params.stock_status = filters.stock_status;
+    // Build query with $and to properly combine conditions
+    const query: any = {
+      status: "published", // Only show published products
+    };
+    const andConditions: any[] = [];
+
+    // Category filter (comma-separated category names)
+    if (filters.category) {
+      const categories = filters.category.split(",").map((c) => c.trim());
+      if (categories.length === 1) {
+        query.category = categories[0];
+      } else if (categories.length > 1) {
+        query.category = { $in: categories };
+      }
     }
 
-    // Handle sorting
+    // Price filter - filter on the effective price (salePrice if exists, otherwise price)
+    // Only apply filter if it's not the default full range (0-10000)
+    const hasCustomPriceFilter =
+      (filters.min_price !== undefined && filters.min_price > 0) ||
+      (filters.max_price !== undefined && filters.max_price < 10000);
+
+    if (hasCustomPriceFilter) {
+      // Build an $or query to check both price and salePrice fields
+      const regularPriceCondition: any = {};
+      if (filters.min_price !== undefined && filters.min_price > 0) {
+        regularPriceCondition.$gte = filters.min_price;
+      }
+      if (filters.max_price !== undefined && filters.max_price < 10000) {
+        regularPriceCondition.$lte = filters.max_price;
+      }
+
+      // Check sale price (when it exists)
+      const salePriceCondition: any = { $exists: true };
+      if (filters.min_price !== undefined && filters.min_price > 0) {
+        salePriceCondition.$gte = filters.min_price;
+      }
+      if (filters.max_price !== undefined && filters.max_price < 10000) {
+        salePriceCondition.$lte = filters.max_price;
+      }
+
+      // Products match if either:
+      // 1. Regular price is in range and no sale price exists
+      // 2. Sale price is in range (regardless of regular price)
+      andConditions.push({
+        $or: [
+          { price: regularPriceCondition, salePrice: { $exists: false } },
+          { salePrice: salePriceCondition },
+        ],
+      });
+    }
+
+    // Stock status filter
+    // Handle both inventory types:
+    // - shared_stock: Always considered in stock (no stock field)
+    // - individual_stock: Check stock.status field
+    if (filters.stock_status && filters.stock_status !== "any") {
+      if (filters.stock_status === "instock") {
+        // Products are in stock if:
+        // 1. They use shared_stock (inventoryType = "shared_stock")
+        // 2. OR they have individual stock with status = "in_stock" or "low_stock"
+        andConditions.push({
+          $or: [
+            { inventoryType: "shared_stock" },
+            { "stock.status": { $in: ["in_stock", "low_stock"] } },
+          ],
+        });
+      } else if (filters.stock_status === "outofstock") {
+        // Only individual_stock items can be out of stock
+        query.inventoryType = "individual_stock";
+        query["stock.status"] = "out_of_stock";
+      }
+    }
+
+    // Combine all $and conditions
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
+    }
+
+    // Rating filter
+    if (filters.min_rating) {
+      query["ratings.average"] = { $gte: filters.min_rating };
+    }
+
+    // Build sort
+    let sort: any = { createdAt: -1 }; // Default: newest first
     if (filters.orderby) {
       switch (filters.orderby) {
         case "price-asc":
-          params.orderby = "price";
-          params.order = "asc";
+          sort = { price: 1 };
           break;
         case "price-desc":
-          params.orderby = "price";
-          params.order = "desc";
+          sort = { price: -1 };
           break;
         case "rating":
-          params.orderby = "rating";
-          params.order = "desc";
+          sort = { "ratings.average": -1 };
           break;
         case "date":
-          params.orderby = "date";
-          params.order = "desc";
+          sort = { createdAt: -1 };
           break;
       }
     }
 
-    const response = await axios.get(`${this.baseUrl}/products`, {
-      auth: this.auth,
-      params,
-    });
+    // Execute query
+    console.log("Product query:", JSON.stringify(query, null, 2));
+    console.log("Filters:", JSON.stringify(filters, null, 2));
 
-    let filteredProducts = response.data;
-    let totalProducts = Number(response.headers["x-wp-total"]);
-    let totalPages = Number(response.headers["x-wp-totalpages"]);
+    const products = await ProductModel.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(per_page)
+      .lean();
 
-    // Filter by rating if specified
-    if (filters.min_rating) {
-      const minRatingNum = Number(filters.min_rating);
-      filteredProducts = filteredProducts.filter(
-        (product: any) =>
-          product.average_rating &&
-          parseFloat(product.average_rating) >= minRatingNum
+    const totalProducts = await ProductModel.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / per_page);
+
+    console.log(`Found ${products.length} products (total: ${totalProducts})`);
+
+    // Debug: Check how many products would match without stock filter
+    if (filters.stock_status && filters.stock_status !== "any") {
+      const queryWithoutStock = { ...query };
+      delete queryWithoutStock["stock.status"];
+      const totalWithoutStockFilter = await ProductModel.countDocuments(
+        queryWithoutStock
       );
-
-      // Recalculate pagination for filtered results
-      totalProducts = filteredProducts.length;
-      totalPages = Math.ceil(totalProducts / Number(filters.per_page || 12));
-
-      // Apply pagination to filtered results
-      const startIndex =
-        (Number(filters.page || 1) - 1) * Number(filters.per_page || 12);
-      const endIndex = startIndex + Number(filters.per_page || 12);
-      filteredProducts = filteredProducts.slice(startIndex, endIndex);
+      if (totalWithoutStockFilter > totalProducts) {
+        console.log(
+          `Note: ${
+            totalWithoutStockFilter - totalProducts
+          } products filtered out due to stock status`
+        );
+      }
     }
 
+    // Transform products to match frontend expectations
+    const transformedProducts = products.map(this.transformProduct);
+
     return {
-      products: filteredProducts,
+      products: transformedProducts,
       totalProducts,
       totalPages,
     };
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
-    const response = await axios.get(`${this.baseUrl}/products`, {
-      auth: this.auth,
-      params: {
-        per_page: 4,
-        orderby: "date",
-        order: "desc",
-      },
-    });
+    const products = await ProductModel.find({
+      status: "published",
+      featured: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .lean();
 
-    return response.data;
+    console.log(`Found ${products.length} featured products`);
+    return products.map(this.transformProduct);
   }
 
   async getCategories(filters: CategoryFilters): Promise<any[]> {
-    const params: any = {
-      per_page: 100,
-    };
+    // Get distinct categories from products
+    const pipeline: any[] = [
+      {
+        $match: {
+          status: "published",
+        },
+      },
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ];
 
+    // If hide_empty is true, only show categories with products
     if (filters.hide_empty) {
-      params.hide_empty = true;
+      pipeline.push({
+        $match: {
+          count: { $gt: 0 },
+        },
+      });
     }
 
-    const response = await axios.get(`${this.baseUrl}/products/categories`, {
-      auth: this.auth,
-      params,
-    });
-    return response.data;
+    const categories = await ProductModel.aggregate(pipeline);
+
+    // Transform to match frontend expectations
+    return categories.map((cat, index) => ({
+      id: index + 1, // Generate sequential IDs
+      name: cat._id,
+      count: cat.count,
+    }));
   }
 
-  async getProductById(id: number): Promise<Product> {
-    const response = await axios.get(`${this.baseUrl}/products/${id}`, {
-      auth: this.auth,
-    });
-    return response.data;
+  async getProductById(id: string): Promise<Product> {
+    const product = await ProductModel.findById(id).lean();
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    return this.transformProduct(product);
+  }
+
+  // Transform MongoDB product to match frontend expectations
+  private transformProduct(product: any): Product {
+    // Determine stock status based on inventory type
+    let stockStatus;
+    if (product.inventoryType === "shared_stock") {
+      // Shared stock items (clothing) are always in stock
+      stockStatus = { status: "in_stock", quantity: 999 }; // High quantity to indicate always available
+    } else if (product.inventoryType === "individual_stock" && product.stock) {
+      // Individual stock items use their actual stock data
+      stockStatus = {
+        status: product.stock.status,
+        quantity: product.stock.quantity,
+      };
+    } else {
+      // Default fallback
+      stockStatus = { status: "in_stock", quantity: 0 };
+    }
+
+    return {
+      id: product._id.toString(),
+      name: product.name,
+      slug: product.slug,
+      description: product.description || "",
+      shortDescription: product.shortDescription || "",
+      price: product.salePrice || product.price,
+      regularPrice: product.regularPrice || product.price,
+      salePrice: product.salePrice,
+      onSale: !!product.salePrice,
+      average_rating: product.ratings?.average?.toString() || "0",
+      rating_count: product.ratings?.count || 0,
+      images:
+        product.images?.map((img: any) => ({
+          src: img.url,
+          alt: img.alt || product.name,
+        })) || [],
+      categories: [{ id: 1, name: product.category || "Uncategorized" }],
+      category: product.category || "Uncategorized",
+      stock: stockStatus,
+      sku: product.sku,
+      featured: product.featured || false,
+      tags: product.tags || [],
+      attributes: [], // WooCommerce-style attributes - can be enhanced later
+      specifications: product.specifications || {},
+    };
   }
 }
 

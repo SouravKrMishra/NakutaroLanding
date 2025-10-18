@@ -5,7 +5,7 @@ import { buildApiUrl } from "./api.ts";
 
 interface CartItem {
   id: string | number; // Changed to string to support variant-based IDs
-  productId?: number; // Original product ID for reference
+  productId?: string | number; // Original product ID for reference
   name: string;
   price: string;
   image: string;
@@ -91,6 +91,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return {
         ...state,
         items: action.payload,
+        total: calculateTotal(action.payload),
+        itemCount: calculateItemCount(action.payload),
       };
     }
 
@@ -129,7 +131,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     total: 0,
@@ -140,61 +142,73 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const total = calculateTotal(state.items);
     const itemCount = calculateItemCount(state.items);
-
-    dispatch({ type: "LOAD_CART", payload: state.items });
-  }, [state.items]);
+    // Update totals in state if they don't match
+    if (state.total !== total || state.itemCount !== itemCount) {
+      dispatch({ type: "LOAD_CART", payload: state.items });
+    }
+  }, [state.items, state.total, state.itemCount]);
 
   // Load cart from database on mount and when user changes
   useEffect(() => {
     const loadCartFromDatabase = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const token = localStorage.getItem("authToken");
-          const response = await axios.get(buildApiUrl("/api/cart"), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-          });
-          const cartItems = response.data.cart.items || [];
-          // Transform items from backend format (productId) to frontend format (id)
-          const transformedItems = cartItems.map((item: any) => ({
-            id: item.productId,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            category: item.category,
-            quantity: item.quantity,
-            inStock: item.inStock,
-          }));
-          dispatch({ type: "LOAD_CART", payload: transformedItems });
-        } catch (error) {
-          console.error("Error loading cart from database:", error);
-          // Fallback to localStorage if database fails
-          const savedCart = localStorage.getItem(`cart_${user.id}`);
-          if (savedCart) {
-            try {
-              const items = JSON.parse(savedCart);
-              dispatch({ type: "LOAD_CART", payload: items });
-            } catch (localError) {
-              console.error(
-                "Error loading cart from localStorage:",
-                localError
-              );
+      // Wait for auth to finish loading before fetching cart
+      if (!authLoading) {
+        if (isAuthenticated && user) {
+          try {
+            const token = localStorage.getItem("authToken");
+            const response = await axios.get(buildApiUrl("/api/cart"), {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              withCredentials: true,
+            });
+            const cartItems = response.data.cart.items || [];
+            console.log(
+              "🛒 Cart loaded from database:",
+              cartItems.length,
+              "items"
+            );
+            // Transform items from backend format (productId) to frontend format (id)
+            const transformedItems = cartItems.map((item: any) => ({
+              id: String(item.productId), // Ensure ID is string
+              name: item.name,
+              price: item.price,
+              image: item.image,
+              category: item.category,
+              quantity: item.quantity,
+              inStock: item.inStock,
+            }));
+            console.log("🛒 Transformed cart items:", transformedItems);
+            dispatch({ type: "LOAD_CART", payload: transformedItems });
+          } catch (error) {
+            console.error("Error loading cart from database:", error);
+            console.log("🛒 Falling back to localStorage for user:", user.id);
+            // Fallback to localStorage if database fails
+            const savedCart = localStorage.getItem(`cart_${user.id}`);
+            if (savedCart) {
+              try {
+                const items = JSON.parse(savedCart);
+                dispatch({ type: "LOAD_CART", payload: items });
+              } catch (localError) {
+                console.error(
+                  "Error loading cart from localStorage:",
+                  localError
+                );
+                dispatch({ type: "CLEAR_CART" });
+              }
+            } else {
               dispatch({ type: "CLEAR_CART" });
             }
-          } else {
-            dispatch({ type: "CLEAR_CART" });
           }
+        } else {
+          // Clear cart when user logs out
+          dispatch({ type: "CLEAR_CART" });
         }
-      } else {
-        // Clear cart when user logs out
-        dispatch({ type: "CLEAR_CART" });
       }
     };
 
     loadCartFromDatabase();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading]);
 
   // Sync cart to database whenever it changes (only for authenticated users)
   useEffect(() => {
@@ -204,7 +218,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           const token = localStorage.getItem("authToken");
           // Transform items to match backend schema (id -> productId)
           const transformedItems = state.items.map((item) => ({
-            productId: item.id,
+            productId: String(item.id), // Ensure ID is string
             name: item.name,
             price: item.price,
             image: item.image,
@@ -271,7 +285,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       await axios.post(
         buildApiUrl("/api/cart"),
         {
-          productId: item.id,
+          productId: String(item.id), // Ensure ID is string
           name: item.name,
           price: item.price,
           image: item.image,
@@ -361,7 +375,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const isInCart = (id: string | number): boolean => {
-    return state.items.some((item) => item.id === id);
+    const idStr = String(id);
+    return state.items.some((item) => String(item.id) === idStr);
   };
 
   const value: CartContextType = {

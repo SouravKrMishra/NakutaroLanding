@@ -7,7 +7,6 @@ import recommendationRoutes from "./recommendationRoutes.ts";
 import orderRoutes from "./orderRoutes.ts";
 import cartRoutes from "./cartRoutes.ts";
 import paymentRoutes from "./paymentRoutes.ts";
-import adminRoutes from "./adminRoutes.ts";
 
 const router = Router();
 
@@ -20,6 +19,5 @@ router.use("/", recommendationRoutes);
 router.use("/", orderRoutes);
 router.use("/", cartRoutes);
 router.use("/payments", paymentRoutes);
-router.use("/admin", adminRoutes);
 
 export default router;

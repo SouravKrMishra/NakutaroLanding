@@ -3,7 +3,7 @@ import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDebounce } from "@/hooks/use-debounce.ts";
 import { buildApiUrl } from "@/lib/api.ts";
 import {
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { ProductSkeleton } from "@/components/ProductSkeleton.tsx";
 import { FeaturedProductsSkeleton } from "@/components/FeaturedProductsSkeleton.tsx";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useWishlist } from "@/lib/WishlistContext.tsx";
 import { useCart } from "@/lib/CartContext.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
@@ -58,7 +58,7 @@ const sortOptions: SortOption[] = [
 ];
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
   price: string;
   rating: number;
@@ -70,11 +70,69 @@ type Product = {
   attributes?: { name: string; options: string[] }[];
 };
 
+// URL parameter management functions
+const parseUrlParams = (search: string) => {
+  const params = new URLSearchParams(search);
+
+  return {
+    categories: params.get("categories")?.split(",").filter(Boolean) || [],
+    minPrice: params.get("minPrice") ? Number(params.get("minPrice")) : 0,
+    maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : 10000,
+    ratings:
+      params.get("ratings")?.split(",").map(Number).filter(Boolean) || [],
+    sortBy: (params.get("sortBy") as SortOption) || "Relevance",
+    page: params.get("page") ? Number(params.get("page")) : 1,
+    includeOutOfStock: params.get("includeOutOfStock") === "true",
+    view: (params.get("view") as "grid" | "list") || "grid",
+  };
+};
+
+const buildUrlParams = (filters: {
+  categories: string[];
+  minPrice: number;
+  maxPrice: number;
+  ratings: number[];
+  sortBy: SortOption;
+  page: number;
+  includeOutOfStock: boolean;
+  view: "grid" | "list";
+}) => {
+  const params = new URLSearchParams();
+
+  if (filters.categories.length > 0) {
+    params.set("categories", filters.categories.join(","));
+  }
+  if (filters.minPrice !== 0) {
+    params.set("minPrice", filters.minPrice.toString());
+  }
+  if (filters.maxPrice !== 10000) {
+    params.set("maxPrice", filters.maxPrice.toString());
+  }
+  if (filters.ratings.length > 0) {
+    params.set("ratings", filters.ratings.join(","));
+  }
+  if (filters.sortBy !== "Relevance") {
+    params.set("sortBy", filters.sortBy);
+  }
+  if (filters.page !== 1) {
+    params.set("page", filters.page.toString());
+  }
+  if (filters.includeOutOfStock) {
+    params.set("includeOutOfStock", "true");
+  }
+  if (filters.view !== "grid") {
+    params.set("view", filters.view);
+  }
+
+  return params.toString();
+};
+
 const ProductsPage = () => {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<number[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<number[]>([0, 10000]);
   const [committedPriceRange, setCommittedPriceRange] = useState<number[]>([
     0, 10000,
@@ -95,14 +153,15 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [includeOutOfStock, setIncludeOutOfStock] = useState(false);
+  const [includeOutOfStock, setIncludeOutOfStock] = useState(true); // Default true for print-on-demand
   const [selectedAttributes, setSelectedAttributes] = useState<{
-    [productId: number]: { [attributeName: string]: string };
+    [productId: string]: { [attributeName: string]: string };
   }>({});
   const [showAttributeSelection, setShowAttributeSelection] = useState<{
-    [productId: number]: boolean;
+    [productId: string]: boolean;
   }>({});
   const pageSize = 12;
+  const isUpdatingFromUrl = useRef(false);
 
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -112,29 +171,27 @@ const ProductsPage = () => {
 
   const handleWishlistToggle = async (product: Product) => {
     try {
-      if (isInWishlist(product.id)) {
-        await removeFromWishlist(product.id);
-        toast({
-          title: "Removed from Wishlist",
-          description: `${product.name} has been removed from your wishlist.`,
-          variant: "destructive",
-        });
-      } else {
-        await addToWishlist({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          category: product.category,
-          rating: product.rating,
-          reviews: product.reviews,
-        });
-        toast({
-          title: "Added to Wishlist ❤️",
-          description: `${product.name} has been added to your wishlist.`,
-          variant: "default",
-        });
-      }
+      const isCurrentlyInWishlist = isInWishlist(product.id);
+
+      await addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        rating: product.rating,
+        reviews: product.reviews,
+      });
+
+      toast({
+        title: isCurrentlyInWishlist
+          ? "Removed from Wishlist"
+          : "Added to Wishlist ❤️",
+        description: `${product.name} has been ${
+          isCurrentlyInWishlist ? "removed from" : "added to"
+        } your wishlist.`,
+        variant: isCurrentlyInWishlist ? "destructive" : "default",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -194,7 +251,7 @@ const ProductsPage = () => {
   };
 
   const handleAttributeSelect = (
-    productId: number,
+    productId: string,
     attributeName: string,
     value: string
   ) => {
@@ -276,13 +333,68 @@ const ProductsPage = () => {
     }
   };
 
-  const handleCancelAttributeSelection = (productId: number) => {
+  const handleCancelAttributeSelection = (productId: string) => {
     setShowAttributeSelection((prev) => ({ ...prev, [productId]: false }));
     setSelectedAttributes((prev) => ({ ...prev, [productId]: {} }));
   };
 
   const debouncedPriceRange = useDebounce(committedPriceRange, 1000);
   const debouncedRatings = useDebounce(ratings, 1000);
+
+  // Function to update URL with current filter state
+  const updateUrl = () => {
+    const activeRatings = Object.entries(ratings)
+      .filter(([_, isActive]) => isActive)
+      .map(([rating, _]) => parseInt(rating));
+
+    const urlParams = buildUrlParams({
+      categories: activeCategory,
+      minPrice: committedPriceRange[0],
+      maxPrice: committedPriceRange[1],
+      ratings: activeRatings,
+      sortBy,
+      page: currentPage,
+      includeOutOfStock,
+      view,
+    });
+
+    const newUrl = urlParams ? `?${urlParams}` : "";
+    setLocation(`/products${newUrl}`, { replace: true });
+  };
+
+  // Initialize state from URL parameters
+  useEffect(() => {
+    isUpdatingFromUrl.current = true;
+    const urlParams = parseUrlParams(search);
+
+    setActiveCategory(urlParams.categories);
+    setPriceRange([urlParams.minPrice, urlParams.maxPrice]);
+    setCommittedPriceRange([urlParams.minPrice, urlParams.maxPrice]);
+    setSortBy(urlParams.sortBy);
+    setCurrentPage(urlParams.page);
+    setIncludeOutOfStock(urlParams.includeOutOfStock);
+    setView(urlParams.view);
+
+    // Set ratings from URL
+    const newRatings: { [key: number]: boolean } = {
+      5: false,
+      4: false,
+      3: false,
+      2: false,
+      1: false,
+    };
+    urlParams.ratings.forEach((rating) => {
+      if (rating >= 1 && rating <= 5) {
+        newRatings[rating] = true;
+      }
+    });
+    setRatings(newRatings);
+
+    // Reset the flag after a short delay to allow state updates to complete
+    setTimeout(() => {
+      isUpdatingFromUrl.current = false;
+    }, 100);
+  }, [search]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -296,13 +408,14 @@ const ProductsPage = () => {
         const mappedFeaturedProducts = response.data.map((item: any) => ({
           id: item.id,
           name: item.name,
-          price: item.price,
+          price: item.price?.toString() || "0",
           rating: item.average_rating ? parseFloat(item.average_rating) : 0,
-          reviews: item.rating_count,
-          image: item.images[0]?.src || "",
-          category: item.categories[0]?.name || "Uncategorized",
+          reviews: item.rating_count || 0,
+          image: item.images?.[0]?.src || "",
+          category:
+            item.category || item.categories?.[0]?.name || "Uncategorized",
           isNew: false,
-          onSale: item.on_sale,
+          onSale: item.onSale || false,
           attributes: item.attributes || [],
         }));
         setFeaturedProducts(mappedFeaturedProducts);
@@ -386,7 +499,8 @@ const ProductsPage = () => {
               return (
                 item.price !== undefined &&
                 item.price !== null &&
-                item.price !== ""
+                item.price !== "" &&
+                item.price !== 0
               );
             }
             // If including out of stock, allow all
@@ -395,13 +509,14 @@ const ProductsPage = () => {
           .map((item: any) => ({
             id: item.id,
             name: item.name,
-            price: item.price,
+            price: item.price?.toString() || "0",
             rating: item.average_rating ? parseFloat(item.average_rating) : 0,
-            reviews: item.rating_count,
-            image: item.images[0]?.src || "",
-            category: item.categories[0]?.name || "Uncategorized",
+            reviews: item.rating_count || 0,
+            image: item.images?.[0]?.src || "",
+            category:
+              item.category || item.categories?.[0]?.name || "Uncategorized",
             isNew: false,
-            onSale: item.on_sale,
+            onSale: item.onSale || false,
             attributes: item.attributes || [],
           }));
 
@@ -425,11 +540,11 @@ const ProductsPage = () => {
     includeOutOfStock,
   ]);
 
-  const handleCategoryClick = (categoryId: number) => {
+  const handleCategoryClick = (categoryName: string) => {
     setActiveCategory((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
+      prev.includes(categoryName)
+        ? prev.filter((name) => name !== categoryName)
+        : [...prev, categoryName]
     );
     setCurrentPage(1);
   };
@@ -438,6 +553,21 @@ const ProductsPage = () => {
     setRatings((prev) => ({ ...prev, [rating]: !prev[rating] }));
     setCurrentPage(1);
   };
+
+  // Update URL when filters change (but not when updating from URL)
+  useEffect(() => {
+    if (!isUpdatingFromUrl.current) {
+      updateUrl();
+    }
+  }, [
+    activeCategory,
+    committedPriceRange,
+    ratings,
+    sortBy,
+    currentPage,
+    includeOutOfStock,
+    view,
+  ]);
 
   const clearFilters = () => {
     // Check if filters are already in default state
@@ -460,6 +590,7 @@ const ProductsPage = () => {
       setSortBy("Relevance");
       setCurrentPage(1);
       setIncludeOutOfStock(false);
+      setView("grid");
     }
   };
 
@@ -685,10 +816,10 @@ const ProductsPage = () => {
                         .filter((category) => category.count > 0)
                         .map((category) => (
                           <button
-                            key={category.id}
-                            onClick={() => handleCategoryClick(category.id)}
+                            key={category.name}
+                            onClick={() => handleCategoryClick(category.name)}
                             className={`px-4 py-2 rounded-full border-2 transition-all duration-300 text-sm font-medium ${
-                              activeCategory.includes(category.id)
+                              activeCategory.includes(category.name)
                                 ? "bg-accent text-white border-accent shadow-lg shadow-accent/25"
                                 : "bg-[#181818] text-gray-300 border-[#2D2D2D] hover:bg-accent/10 hover:text-accent hover:border-accent/50"
                             }`}

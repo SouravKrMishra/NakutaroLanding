@@ -9,7 +9,7 @@ export const getProductById = async (
   next: NextFunction
 ) => {
   try {
-    const product = await productService.getProductById(Number(req.params.id));
+    const product = await productService.getProductById(req.params.id);
     res.json(product);
   } catch (error) {
     next(createError("Failed to fetch product", 500));

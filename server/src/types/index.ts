@@ -1,12 +1,28 @@
 export interface Product {
-  id: number;
+  id: string;
   name: string;
-  price: string;
+  slug?: string;
+  description?: string;
+  shortDescription?: string;
+  price: number;
+  regularPrice?: number;
+  salePrice?: number;
+  onSale?: boolean;
   average_rating?: string;
   rating_count: number;
-  images: Array<{ src: string }>;
-  categories: Array<{ name: string }>;
-  on_sale: boolean;
+  images: Array<{ src: string; alt?: string }>;
+  categories: Array<{ id: number; name: string }>;
+  category?: string;
+  stock?: {
+    quantity: number;
+    status: string;
+    lowStockThreshold?: number;
+  };
+  sku?: string;
+  featured?: boolean;
+  tags?: string[];
+  attributes?: any[];
+  specifications?: any;
 }
 
 export interface ProductFilters {

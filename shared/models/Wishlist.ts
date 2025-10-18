@@ -8,7 +8,7 @@ const wishlistSchema = new mongoose.Schema(
       required: true,
     },
     productId: {
-      type: Number,
+      type: String,
       required: true,
     },
     productName: {

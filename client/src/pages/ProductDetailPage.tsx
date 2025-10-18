@@ -26,7 +26,7 @@ import { useAuth } from "@/lib/AuthContext.tsx";
 import { useToast } from "@/hooks/use-toast.ts";
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
   price: string;
   rating: number;
@@ -83,7 +83,25 @@ const ProductDetailPage = () => {
       const response = await axios.get(
         buildApiUrl(`/api/products/${productId}`)
       );
-      setProduct(response.data);
+      const data = response.data;
+
+      // Transform MongoDB product to match frontend expectations
+      const transformedProduct = {
+        ...data,
+        price: data.price?.toString() || "0",
+        stock_status:
+          data.stock?.status === "in_stock" ||
+          data.stock?.status === "low_stock"
+            ? "instock"
+            : "outofstock",
+        average_rating: data.average_rating || "0",
+        rating_count: data.rating_count || 0,
+        categories: data.categories || [
+          { name: data.category || "Uncategorized" },
+        ],
+      };
+
+      setProduct(transformedProduct);
     } catch (err) {
       setError("Failed to fetch product details.");
     } finally {
@@ -385,29 +403,27 @@ const ProductDetailPage = () => {
     if (!product) return;
 
     try {
-      if (isInWishlist(product.id)) {
-        await removeFromWishlist(product.id);
-        toast({
-          title: "Removed from Wishlist",
-          description: `${product.name} has been removed from your wishlist.`,
-          variant: "destructive",
-        });
-      } else {
-        await addToWishlist({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images?.[0]?.src || "",
-          category: product.categories?.[0]?.name || "Uncategorized",
-          rating: parseFloat(product.average_rating) || 0,
-          reviews: product.rating_count || 0,
-        });
-        toast({
-          title: "Added to Wishlist ❤️",
-          description: `${product.name} has been added to your wishlist.`,
-          variant: "default",
-        });
-      }
+      const isCurrentlyInWishlist = isInWishlist(product.id);
+
+      await addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0]?.src || "",
+        category: product.categories?.[0]?.name || "Uncategorized",
+        rating: parseFloat(product.average_rating) || 0,
+        reviews: product.rating_count || 0,
+      });
+
+      toast({
+        title: isCurrentlyInWishlist
+          ? "Removed from Wishlist"
+          : "Added to Wishlist ❤️",
+        description: `${product.name} has been ${
+          isCurrentlyInWishlist ? "removed from" : "added to"
+        } your wishlist.`,
+        variant: isCurrentlyInWishlist ? "destructive" : "default",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -622,10 +638,9 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              <div
-                className="text-3xl font-bold text-accent mb-4"
-                dangerouslySetInnerHTML={{ __html: price }}
-              />
+              <div className="text-3xl font-bold text-accent mb-4">
+                ₹{price}
+              </div>
 
               <div
                 className="text-gray-400 mb-6"

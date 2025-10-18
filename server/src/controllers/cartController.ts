@@ -119,7 +119,7 @@ export const updateCartItem = async (
     }
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId === parseInt(productId)
+      (item) => item.productId === productId
     );
 
     if (itemIndex === -1) {
@@ -129,17 +129,31 @@ export const updateCartItem = async (
     if (quantity === 0) {
       // Remove item if quantity is 0
       cart.items.splice(itemIndex, 1);
+
+      // If cart is now empty, delete the entire cart document
+      if (cart.items.length === 0) {
+        await Cart.findOneAndDelete({ userId });
+        res.json({
+          message: "Cart updated successfully",
+          cart: { items: [] },
+        });
+      } else {
+        await cart.save();
+        res.json({
+          message: "Cart updated successfully",
+          cart,
+        });
+      }
     } else {
       // Update quantity
       cart.items[itemIndex].quantity = quantity;
+      await cart.save();
+
+      res.json({
+        message: "Cart updated successfully",
+        cart,
+      });
     }
-
-    await cart.save();
-
-    res.json({
-      message: "Cart updated successfully",
-      cart,
-    });
   } catch (error) {
     next(createError("Failed to update cart", 500));
   }
@@ -166,7 +180,7 @@ export const removeFromCart = async (
     }
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId === parseInt(productId)
+      (item) => item.productId === productId
     );
 
     if (itemIndex === -1) {
@@ -174,12 +188,21 @@ export const removeFromCart = async (
     }
 
     cart.items.splice(itemIndex, 1);
-    await cart.save();
 
-    res.json({
-      message: "Item removed from cart successfully",
-      cart,
-    });
+    // If cart is now empty, delete the entire cart document
+    if (cart.items.length === 0) {
+      await Cart.findOneAndDelete({ userId });
+      res.json({
+        message: "Item removed from cart successfully",
+        cart: { items: [] },
+      });
+    } else {
+      await cart.save();
+      res.json({
+        message: "Item removed from cart successfully",
+        cart,
+      });
+    }
   } catch (error) {
     next(createError("Failed to remove item from cart", 500));
   }
@@ -197,18 +220,12 @@ export const clearCart = async (
       return next(createError("User not authenticated", 401));
     }
 
-    const cart = await Cart.findOne({ userId });
-
-    if (!cart) {
-      return next(createError("Cart not found", 404));
-    }
-
-    cart.items = [];
-    await cart.save();
+    // Delete the entire cart document instead of just emptying it
+    await Cart.findOneAndDelete({ userId });
 
     res.json({
       message: "Cart cleared successfully",
-      cart,
+      cart: { items: [] },
     });
   } catch (error) {
     next(createError("Failed to clear cart", 500));
@@ -236,16 +253,26 @@ export const syncCart = async (
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      cart = new Cart({ userId, items: [] });
+      cart = new Cart({ userId, items: items });
+    } else {
+      // Clear existing items and add new ones
+      cart.items.splice(0, cart.items.length, ...items);
     }
 
-    cart.items = items;
-    await cart.save();
-
-    res.json({
-      message: "Cart synced successfully",
-      cart,
-    });
+    // If cart is now empty, delete the entire cart document
+    if (cart.items.length === 0) {
+      await Cart.findOneAndDelete({ userId });
+      res.json({
+        message: "Cart synced successfully",
+        cart: { items: [] },
+      });
+    } else {
+      await cart.save();
+      res.json({
+        message: "Cart synced successfully",
+        cart,
+      });
+    }
   } catch (error) {
     next(createError("Failed to sync cart", 500));
   }

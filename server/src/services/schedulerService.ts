@@ -19,8 +19,10 @@ export class SchedulerService {
 
     console.log("Starting order cleanup scheduler...");
 
-    // Run immediately on startup
-    this.runCleanupTask();
+    // Delay initial run by 5 seconds to ensure database connection is established
+    setTimeout(() => {
+      this.runCleanupTask();
+    }, 5000);
 
     // Then run every 30 minutes
     this.cleanupInterval = setInterval(() => {

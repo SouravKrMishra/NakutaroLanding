@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import axios from "axios";
@@ -10,7 +11,7 @@ import { buildApiUrl } from "./api.js";
 import { useAuth } from "./AuthContext.tsx";
 
 export interface WishlistItem {
-  id: number;
+  id: string | number;
   name: string;
   price: string;
   image: string;
@@ -27,8 +28,8 @@ export interface WishlistItem {
 interface WishlistContextType {
   wishlistItems: WishlistItem[];
   addToWishlist: (item: WishlistItem) => Promise<void>;
-  removeFromWishlist: (id: number) => Promise<void>;
-  isInWishlist: (id: number) => boolean;
+  removeFromWishlist: (id: string | number) => Promise<void>;
+  isInWishlist: (id: string | number) => boolean;
   wishlistCount: number;
   loading: boolean;
   error: string | null;
@@ -48,7 +49,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Get auth token from localStorage
   const getAuthToken = () => {
@@ -56,7 +57,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
   };
 
   // Fetch wishlist from API
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     if (!isAuthenticated || !user) {
       setWishlistItems([]);
       return;
@@ -74,47 +75,56 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
       });
 
       // Ensure response.data is always an array
-      setWishlistItems(Array.isArray(response.data) ? response.data : []);
+      const wishlistData = Array.isArray(response.data) ? response.data : [];
+      setWishlistItems(wishlistData);
     } catch (err: any) {
+      console.error("Failed to load wishlist:", err);
       setError("Failed to load wishlist");
       // Set empty array on error to maintain UX
       setWishlistItems([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, user]);
 
   // Load wishlist when user authentication changes
   useEffect(() => {
-    fetchWishlist();
-  }, [isAuthenticated, user?.id]); // Only depend on user.id to avoid unnecessary re-renders
+    // Wait for auth to finish loading before fetching wishlist
+    if (!authLoading) {
+      fetchWishlist();
+    }
+  }, [authLoading, fetchWishlist]); // Include authLoading to wait for auth to complete
 
   const addToWishlist = async (item: WishlistItem): Promise<void> => {
     if (!isAuthenticated || !user) {
       throw new Error("Authentication required");
     }
 
-    // Optimistically add to local state
-    const newItem: WishlistItem = {
-      ...item,
-      priority: "Medium",
-      addedDate: new Date().toISOString().split("T")[0],
-      inStock: true,
-      quantity: 1,
-      series: item.category || "General",
-    };
+    const isCurrentlyInWishlist = isInWishlist(item.id);
 
-    setWishlistItems((prev) => {
-      if (prev.some((existingItem) => existingItem.id === item.id)) {
-        return prev;
-      }
-      return [...prev, newItem];
-    });
+    // Optimistically update local state
+    if (isCurrentlyInWishlist) {
+      // Remove from wishlist
+      setWishlistItems((prev) =>
+        prev.filter((wishItem) => wishItem.id !== item.id)
+      );
+    } else {
+      // Add to wishlist
+      const newItem: WishlistItem = {
+        ...item,
+        priority: "Medium",
+        addedDate: new Date().toISOString().split("T")[0],
+        inStock: true,
+        quantity: 1,
+        series: item.category || "General",
+      };
+      setWishlistItems((prev) => [...prev, newItem]);
+    }
 
     try {
       const token = getAuthToken();
       const payload = {
-        productId: item.id,
+        productId: String(item.id), // Keep as string
         name: item.name,
         price: item.price,
         image: item.image,
@@ -127,23 +137,39 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
         inStock: true,
       };
 
-      const response = await axios.post(buildApiUrl("/api/wishlist"), payload, {
+      await axios.post(buildApiUrl("/api/wishlist"), payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      // Optimistic update already handled above, no need to update again
     } catch (err: any) {
       // Revert optimistic update on error
-      setWishlistItems((prev) =>
-        prev.filter((wishItem) => wishItem.id !== item.id)
-      );
+      if (isCurrentlyInWishlist) {
+        // Re-add the item
+        const newItem: WishlistItem = {
+          ...item,
+          priority: "Medium",
+          addedDate: new Date().toISOString().split("T")[0],
+          inStock: true,
+          quantity: 1,
+          series: item.category || "General",
+        };
+        setWishlistItems((prev) => [...prev, newItem]);
+      } else {
+        // Remove the item
+        setWishlistItems((prev) =>
+          prev.filter((wishItem) => wishItem.id !== item.id)
+        );
+      }
       throw new Error(
-        err.response?.data?.message || "Failed to add to wishlist"
+        err.response?.data?.message || "Failed to toggle wishlist"
       );
     }
   };
 
-  const removeFromWishlist = async (id: number): Promise<void> => {
+  const removeFromWishlist = async (id: string | number): Promise<void> => {
     if (!isAuthenticated || !user) {
       throw new Error("Authentication required");
     }
@@ -155,7 +181,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
     try {
       const token = getAuthToken();
 
-      const response = await axios.delete(buildApiUrl(`/api/wishlist/${id}`), {
+      await axios.delete(buildApiUrl(`/api/wishlist/${id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -169,9 +195,14 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
     }
   };
 
-  const isInWishlist = (id: number) => {
-    return wishlistItems.some((item) => item.id === id);
-  };
+  const isInWishlist = useCallback(
+    (id: string | number) => {
+      // Compare IDs as strings for consistency
+      const idStr = String(id);
+      return wishlistItems.some((item) => String(item.id) === idStr);
+    },
+    [wishlistItems]
+  );
 
   const wishlistCount = wishlistItems.length;
 

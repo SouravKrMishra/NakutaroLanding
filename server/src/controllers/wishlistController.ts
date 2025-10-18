@@ -108,8 +108,14 @@ export const addToWishlist = async (req: Request, res: Response) => {
     });
 
     if (existingItem) {
-      console.log("Wishlist Controller: Item already exists in wishlist");
-      return res.status(400).json({ message: "Item already in wishlist" });
+      console.log(
+        "Wishlist Controller: Item already exists in wishlist, removing it..."
+      );
+      await Wishlist.findOneAndDelete({
+        userId: req.user.id,
+        productId: productId,
+      });
+      return res.status(200).json({ message: "Item removed from wishlist" });
     }
 
     // Create new wishlist item
@@ -153,15 +159,24 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
 
     const { productId } = req.params;
 
+    console.log(
+      "Removing from wishlist - User:",
+      req.user.id,
+      "Product:",
+      productId
+    );
+
     const deletedItem = await Wishlist.findOneAndDelete({
       userId: req.user.id,
-      productId: parseInt(productId),
+      productId: productId,
     });
 
     if (!deletedItem) {
+      console.log("Item not found in wishlist");
       return res.status(404).json({ message: "Item not found in wishlist" });
     }
 
+    console.log("Item removed from wishlist successfully");
     res.json({ message: "Item removed from wishlist successfully" });
   } catch (error) {
     console.error("Error removing from wishlist:", error);
@@ -187,7 +202,7 @@ export const updateWishlistItem = async (req: Request, res: Response) => {
     const updatedItem = await Wishlist.findOneAndUpdate(
       {
         userId: req.user.id,
-        productId: parseInt(productId),
+        productId: productId,
       },
       {
         ...(priority && { priority }),
