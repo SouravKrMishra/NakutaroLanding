@@ -113,7 +113,6 @@ export const signup = async (req: Request, res: Response) => {
       token,
     });
   } catch (err) {
-    console.error("Registration error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -143,6 +142,14 @@ export const signin = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    // Check if user account is active
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Account is deactivated. Please contact support." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -203,6 +210,13 @@ export const verify = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not found" });
     }
 
+    // Check if user account is still active
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Account is deactivated. Please contact support." });
+    }
+
     res.status(200).json({
       user: {
         id: user._id,
@@ -223,6 +237,21 @@ export const verify = async (req: Request, res: Response) => {
     });
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    // Clear the httpOnly cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -256,7 +285,6 @@ export const getUserProfile = async (req: Request, res: Response) => {
       description: user.description,
     });
   } catch (error) {
-    console.error("Error fetching user profile:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

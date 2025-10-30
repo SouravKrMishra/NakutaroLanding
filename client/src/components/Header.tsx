@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useCart } from "@/lib/CartContext.tsx";
+ 
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -94,6 +95,7 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
+            
             {/* Cart Icon - Only show for authenticated users */}
             {isAuthenticated && (
               <Link

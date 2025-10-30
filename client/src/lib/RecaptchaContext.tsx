@@ -12,7 +12,6 @@ export const RecaptchaProvider: React.FC<RecaptchaContextProps> = ({
   children,
 }) => {
   if (!RECAPTCHA_SITE_KEY) {
-    console.warn("reCAPTCHA site key not found in environment variables");
     return <>{children}</>;
   }
 

@@ -61,11 +61,13 @@ const LoginPage = () => {
         recaptchaToken = await executeRecaptcha("login");
       }
 
-      const success = await login(email, password, recaptchaToken);
-      if (success) {
+      const result = await login(email, password, recaptchaToken);
+      if (result.success) {
         setLocation("/dashboard");
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError(
+          result.error || "Invalid email or password. Please try again."
+        );
       }
     } catch (err) {
       setError("An error occurred. Please try again.");

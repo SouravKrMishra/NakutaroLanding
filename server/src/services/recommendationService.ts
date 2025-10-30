@@ -78,7 +78,6 @@ class RecommendationService {
       const uniqueRecommendations = this.removeDuplicates(recommendations);
       return uniqueRecommendations.slice(0, limit);
     } catch (error) {
-      console.error("Error getting recommendations:", error);
       return await this.getTrendingProducts(limit);
     }
   }
@@ -166,12 +165,7 @@ class RecommendationService {
             });
           }
         }
-      } catch (error) {
-        console.error(
-          `Error fetching products for category ${category}:`,
-          error
-        );
-      }
+      } catch (error) {}
     }
 
     return recommendations;
@@ -229,9 +223,7 @@ class RecommendationService {
             });
           }
         }
-      } catch (error) {
-        console.error(`Error fetching products for series ${series}:`, error);
-      }
+      } catch (error) {}
     }
 
     return recommendations;
@@ -264,7 +256,6 @@ class RecommendationService {
         confidence: 0.5,
       }));
     } catch (error) {
-      console.error("Error fetching trending products:", error);
       return [];
     }
   }
@@ -299,9 +290,7 @@ class RecommendationService {
         userId,
         ...purchaseData,
       });
-    } catch (error) {
-      console.error("Error adding purchase to history:", error);
-    }
+    } catch (error) {}
   }
 }
 

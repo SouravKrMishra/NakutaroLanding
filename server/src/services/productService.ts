@@ -15,6 +15,7 @@ class ProductService {
     // Build query with $and to properly combine conditions
     const query: any = {
       status: "published", // Only show published products
+      isDeleted: { $ne: true }, // Exclude soft-deleted products
     };
     const andConditions: any[] = [];
 
@@ -115,10 +116,6 @@ class ProductService {
       }
     }
 
-    // Execute query
-    console.log("Product query:", JSON.stringify(query, null, 2));
-    console.log("Filters:", JSON.stringify(filters, null, 2));
-
     const products = await ProductModel.find(query)
       .sort(sort)
       .skip(skip)
@@ -128,8 +125,6 @@ class ProductService {
     const totalProducts = await ProductModel.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / per_page);
 
-    console.log(`Found ${products.length} products (total: ${totalProducts})`);
-
     // Debug: Check how many products would match without stock filter
     if (filters.stock_status && filters.stock_status !== "any") {
       const queryWithoutStock = { ...query };
@@ -138,11 +133,6 @@ class ProductService {
         queryWithoutStock
       );
       if (totalWithoutStockFilter > totalProducts) {
-        console.log(
-          `Note: ${
-            totalWithoutStockFilter - totalProducts
-          } products filtered out due to stock status`
-        );
       }
     }
 
@@ -160,12 +150,12 @@ class ProductService {
     const products = await ProductModel.find({
       status: "published",
       featured: true,
+      isDeleted: { $ne: true }, // Exclude soft-deleted products
     })
       .sort({ createdAt: -1 })
       .limit(4)
       .lean();
 
-    console.log(`Found ${products.length} featured products`);
     return products.map(this.transformProduct);
   }
 
@@ -175,6 +165,7 @@ class ProductService {
       {
         $match: {
           status: "published",
+          isDeleted: { $ne: true }, // Exclude soft-deleted products
         },
       },
       {
@@ -208,7 +199,10 @@ class ProductService {
   }
 
   async getProductById(id: string): Promise<Product> {
-    const product = await ProductModel.findById(id).lean();
+    const product = await ProductModel.findOne({
+      _id: id,
+      isDeleted: { $ne: true }, // Exclude soft-deleted products
+    }).lean();
 
     if (!product) {
       throw new Error("Product not found");
@@ -235,6 +229,37 @@ class ProductService {
       stockStatus = { status: "in_stock", quantity: 0 };
     }
 
+    // Generate attributes for clothing items
+    let attributes: any[] = [];
+    const isClothingItem = ["T-Shirts", "Hoodies"].includes(product.category);
+
+    if (isClothingItem) {
+      // Define available sizes and colors
+      const sizes = ["S", "M", "L", "XL", "XXL"];
+      const colors = [
+        "Black",
+        "White",
+        "Beige",
+        "Lavender",
+        "Pink",
+        "Lime Green",
+        "Dark Green",
+      ];
+
+      attributes = [
+        {
+          name: "Size",
+          options: sizes,
+          required: true,
+        },
+        {
+          name: "Color",
+          options: colors,
+          required: true,
+        },
+      ];
+    }
+
     return {
       id: product._id.toString(),
       name: product.name,
@@ -258,7 +283,7 @@ class ProductService {
       sku: product.sku,
       featured: product.featured || false,
       tags: product.tags || [],
-      attributes: [], // WooCommerce-style attributes - can be enhanced later
+      attributes: attributes,
       specifications: product.specifications || {},
     };
   }

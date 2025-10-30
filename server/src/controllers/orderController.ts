@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import { Order } from "../../../shared/models/Order.js";
+import { Product } from "../../../shared/models/Product.js";
 import Transaction from "../../../shared/models/Transaction.js";
 import { createError } from "../middleware/errorHandler.js";
 
@@ -63,7 +65,6 @@ export const createOrder = async (
             parseFloat(item.price.replace(/[^\d.]/g, "")) * item.quantity,
         });
       } catch (error) {
-        console.error("Error adding to purchase history:", error);
         // Don't fail the order if purchase history fails
       }
     }
@@ -96,10 +97,56 @@ export const getOrders = async (
 
     const orders = await Order.find({ userId })
       .sort({ orderDate: -1 })
-      .select("-__v");
+      .select("-__v")
+      .lean();
 
-    res.json({ orders });
+    // Check which products are deleted and mark them in orders
+    const allProductIds = new Set<string>();
+    orders.forEach((order) => {
+      order.items?.forEach((item: any) => {
+        if (item.productId) {
+          allProductIds.add(item.productId.toString());
+        }
+      });
+    });
+
+    if (allProductIds.size > 0) {
+      // Convert productId strings to ObjectIds for the query
+      const objectIds = Array.from(allProductIds)
+        .map((id) => {
+          try {
+            return new mongoose.Types.ObjectId(id);
+          } catch (error) {
+            // If conversion fails, it might be a numeric ID, skip it
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const products = await Product.find({
+        _id: { $in: objectIds },
+      }).select("_id isDeleted");
+
+      const deletedProductIds = new Set(
+        products.filter((p) => p.isDeleted).map((p) => p._id.toString())
+      );
+
+      // Mark items with deleted products
+      const ordersWithDeletedInfo = orders.map((order) => ({
+        ...order,
+        items: order.items?.map((item: any) => ({
+          ...item,
+          isDeleted: deletedProductIds.has(item.productId?.toString()),
+          isAvailable: !deletedProductIds.has(item.productId?.toString()),
+        })),
+      }));
+
+      res.json({ orders: ordersWithDeletedInfo });
+    } else {
+      res.json({ orders });
+    }
   } catch (error) {
+    console.error("Error in getOrders:", error);
     next(createError("Failed to fetch orders", 500));
   }
 };
@@ -116,14 +163,55 @@ export const getOrderById = async (
     }
 
     const { orderId } = req.params;
-    const order = await Order.findOne({ _id: orderId, userId }).select("-__v");
+    const order = await Order.findOne({ _id: orderId, userId })
+      .select("-__v")
+      .lean();
 
     if (!order) {
       return next(createError("Order not found", 404));
     }
 
-    res.json({ order });
+    // Check which products are deleted
+    const productIds =
+      order.items?.map((item: any) => item.productId).filter(Boolean) || [];
+
+    if (productIds.length > 0) {
+      // Convert productId strings to ObjectIds for the query
+      const objectIds = productIds
+        .map((id) => {
+          try {
+            return new mongoose.Types.ObjectId(id);
+          } catch (error) {
+            // If conversion fails, it might be a numeric ID, skip it
+            return null;
+          }
+        })
+        .filter(Boolean);
+
+      const products = await Product.find({
+        _id: { $in: objectIds },
+      }).select("_id isDeleted");
+
+      const deletedProductIds = new Set(
+        products.filter((p) => p.isDeleted).map((p) => p._id.toString())
+      );
+
+      // Mark items with deleted products
+      const orderWithDeletedInfo = {
+        ...order,
+        items: order.items?.map((item: any) => ({
+          ...item,
+          isDeleted: deletedProductIds.has(item.productId?.toString()),
+          isAvailable: !deletedProductIds.has(item.productId?.toString()),
+        })),
+      };
+
+      res.json({ order: orderWithDeletedInfo });
+    } else {
+      res.json({ order });
+    }
   } catch (error) {
+    console.error("Error in getOrderById:", error);
     next(createError("Failed to fetch order", 500));
   }
 };
@@ -149,11 +237,14 @@ export const updateOrderStatus = async (
     }
 
     // Update fields
+    const statusChanged = status && status !== order.status;
     if (status) order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     if (notes) order.notes = notes;
 
     await order.save();
+
+    // Notifications removed
 
     res.json({
       message: "Order updated successfully",
@@ -181,8 +272,6 @@ export const createOrderForPhonepe = async (
       return next(createError("User not authenticated", 401));
     }
 
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
-
     const {
       items,
       shippingInfo,
@@ -198,20 +287,9 @@ export const createOrderForPhonepe = async (
       return next(createError("Missing required fields", 400));
     }
 
-    console.log("All required fields present");
-
     // Calculate PhonePe processing fee
     const phonepeFee = 2;
     const finalTotal = total + phonepeFee;
-
-    console.log("Creating order with data:", {
-      userId,
-      items: items.length,
-      shippingInfo: Object.keys(shippingInfo),
-      subtotal,
-      shippingCost,
-      total: finalTotal,
-    });
 
     // Generate order number
     const date = new Date();
@@ -244,28 +322,7 @@ export const createOrderForPhonepe = async (
       testMode: testMode || false,
     });
 
-    console.log(
-      "Order object created with status:",
-      order.status,
-      "paymentStatus:",
-      order.paymentStatus,
-      "testMode:",
-      order.testMode
-    );
-    console.log("Attempting to save order...");
     await order.save();
-    console.log(
-      "Order saved successfully:",
-      order.orderNumber,
-      "ID:",
-      order._id
-    );
-    console.log(
-      "Final order status after save:",
-      order.status,
-      "paymentStatus:",
-      order.paymentStatus
-    );
 
     // Add items to purchase history for recommendations (including test orders)
     for (const item of items) {
@@ -283,9 +340,7 @@ export const createOrderForPhonepe = async (
           totalAmount:
             parseFloat(item.price.replace(/[^\d.]/g, "")) * item.quantity,
         });
-        console.log(`Added purchase history for product ${item.productId}`);
       } catch (error) {
-        console.error("Error adding to purchase history:", error);
         // Don't fail the order if purchase history fails
       }
     }
@@ -301,8 +356,6 @@ export const createOrderForPhonepe = async (
       },
     });
   } catch (error: any) {
-    console.error("Error creating order for PhonePe:", error);
-    console.error("Error stack:", error.stack);
     next(createError("Failed to create order for PhonePe payment", 500));
   }
 };
@@ -320,11 +373,6 @@ export const getOrderForSuccessPage = async (
     }
 
     const { orderId, transactionId } = req.query;
-    console.log("Order validation request:", {
-      orderId,
-      transactionId,
-      userId,
-    });
 
     if (!orderId && !transactionId) {
       return next(createError("Order ID or Transaction ID is required", 400));
@@ -334,7 +382,6 @@ export const getOrderForSuccessPage = async (
 
     if (orderId) {
       // Get order by ID
-      console.log("Looking for order by ID:", orderId, "Type:", typeof orderId);
 
       // Try to find the order with more flexible query
       order = await Order.findOne({
@@ -342,16 +389,7 @@ export const getOrderForSuccessPage = async (
         userId: userId,
       });
 
-      console.log("Raw order found:", order ? "YES" : "NO");
       if (order) {
-        console.log("Order details:", {
-          id: order._id,
-          status: order.status,
-          paymentStatus: order.paymentStatus,
-          userId: order.userId,
-          testMode: order.testMode,
-        });
-
         // Check if order meets validation criteria
         const validStatuses = [
           "PAID",
@@ -363,22 +401,10 @@ export const getOrderForSuccessPage = async (
         const hasValidStatus = validStatuses.includes(order.status);
         const hasValidPaymentStatus = order.paymentStatus === "COMPLETED";
 
-        console.log("Validation checks:", {
-          hasValidStatus,
-          hasValidPaymentStatus,
-          orderStatus: order.status,
-          orderPaymentStatus: order.paymentStatus,
-        });
-
         if (!hasValidStatus || !hasValidPaymentStatus) {
           order = null; // Reset order if it doesn't meet criteria
         }
       }
-
-      console.log(
-        "Final order validation result:",
-        order ? "PASSED" : "FAILED"
-      );
     } else if (transactionId) {
       // Get order by transaction ID
       const transaction = await Transaction.findOne({
@@ -400,21 +426,12 @@ export const getOrderForSuccessPage = async (
     }
 
     if (!order) {
-      console.log("Order not found or not completed");
       return next(createError("Order not found or not completed", 404));
     }
-
-    console.log("Order found:", {
-      id: order._id,
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      orderDate: order.orderDate,
-    });
 
     // Check if order was completed recently (within last 30 minutes)
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
     if (order.orderDate < thirtyMinutesAgo) {
-      console.log("Order success page access expired");
       return next(createError("Order success page access expired", 403));
     }
 
@@ -436,7 +453,6 @@ export const getOrderForSuccessPage = async (
       },
     });
   } catch (error: any) {
-    console.error("Error getting order for success page:", error);
     next(createError("Failed to get order details", 500));
   }
 };

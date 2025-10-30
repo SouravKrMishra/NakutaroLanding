@@ -16,7 +16,6 @@ export class OrderCleanupService {
       // Check if database is connected
       const mongoose = await import("mongoose");
       if (mongoose.default.connection.readyState !== 1) {
-        console.log("Database not connected, skipping order cleanup");
         return { cancelledCount: 0, cancelledOrders: [] };
       }
 
@@ -30,7 +29,6 @@ export class OrderCleanupService {
       });
 
       if (expiredOrders.length === 0) {
-        console.log("No expired pending orders found");
         return { cancelledCount: 0, cancelledOrders: [] };
       }
 
@@ -49,10 +47,6 @@ export class OrderCleanupService {
         }
       );
 
-      console.log(
-        `Successfully cancelled ${updateResult.modifiedCount} expired pending orders`
-      );
-
       // Get the updated orders for logging
       const cancelledOrders = await Order.find({
         status: "cancelled",
@@ -65,7 +59,6 @@ export class OrderCleanupService {
         cancelledOrders: cancelledOrders,
       };
     } catch (error) {
-      console.error("Error cancelling expired pending orders:", error);
       // Return default values instead of throwing error to prevent scheduler crashes
       return { cancelledCount: 0, cancelledOrders: [] };
     }
@@ -83,7 +76,6 @@ export class OrderCleanupService {
       // Check if database is connected
       const mongoose = await import("mongoose");
       if (mongoose.default.connection.readyState !== 1) {
-        console.log("Database not connected, skipping order stats");
         return {
           totalPending: 0,
           expiredPending: 0,
@@ -111,7 +103,6 @@ export class OrderCleanupService {
         recentPending,
       };
     } catch (error) {
-      console.error("Error getting pending order stats:", error);
       // Return default values instead of throwing error to prevent scheduler crashes
       return {
         totalPending: 0,
@@ -138,7 +129,6 @@ export class OrderCleanupService {
         cancelledCount: result.cancelledCount,
       };
     } catch (error) {
-      console.error("Manual cleanup failed:", error);
       return {
         success: false,
         message: "Failed to perform manual cleanup",

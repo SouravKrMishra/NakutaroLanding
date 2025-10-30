@@ -13,6 +13,7 @@ import {
   PhonePeException,
   StandardCheckoutClient,
 } from "pg-sdk-node";
+// Notifications removed
 
 // Initialize PhonePe payment
 export const initiatePhonepePayment = async (req: Request, res: Response) => {
@@ -303,6 +304,7 @@ export const phonepeRedirect = async (req: Request, res: Response) => {
       if (transaction.orderId) {
         const order = await Order.findById(transaction.orderId);
         if (order) {
+          const previousStatus = order.status;
           if (transaction.status === "SUCCESS") {
             order.paymentStatus = "COMPLETED";
             order.status = "PAID";
@@ -311,6 +313,8 @@ export const phonepeRedirect = async (req: Request, res: Response) => {
             order.status = "PENDING_PAYMENT";
           }
           await order.save();
+
+          // Notifications removed
         }
       }
     }
@@ -396,11 +400,14 @@ export const phonepeCallback = async (req: Request, res: Response) => {
       if (transaction.orderId) {
         const order = await Order.findById(transaction.orderId);
         if (order) {
+          const previousStatus = order.status;
           order.paymentStatus =
             transaction.status === "SUCCESS" ? "COMPLETED" : "FAILED";
           order.status =
             transaction.status === "SUCCESS" ? "PAID" : "PENDING_PAYMENT";
           await order.save();
+
+          // Notifications removed
 
           // Clear the user's cart if payment was successful
           if (transaction.status === "SUCCESS") {

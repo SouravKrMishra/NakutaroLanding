@@ -96,7 +96,6 @@ const CheckoutPage = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching user details:", error);
         // Fallback to basic user info if API fails
         setShippingInfo((prev) => ({
           ...prev,

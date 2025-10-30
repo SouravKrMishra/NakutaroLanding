@@ -44,14 +44,11 @@ export const subscribeToNewsletter = async (req: Request, res: Response) => {
 
     await newSubscriber.save();
 
-    console.log(`New newsletter subscription: ${email} (saved to database)`);
-
     res.status(200).json({
       success: true,
       message: "Successfully subscribed to newsletter!",
     });
   } catch (error) {
-    console.error("Newsletter subscription error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to subscribe to newsletter. Please try again.",
@@ -67,7 +64,6 @@ export const getSubscriberCount = async (req: Request, res: Response) => {
       count,
     });
   } catch (error) {
-    console.error("Get subscriber count error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to get subscriber count",
@@ -100,7 +96,6 @@ export const getAllSubscribers = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Get all subscribers error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to get subscribers",

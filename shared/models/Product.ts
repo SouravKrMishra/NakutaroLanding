@@ -116,6 +116,16 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Soft delete fields
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
     // Inventory management
     inventoryType: {
       type: String,
@@ -200,5 +210,7 @@ productSchema.pre("save", async function (next) {
 
   next();
 });
+
+// Notifications removed
 
 export const Product = mongoose.model("Product", productSchema);

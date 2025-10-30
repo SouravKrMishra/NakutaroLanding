@@ -19,4 +19,9 @@ export const config = {
     secretKey: process.env.RECAPTCHA_SECRET_KEY!,
     siteKey: process.env.RECAPTCHA_SITE_KEY!,
   },
+  oneSignal: {
+    appId: process.env.ONESIGNAL_APP_ID!,
+    restApiKey: process.env.ONESIGNAL_REST_API_KEY!,
+    userAuthKey: process.env.ONESIGNAL_USER_AUTH_KEY,
+  },
 } as const;

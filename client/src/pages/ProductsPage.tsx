@@ -3,7 +3,8 @@ import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+
 import { useDebounce } from "@/hooks/use-debounce.ts";
 import { buildApiUrl } from "@/lib/api.ts";
 import {
@@ -162,6 +163,7 @@ const ProductsPage = () => {
   }>({});
   const pageSize = 12;
   const isUpdatingFromUrl = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -208,6 +210,20 @@ const ProductsPage = () => {
         description: "Please log in to add items to your cart.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check if this is a clothing item (T-Shirts or Hoodies) that requires size selection
+    const isClothingItem = ["T-Shirts", "Hoodies"].includes(product.category);
+
+    if (isClothingItem) {
+      // Redirect to product detail page for size selection
+      toast({
+        title: "Size Selection Required",
+        description: "Please select a size on the product detail page.",
+        variant: "default",
+      });
+      setLocation(`/product/${product.id}`);
       return;
     }
 
@@ -367,15 +383,7 @@ const ProductsPage = () => {
     isUpdatingFromUrl.current = true;
     const urlParams = parseUrlParams(search);
 
-    setActiveCategory(urlParams.categories);
-    setPriceRange([urlParams.minPrice, urlParams.maxPrice]);
-    setCommittedPriceRange([urlParams.minPrice, urlParams.maxPrice]);
-    setSortBy(urlParams.sortBy);
-    setCurrentPage(urlParams.page);
-    setIncludeOutOfStock(urlParams.includeOutOfStock);
-    setView(urlParams.view);
-
-    // Set ratings from URL
+    // Set ratings from URL first
     const newRatings: { [key: number]: boolean } = {
       5: false,
       4: false,
@@ -388,11 +396,21 @@ const ProductsPage = () => {
         newRatings[rating] = true;
       }
     });
+
+    // Update all state variables at once to minimize re-renders
+    setActiveCategory(urlParams.categories);
+    setPriceRange([urlParams.minPrice, urlParams.maxPrice]);
+    setCommittedPriceRange([urlParams.minPrice, urlParams.maxPrice]);
+    setSortBy(urlParams.sortBy);
+    setCurrentPage(urlParams.page);
+    setIncludeOutOfStock(urlParams.includeOutOfStock);
+    setView(urlParams.view);
     setRatings(newRatings);
 
     // Reset the flag after a short delay to allow state updates to complete
     setTimeout(() => {
       isUpdatingFromUrl.current = false;
+      hasInitialized.current = false; // Reset initialization flag
     }, 100);
   }, [search]);
 
@@ -419,9 +437,7 @@ const ProductsPage = () => {
           attributes: item.attributes || [],
         }));
         setFeaturedProducts(mappedFeaturedProducts);
-      } catch (err) {
-        console.error("Failed to fetch featured products", err);
-      }
+      } catch (err) {}
       setFeaturedLoading(false);
     };
     fetchFeaturedProducts();
@@ -441,15 +457,24 @@ const ProductsPage = () => {
           count: cat.count,
         }));
         setCategories(fetchedCategories);
-      } catch (err) {
-        console.error("Failed to fetch categories", err);
-      }
+      } catch (err) {}
     };
-    fetchCategories();
+
+    // Debounce the categories fetch to prevent rapid API calls
+    const timeoutId = setTimeout(() => {
+      fetchCategories();
+    }, 300); // Wait 300ms after includeOutOfStock changes
+
+    return () => clearTimeout(timeoutId);
   }, [includeOutOfStock]);
 
   useEffect(() => {
     const fetchProducts = async () => {
+      // Prevent duplicate calls during URL initialization
+      if (isUpdatingFromUrl.current && !hasInitialized.current) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -523,6 +548,7 @@ const ProductsPage = () => {
         setProducts(mappedProducts);
         setTotalProducts(totalProducts);
         setTotalPages(totalPages);
+        hasInitialized.current = true;
       } catch (err: any) {
         setError("Failed to load products.");
       }

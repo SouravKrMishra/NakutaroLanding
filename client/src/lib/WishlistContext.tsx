@@ -78,7 +78,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
       const wishlistData = Array.isArray(response.data) ? response.data : [];
       setWishlistItems(wishlistData);
     } catch (err: any) {
-      console.error("Failed to load wishlist:", err);
       setError("Failed to load wishlist");
       // Set empty array on error to maintain UX
       setWishlistItems([]);
@@ -93,7 +92,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
     if (!authLoading) {
       fetchWishlist();
     }
-  }, [authLoading, fetchWishlist]); // Include authLoading to wait for auth to complete
+  }, [authLoading, isAuthenticated, user?.id]); // Use user.id instead of entire user object
 
   const addToWishlist = async (item: WishlistItem): Promise<void> => {
     if (!isAuthenticated || !user) {

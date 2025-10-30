@@ -99,10 +99,8 @@ router.post(
   (req: any, res: any, next: any) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log("Validation errors:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
-    console.log("Validation passed, calling createOrderForPhonepe");
     createOrderForPhonepe(req, res, next);
   }
 );

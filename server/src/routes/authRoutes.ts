@@ -3,6 +3,7 @@ import {
   signup,
   signin,
   verify,
+  logout,
   getUserProfile,
 } from "../controllers/authController.ts";
 import { authenticateToken } from "../middleware/auth.js";
@@ -44,6 +45,9 @@ router.post(
 
 // Verify route
 router.get("/verify", verify);
+
+// Logout route
+router.post("/logout", logout);
 
 // Get user profile route
 router.get("/user/profile", authenticateToken, getUserProfile);

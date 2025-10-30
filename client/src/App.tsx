@@ -26,6 +26,7 @@ import CartPage from "@/pages/CartPage.tsx";
 import CheckoutPage from "@/pages/CheckoutPage.tsx";
 import OrderSuccessPage from "@/pages/OrderSuccessPage.tsx";
 import OrdersPage from "@/pages/OrdersPage.tsx";
+ 
 
 // Shared components
 import Header from "./components/Header.js";
@@ -56,76 +57,77 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RecaptchaProvider>
-        <AuthProvider>
-          <WishlistProvider>
-            <CartProvider>
-              <ThemeProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Header />
-                  <main>
-                    <Switch>
-                      <Route path="/" component={HomePage} />
-                      <Route path="/products" component={ProductsPage} />
-                      <Route
-                        path="/product/:id"
-                        component={ProductDetailPage}
-                      />
-                      <Route path="/events" component={EventsPage} />
-                      <Route path="/contact" component={ContactPage} />
-                      <Route path="/business" component={BusinessPage} />
-                      <Route path="/login" component={LoginPage} />
-                      <Route path="/register" component={RegisterPage} />
-                      <Route
-                        path="/dashboard"
-                        component={() => (
-                          <ProtectedRoute>
-                            <DashboardPage />
-                          </ProtectedRoute>
-                        )}
-                      />
-                      <Route
-                        path="/orders"
-                        component={() => (
-                          <ProtectedRoute>
-                            <OrdersPage />
-                          </ProtectedRoute>
-                        )}
-                      />
-                      <Route
-                        path="/cart"
-                        component={() => (
-                          <ProtectedRoute>
-                            <CartPage />
-                          </ProtectedRoute>
-                        )}
-                      />
-                      <Route
-                        path="/checkout"
-                        component={() => (
-                          <ProtectedRoute>
-                            <CheckoutPage />
-                          </ProtectedRoute>
-                        )}
-                      />
-                      <Route
-                        path="/order-success"
-                        component={() => (
-                          <ProtectedRoute>
-                            <OrderSuccessPage />
-                          </ProtectedRoute>
-                        )}
-                      />
-                      <Route component={NotFoundPage} />
-                    </Switch>
-                  </main>
-                  <Footer />
-                  <ScrollToTop />
-                  <ThemeCustomizer />
-                </TooltipProvider>
-              </ThemeProvider>
-            </CartProvider>
-          </WishlistProvider>
+          <AuthProvider>
+            <WishlistProvider>
+              <CartProvider>
+                <ThemeProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Header />
+                    <main>
+                      <Switch>
+                        <Route path="/" component={HomePage} />
+                        <Route path="/products" component={ProductsPage} />
+                        <Route
+                          path="/product/:id"
+                          component={ProductDetailPage}
+                        />
+                        <Route path="/events" component={EventsPage} />
+                        <Route path="/contact" component={ContactPage} />
+                        <Route path="/business" component={BusinessPage} />
+                        <Route path="/login" component={LoginPage} />
+                        <Route path="/register" component={RegisterPage} />
+                        <Route
+                          path="/dashboard"
+                          component={() => (
+                            <ProtectedRoute>
+                              <DashboardPage />
+                            </ProtectedRoute>
+                          )}
+                        />
+                        <Route
+                          path="/orders"
+                          component={() => (
+                            <ProtectedRoute>
+                              <OrdersPage />
+                            </ProtectedRoute>
+                          )}
+                        />
+                        <Route
+                          path="/cart"
+                          component={() => (
+                            <ProtectedRoute>
+                              <CartPage />
+                            </ProtectedRoute>
+                          )}
+                        />
+                        <Route
+                          path="/checkout"
+                          component={() => (
+                            <ProtectedRoute>
+                              <CheckoutPage />
+                            </ProtectedRoute>
+                          )}
+                        />
+                        <Route
+                          path="/order-success"
+                          component={() => (
+                            <ProtectedRoute>
+                              <OrderSuccessPage />
+                            </ProtectedRoute>
+                          )}
+                        />
+                      
+                        <Route component={NotFoundPage} />
+                      </Switch>
+                    </main>
+                    <Footer />
+                    <ScrollToTop />
+                    <ThemeCustomizer />
+                  </TooltipProvider>
+                </ThemeProvider>
+              </CartProvider>
+            </WishlistProvider>
         </AuthProvider>
       </RecaptchaProvider>
     </QueryClientProvider>

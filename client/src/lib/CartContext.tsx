@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useRef,
+} from "react";
 import { useAuth } from "./AuthContext.tsx";
 import axios from "axios";
 import { buildApiUrl } from "./api.ts";
@@ -13,6 +19,7 @@ interface CartItem {
   quantity: number;
   inStock: boolean;
   variants?: { [key: string]: string }; // Selected variants like size, color, etc.
+  lastModified?: number; // Timestamp for conflict resolution
 }
 
 interface CartState {
@@ -124,6 +131,7 @@ interface CartContextType {
   updateQuantity: (id: string | number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   isInCart: (id: string | number) => boolean;
+  refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -137,6 +145,111 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     total: 0,
     itemCount: 0,
   });
+  const [loginSessionId, setLoginSessionId] = React.useState<string>("");
+  const [isCartLoaded, setIsCartLoaded] = React.useState(false);
+
+  // Refs for preventing race conditions (removed polling-related refs)
+
+  // Conflict resolution function for cart items
+  const resolveCartConflicts = (
+    localItems: CartItem[],
+    serverItems: CartItem[]
+  ): CartItem[] => {
+    const resolvedItems: CartItem[] = [];
+    const allItemIds = new Set([
+      ...localItems.map((item) => String(item.id)),
+      ...serverItems.map((item) => String(item.id)),
+    ]);
+
+    for (const itemId of allItemIds) {
+      const localItem = localItems.find((item) => String(item.id) === itemId);
+      const serverItem = serverItems.find((item) => String(item.id) === itemId);
+
+      if (localItem && serverItem) {
+        // Both exist - use the one with the latest modification time
+        const localTime = localItem.lastModified || 0;
+        const serverTime = serverItem.lastModified || 0;
+
+        if (localTime > serverTime) {
+          resolvedItems.push(localItem);
+        } else {
+          resolvedItems.push(serverItem);
+        }
+      } else if (localItem) {
+        // Only exists locally - keep it
+        resolvedItems.push(localItem);
+      } else if (serverItem) {
+        // Only exists on server - add it
+        resolvedItems.push(serverItem);
+      }
+    }
+
+    return resolvedItems;
+  };
+
+  // Listen for login events to refresh cart
+  useEffect(() => {
+    const handleUserLogin = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { userId, timestamp } = customEvent.detail;
+      if (isAuthenticated && user && user.id === userId) {
+        console.log("Login event detected, refreshing cart...");
+        // Call refreshCart function directly
+        if (isAuthenticated && user) {
+          try {
+            const token = localStorage.getItem("authToken");
+            const response = await axios.get(buildApiUrl("/api/cart"), {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              withCredentials: true,
+            });
+            const cartItems = response.data.cart.items || [];
+            const transformedItems = cartItems.map((item: any) => ({
+              id: String(item.productId),
+              name: item.name,
+              price: item.price,
+              image: item.image,
+              category: item.category,
+              quantity: item.quantity,
+              inStock: item.inStock,
+              lastModified: item.lastModified || Date.now(),
+            }));
+
+            dispatch({ type: "LOAD_CART", payload: transformedItems });
+            localStorage.setItem(
+              `cart_${user.id}`,
+              JSON.stringify(transformedItems)
+            );
+            console.log(
+              "Cart refreshed from login event:",
+              transformedItems.length,
+              "items"
+            );
+          } catch (error) {
+            console.error("Failed to refresh cart from login event:", error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("userLogin", handleUserLogin);
+
+    return () => {
+      window.removeEventListener("userLogin", handleUserLogin);
+    };
+  }, [isAuthenticated, user]);
+
+  // Generate new session ID when user logs in (to force cart refresh)
+  useEffect(() => {
+    if (isAuthenticated && user && !authLoading) {
+      const newSessionId = `${user.id}_${Date.now()}`;
+      setLoginSessionId(newSessionId);
+      console.log("New login session detected, will refresh cart");
+    } else if (!isAuthenticated) {
+      setLoginSessionId("");
+    }
+  }, [isAuthenticated, user, authLoading]);
 
   // Calculate totals whenever items change
   useEffect(() => {
@@ -151,10 +264,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Load cart from database on mount and when user changes
   useEffect(() => {
     const loadCartFromDatabase = async () => {
+      // Reset cart loaded flag when user changes
+      setIsCartLoaded(false);
+
       // Wait for auth to finish loading before fetching cart
       if (!authLoading) {
         if (isAuthenticated && user) {
           try {
+            console.log("Loading cart from database for user:", user.id);
             const token = localStorage.getItem("authToken");
             const response = await axios.get(buildApiUrl("/api/cart"), {
               headers: {
@@ -163,11 +280,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               withCredentials: true,
             });
             const cartItems = response.data.cart.items || [];
-            console.log(
-              "🛒 Cart loaded from database:",
-              cartItems.length,
-              "items"
-            );
             // Transform items from backend format (productId) to frontend format (id)
             const transformedItems = cartItems.map((item: any) => ({
               id: String(item.productId), // Ensure ID is string
@@ -177,27 +289,49 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               category: item.category,
               quantity: item.quantity,
               inStock: item.inStock,
+              lastModified: item.lastModified || Date.now(),
             }));
-            console.log("🛒 Transformed cart items:", transformedItems);
+
+            // Always prioritize database data over localStorage
             dispatch({ type: "LOAD_CART", payload: transformedItems });
+
+            // Update localStorage with fresh data from database
+            localStorage.setItem(
+              `cart_${user.id}`,
+              JSON.stringify(transformedItems)
+            );
+            console.log(
+              "Cart loaded from database:",
+              transformedItems.length,
+              "items"
+            );
+            setIsCartLoaded(true);
+            console.log(
+              "Cart loaded from database: Set isCartLoaded to true, items:",
+              transformedItems.length
+            );
           } catch (error) {
-            console.error("Error loading cart from database:", error);
-            console.log("🛒 Falling back to localStorage for user:", user.id);
+            console.error("Failed to load cart from database:", error);
             // Fallback to localStorage if database fails
             const savedCart = localStorage.getItem(`cart_${user.id}`);
             if (savedCart) {
               try {
                 const items = JSON.parse(savedCart);
                 dispatch({ type: "LOAD_CART", payload: items });
-              } catch (localError) {
-                console.error(
-                  "Error loading cart from localStorage:",
-                  localError
+                console.log(
+                  "Cart loaded from localStorage fallback:",
+                  items.length,
+                  "items"
                 );
+                setIsCartLoaded(true);
+              } catch (localError) {
+                console.error("Failed to parse localStorage cart:", localError);
                 dispatch({ type: "CLEAR_CART" });
+                setIsCartLoaded(true);
               }
             } else {
               dispatch({ type: "CLEAR_CART" });
+              setIsCartLoaded(true);
             }
           }
         } else {
@@ -208,11 +342,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     loadCartFromDatabase();
-  }, [isAuthenticated, user, authLoading]);
+  }, [isAuthenticated, user?.id, authLoading]); // Only depend on user.id instead of entire user object
+
+  // Cart polling removed - sync only happens on user actions and login
 
   // Sync cart to database whenever it changes (only for authenticated users)
   useEffect(() => {
     const syncCartToDatabase = async () => {
+      // Don't sync until cart has been loaded from database
+      if (!isCartLoaded) {
+        return;
+      }
+
       if (isAuthenticated && user && state.items.length > 0) {
         try {
           const token = localStorage.getItem("authToken");
@@ -240,29 +381,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           // Also save to localStorage as backup
           localStorage.setItem(`cart_${user.id}`, JSON.stringify(state.items));
         } catch (error) {
-          console.error("Error syncing cart to database:", error);
           // Fallback to localStorage only
           localStorage.setItem(`cart_${user.id}`, JSON.stringify(state.items));
         }
       } else if (isAuthenticated && user && state.items.length === 0) {
-        // Clear cart in database when empty
-        try {
-          const token = localStorage.getItem("authToken");
-          await axios.delete(buildApiUrl("/api/cart"), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-          });
-          localStorage.removeItem(`cart_${user.id}`);
-        } catch (error) {
-          console.error("Error clearing cart in database:", error);
-        }
+        // Don't clear cart in database on initial load - only clear when user explicitly clears
+        // The clearCart function handles explicit clearing
+        console.log(
+          "Cart sync: Cart is empty, skipping database clear to avoid page load issues"
+        );
       }
     };
 
-    syncCartToDatabase();
-  }, [state.items, isAuthenticated, user]);
+    // Debounce the sync to prevent rapid API calls
+    const timeoutId = setTimeout(() => {
+      syncCartToDatabase();
+    }, 500); // Wait 500ms after last change
+
+    return () => clearTimeout(timeoutId);
+  }, [state.items, isAuthenticated, user?.id, isCartLoaded]); // Include isCartLoaded to prevent premature sync
 
   // Clear cart when user logs out
   useEffect(() => {
@@ -282,6 +419,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       // Add to database first
       const token = localStorage.getItem("authToken");
+      const timestamp = Date.now();
       await axios.post(
         buildApiUrl("/api/cart"),
         {
@@ -292,6 +430,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           category: item.category,
           quantity,
           inStock: item.inStock,
+          lastModified: timestamp,
         },
         {
           headers: {
@@ -302,11 +441,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       // Then update local state
-      dispatch({ type: "ADD_ITEM", payload: { ...item, quantity } });
+      dispatch({
+        type: "ADD_ITEM",
+        payload: { ...item, quantity, lastModified: timestamp },
+      });
     } catch (error) {
-      console.error("Error adding item to cart:", error);
       // Fallback to local state only
-      dispatch({ type: "ADD_ITEM", payload: { ...item, quantity } });
+      dispatch({
+        type: "ADD_ITEM",
+        payload: { ...item, quantity, lastModified: Date.now() },
+      });
     }
   };
 
@@ -324,7 +468,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       // Then update local state
       dispatch({ type: "REMOVE_ITEM", payload: id });
     } catch (error) {
-      console.error("Error removing item from cart:", error);
       // Fallback to local state only
       dispatch({ type: "REMOVE_ITEM", payload: id });
     }
@@ -348,7 +491,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       // Then update local state
       dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
     } catch (error) {
-      console.error("Error updating cart item quantity:", error);
       // Fallback to local state only
       dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
     }
@@ -368,7 +510,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       // Then update local state
       dispatch({ type: "CLEAR_CART" });
     } catch (error) {
-      console.error("Error clearing cart:", error);
       // Fallback to local state only
       dispatch({ type: "CLEAR_CART" });
     }
@@ -377,6 +518,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const isInCart = (id: string | number): boolean => {
     const idStr = String(id);
     return state.items.some((item) => String(item.id) === idStr);
+  };
+
+  const refreshCart = async (): Promise<void> => {
+    if (!isAuthenticated || !user) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get(buildApiUrl("/api/cart"), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+      const cartItems = response.data.cart.items || [];
+      // Transform items from backend format (productId) to frontend format (id)
+      const transformedItems = cartItems.map((item: any) => ({
+        id: String(item.productId), // Ensure ID is string
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        category: item.category,
+        quantity: item.quantity,
+        inStock: item.inStock,
+      }));
+
+      // Update cart with fresh data from database
+      dispatch({ type: "LOAD_CART", payload: transformedItems });
+
+      // Update localStorage with fresh data
+      localStorage.setItem(`cart_${user.id}`, JSON.stringify(transformedItems));
+    } catch (error) {
+      console.error("Failed to refresh cart:", error);
+    }
   };
 
   const value: CartContextType = {
@@ -388,6 +564,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     updateQuantity,
     clearCart,
     isInCart,
+    refreshCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -86,7 +86,6 @@ const OrdersPage = () => {
 
         setOrders(response.data.orders || []);
       } catch (error) {
-        console.error("Error fetching orders:", error);
         setError("Failed to load orders");
         setOrders([]);
       } finally {

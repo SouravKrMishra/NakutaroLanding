@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { productService } from "../services/productService.ts";
 import { createError } from "../middleware/errorHandler.ts";
 import { ProductFilters, CategoryFilters } from "../types/index.ts";
+import Stock from "../../../shared/models/Stock.js";
 
 export const getProductById = async (
   req: Request,
@@ -66,5 +67,55 @@ export const getCategories = async (
     res.json(categories);
   } catch (error) {
     next(createError("Failed to fetch categories", 500));
+  }
+};
+
+export const getStockData = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Fetch all stock data from database
+    const stocks = await Stock.find({});
+
+    // Convert to the format expected by frontend
+    const stockData: Record<
+      string,
+      { quantity: number; lowStockThreshold: number; available: boolean }
+    > = {};
+
+    stocks.forEach((stock) => {
+      const key = `${stock.size}-${stock.color}`;
+      stockData[key] = {
+        quantity: stock.quantity,
+        lowStockThreshold: stock.lowStockThreshold,
+        available: stock.quantity > 0,
+      };
+    });
+
+    // Define available sizes and colors
+    const sizes = ["S", "M", "L", "XL", "XXL"];
+    const colors = [
+      "Black",
+      "White",
+      "Beige",
+      "Lavender",
+      "Pink",
+      "Lime Green",
+      "Dark Green",
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        sizes,
+        colors,
+        stock: stockData,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching stock data:", error);
+    next(createError("Failed to fetch stock data", 500));
   }
 };

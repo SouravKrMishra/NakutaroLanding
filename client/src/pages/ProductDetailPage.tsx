@@ -68,6 +68,8 @@ const ProductDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageLoading, setImageLoading] = useState(false);
   const [colorImages, setColorImages] = useState<{ [key: string]: string }>({});
+  const [stockData, setStockData] = useState<any>(null);
+  const [stockLoading, setStockLoading] = useState(false);
 
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -89,6 +91,14 @@ const ProductDetailPage = () => {
       const transformedProduct = {
         ...data,
         price: data.price?.toString() || "0",
+        salePrice:
+          data.salePrice !== undefined && data.salePrice !== null
+            ? data.salePrice.toString()
+            : undefined,
+        regularPrice:
+          data.regularPrice !== undefined && data.regularPrice !== null
+            ? data.regularPrice.toString()
+            : undefined,
         stock_status:
           data.stock?.status === "in_stock" ||
           data.stock?.status === "low_stock"
@@ -102,15 +112,32 @@ const ProductDetailPage = () => {
       };
 
       setProduct(transformedProduct);
-    } catch (err) {
-      setError("Failed to fetch product details.");
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setError("This product is no longer available.");
+      } else {
+        setError("Failed to fetch product details.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchStockData = async () => {
+    setStockLoading(true);
+    try {
+      const response = await axios.get(buildApiUrl("/api/stock-data"));
+      setStockData(response.data.data);
+    } catch (err) {
+      console.error("Failed to fetch stock data:", err);
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProduct();
+    fetchStockData(); // Fetch stock data for clothing items
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [productId]);
 
@@ -161,6 +188,19 @@ const ProductDetailPage = () => {
     categories,
     attributes,
   } = product;
+
+  const hasValidSale =
+    product &&
+    product.salePrice &&
+    product.regularPrice &&
+    Number(product.salePrice) < Number(product.regularPrice);
+
+  // Function to check if a size-color combination is available
+  const isSizeColorAvailable = (size: string, color: string): boolean => {
+    if (!stockData) return true; // Default to available if no stock data
+    const key = `${size}-${color}`;
+    return stockData.stock[key]?.available || false;
+  };
 
   const renderStars = (rating: number) => {
     return (
@@ -639,7 +679,16 @@ const ProductDetailPage = () => {
               </div>
 
               <div className="text-3xl font-bold text-accent mb-4">
-                ₹{price}
+                {hasValidSale ? (
+                  <div className="flex items-center gap-3">
+                    <span>₹{product.salePrice}</span>
+                    <span className="text-lg text-gray-400 line-through">
+                      ₹{product.regularPrice}
+                    </span>
+                  </div>
+                ) : (
+                  <span>₹{product.regularPrice ?? price}</span>
+                )}
               </div>
 
               <div
@@ -666,13 +715,33 @@ const ProductDetailPage = () => {
                       const isColorAttribute = attr.name
                         .toLowerCase()
                         .includes("color");
+                      const isSizeAttribute = attr.name
+                        .toLowerCase()
+                        .includes("size");
+
+                      // Check availability for size-color combinations
+                      let isAvailable = true;
+                      if (isSizeAttribute && selectedVariants.Color) {
+                        isAvailable = isSizeColorAvailable(
+                          option,
+                          selectedVariants.Color
+                        );
+                      } else if (isColorAttribute && selectedVariants.Size) {
+                        isAvailable = isSizeColorAvailable(
+                          selectedVariants.Size,
+                          option
+                        );
+                      }
 
                       return (
                         <button
                           key={option}
                           onClick={() => handleVariantChange(attr.name, option)}
+                          disabled={!isAvailable}
                           className={`px-4 py-2 border rounded-md text-sm font-medium transition-all duration-300 ${
-                            isSelected
+                            !isAvailable
+                              ? "border-gray-600 bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
+                              : isSelected
                               ? "border-accent bg-accent/10 text-accent shadow-lg shadow-accent/20"
                               : "border-[#2D2D2D] text-gray-300 hover:border-gray-400 hover:bg-[#2D2D2D]/50"
                           }`}
@@ -689,6 +758,11 @@ const ProductDetailPage = () => {
                             />
                           )}
                           {option}
+                          {!isAvailable && (
+                            <span className="ml-1 text-xs text-red-400">
+                              (Out of Stock)
+                            </span>
+                          )}
                         </button>
                       );
                     })}

@@ -163,9 +163,7 @@ const OrderSuccessPage = () => {
                 }, 50);
                 return; // Exit early if successful
               }
-            } catch (directError) {
-              console.error("Direct order fetch failed:", directError);
-            }
+            } catch (directError) {}
           }
 
           throw new Error(errorData.message || "Failed to validate order");
@@ -179,9 +177,7 @@ const OrderSuccessPage = () => {
         try {
           await clearCart();
           localStorage.removeItem("phonepe_transaction");
-        } catch (cartError) {
-          console.error("Error clearing cart:", cartError);
-        }
+        } catch (cartError) {}
 
         // Clear timeout on success
         clearTimeout(timeoutId);
@@ -194,7 +190,6 @@ const OrderSuccessPage = () => {
           setTimeout(() => setIsVisible(true), 100);
         }, 50);
       } catch (error: any) {
-        console.error("Order validation error:", error);
         clearTimeout(timeoutId);
         setError(error.message || "Failed to validate order");
         setIsLoading(false);

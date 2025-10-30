@@ -30,9 +30,9 @@ interface AuthContextType {
     email: string,
     password: string,
     recaptchaToken?: string
-  ) => Promise<boolean>;
+  ) => Promise<{ success: boolean; error?: string }>;
   setUserData: (userData: User, token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -69,7 +69,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           }
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
         localStorage.removeItem("authToken");
       } finally {
         setIsLoading(false);
@@ -83,7 +82,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     email: string,
     password: string,
     recaptchaToken?: string
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const body: any = { email, password };
       if (recaptchaToken) {
@@ -103,15 +102,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem("authToken", data.token);
-        return true;
+
+        
+
+        // Trigger cart refresh for multi-device sync
+        window.dispatchEvent(
+          new CustomEvent("userLogin", {
+            detail: { userId: data.user.id, timestamp: Date.now() },
+          })
+        );
+
+        return { success: true };
       } else {
         const errorData = await response.json();
-        console.error("AuthContext: Login failed:", errorData);
-        throw new Error(errorData.message || "Login failed");
+        return { success: false, error: errorData.message || "Login failed" };
       }
     } catch (error) {
-      console.error("Login error:", error);
-      return false;
+      return { success: false, error: "Network error. Please try again." };
     }
   };
 
@@ -120,10 +127,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.setItem("authToken", token);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("authToken");
-    setLocation("/");
+  const logout = async () => {
+    try {
+      // Call server logout endpoint to clear cookies
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        });
+      }
+    } catch (error) {
+      // Continue with logout even if server call fails
+      console.error("Logout server call failed:", error);
+    } finally {
+      
+
+      // Clear authentication token
+      localStorage.removeItem("authToken");
+
+      // Clear payment transaction data (but keep cart data for potential re-login)
+      localStorage.removeItem("phonepe_transaction");
+
+      // Clear user state
+      setUser(null);
+
+      // Redirect to home page
+      setLocation("/");
+    }
   };
 
   const value: AuthContextType = {

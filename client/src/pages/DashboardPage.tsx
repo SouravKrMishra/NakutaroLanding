@@ -98,7 +98,6 @@ const DashboardPage = () => {
 
         setProductRecommendations(response.data.recommendations || []);
       } catch (error) {
-        console.error("Error fetching recommendations:", error);
         setRecommendationsError("Failed to load recommendations");
         // Fallback to empty array
         setProductRecommendations([]);
@@ -275,7 +274,6 @@ const DashboardPage = () => {
           });
         }
       } catch (error) {
-        console.error("Error fetching orders and analytics:", error);
         setOrdersError("Failed to load recent orders");
         setAnalyticsError("Failed to load analytics");
         // Fallback to empty arrays
@@ -328,9 +326,7 @@ const DashboardPage = () => {
         },
         withCredentials: true,
       });
-    } catch (error) {
-      console.error("Error adding purchase to history:", error);
-    }
+    } catch (error) {}
   };
 
   const getPriorityColor = (priority?: string) => {
@@ -729,66 +725,8 @@ const DashboardPage = () => {
           </Card>
         </div>
 
-        {/* Order Tracking & Supplier Info */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Order Tracking */}
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <CardTitle className="flex items-center text-accent">
-                <Package className="w-5 h-5 mr-2" />
-                Order Tracking
-              </CardTitle>
-              <CardDescription>Track your recent bulk orders</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg">
-                  <div>
-                    <p className="font-medium text-white">#ORD-005</p>
-                    <p className="text-sm text-gray-400">
-                      100x Attack on Titan Figures
-                    </p>
-                    <p className="text-xs text-accent">
-                      Estimated: Jan 20, 2024
-                    </p>
-                  </div>
-                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-transparent">
-                    In Transit
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg">
-                  <div>
-                    <p className="font-medium text-white">#ORD-006</p>
-                    <p className="text-sm text-gray-400">
-                      75x My Hero Academia Figures
-                    </p>
-                    <p className="text-xs text-accent">
-                      Estimated: Jan 25, 2024
-                    </p>
-                  </div>
-                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-transparent">
-                    Processing
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg">
-                  <div>
-                    <p className="font-medium text-white">#ORD-007</p>
-                    <p className="text-sm text-gray-400">
-                      60x Jujutsu Kaisen Figures
-                    </p>
-                    <p className="text-xs text-accent">
-                      Estimated: Jan 30, 2024
-                    </p>
-                  </div>
-                  <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-transparent">
-                    Confirmed
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Order History & Analytics */}
+        {/* Order History & Analytics */}
+        <div className="mt-8">
           <Card className="bg-[#1a1a1a] border-[#333]">
             <CardHeader>
               <CardTitle className="flex items-center text-accent">

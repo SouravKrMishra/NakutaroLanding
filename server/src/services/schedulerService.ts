@@ -13,11 +13,8 @@ export class SchedulerService {
    */
   static startCleanupScheduler(): void {
     if (this.isRunning) {
-      console.log("Cleanup scheduler is already running");
       return;
     }
-
-    console.log("Starting order cleanup scheduler...");
 
     // Delay initial run by 5 seconds to ensure database connection is established
     setTimeout(() => {
@@ -30,7 +27,6 @@ export class SchedulerService {
     }, 30 * 60 * 1000); // 30 minutes
 
     this.isRunning = true;
-    console.log("Order cleanup scheduler started - running every 30 minutes");
   }
 
   /**
@@ -41,7 +37,6 @@ export class SchedulerService {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
       this.isRunning = false;
-      console.log("Order cleanup scheduler stopped");
     }
   }
 
@@ -50,35 +45,17 @@ export class SchedulerService {
    */
   private static async runCleanupTask(): Promise<void> {
     try {
-      console.log("Running scheduled order cleanup task...");
-
       const stats = await OrderCleanupService.getPendingOrderStats();
-      console.log("Pending order stats:", stats);
 
       if (stats.expiredPending > 0) {
         const result = await OrderCleanupService.cancelExpiredPendingOrders();
-        console.log(
-          `Cleanup completed: ${result.cancelledCount} orders cancelled`
-        );
 
         // Log details of cancelled orders
         if (result.cancelledOrders.length > 0) {
-          console.log(
-            "Cancelled orders:",
-            result.cancelledOrders.map((order) => ({
-              orderNumber: order.orderNumber,
-              userId: order.userId,
-              total: order.total,
-              orderDate: order.orderDate,
-            }))
-          );
         }
       } else {
-        console.log("No expired pending orders to clean up");
       }
-    } catch (error) {
-      console.error("Error in scheduled cleanup task:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -104,10 +81,8 @@ export class SchedulerService {
     cancelledCount: number;
   }> {
     try {
-      console.log("Force running cleanup task...");
       return await OrderCleanupService.manualCleanup();
     } catch (error) {
-      console.error("Force cleanup failed:", error);
       return {
         success: false,
         message: "Force cleanup failed",

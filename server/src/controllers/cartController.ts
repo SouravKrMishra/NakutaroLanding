@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { Cart } from "../../../shared/models/Cart.js";
+import { Product } from "../../../shared/models/Product.js";
 import { createError } from "../middleware/errorHandler.js";
+import mongoose from "mongoose";
 
 // Get user's cart
 export const getCart = async (
@@ -22,7 +24,45 @@ export const getCart = async (
       await cart.save();
     }
 
-    res.json({ cart });
+    // Check if any products in cart are deleted and mark them
+    if (cart.items && cart.items.length > 0) {
+      const productIds = cart.items.map((item) => String(item.productId));
+
+      // Filter to only valid ObjectIds to avoid CastError
+      const validObjectIds = productIds
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      let products: Array<{ _id: any; isDeleted: boolean }> = [];
+      if (validObjectIds.length > 0) {
+        products = await Product.find({ _id: { $in: validObjectIds } }).select(
+          "_id isDeleted"
+        );
+      }
+
+      const deletedProductIds = new Set(
+        products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+      );
+
+      // Treat invalid ObjectIds as unavailable/deleted
+      productIds.forEach((id) => {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          deletedProductIds.add(id);
+        }
+      });
+
+      // Mark cart items with deleted products
+      const cartObj = cart.toObject();
+      const itemsWithDeletedInfo = cartObj.items.map((item: any) => ({
+        ...item,
+        isDeleted: deletedProductIds.has(item.productId.toString()),
+        isAvailable: !deletedProductIds.has(item.productId.toString()),
+      })) as any;
+
+      res.json({ cart: { ...cartObj, items: itemsWithDeletedInfo } });
+    } else {
+      res.json({ cart });
+    }
   } catch (error) {
     next(createError("Failed to fetch cart", 500));
   }
@@ -53,6 +93,12 @@ export const addToCart = async (
     // Validate required fields
     if (!productId || !name || !price || !image || !category) {
       return next(createError("Missing required fields", 400));
+    }
+
+    // Check if product is deleted
+    const product = await Product.findOne({ _id: productId });
+    if (!product || product.isDeleted) {
+      return next(createError("Product is not available", 400));
     }
 
     let cart = await Cart.findOne({ userId });
