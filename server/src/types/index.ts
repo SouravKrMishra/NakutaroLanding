@@ -10,9 +10,18 @@ export interface Product {
   onSale?: boolean;
   average_rating?: string;
   rating_count: number;
-  images: Array<{ src: string; alt?: string }>;
+  images: Array<{
+    src: string;
+    alt?: string;
+    isPrimary?: boolean;
+    color?: string | null;
+    isPrimaryForColor?: boolean;
+  }>;
   categories: Array<{ id: number; name: string }>;
   category?: string;
+  sizes?: string[];
+  colors?: string[];
+  defaultColor?: string | null;
   stock?: {
     quantity: number;
     status: string;

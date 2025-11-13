@@ -7,17 +7,21 @@ import recommendationRoutes from "./recommendationRoutes.ts";
 import orderRoutes from "./orderRoutes.ts";
 import cartRoutes from "./cartRoutes.ts";
 import paymentRoutes from "./paymentRoutes.ts";
+import couponRoutes from "./couponRoutes.ts";
 
 const router = Router();
 
 // Mount route modules
-router.use("/", productRoutes);
+// Mount specific routes first to avoid conflicts
+router.use("/coupons", couponRoutes);
+router.use("/payments", paymentRoutes);
 router.use("/newsletter", newsletterRoutes);
 router.use("/auth", authRoutes);
 router.use("/wishlist", wishlistRoutes);
+// Mount catch-all routes last
+router.use("/", productRoutes);
 router.use("/", recommendationRoutes);
 router.use("/", orderRoutes);
 router.use("/", cartRoutes);
-router.use("/payments", paymentRoutes);
 
 export default router;

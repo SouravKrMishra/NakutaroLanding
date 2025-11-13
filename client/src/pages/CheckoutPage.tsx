@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/lib/CartContext.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useToast } from "@/hooks/use-toast.ts";
+import { Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import {
   Card,
@@ -47,6 +48,10 @@ const CheckoutPage = () => {
   const [phonepeTransactionId, setPhonepeTransactionId] = useState("");
   const [phonepePaymentUrl, setPhonepePaymentUrl] = useState("");
   const [showPhonepeRedirect, setShowPhonepeRedirect] = useState(false);
+  
+  // Coupon state - retrieve from localStorage (set by CartPage)
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: "",
@@ -116,8 +121,27 @@ const CheckoutPage = () => {
     }
   }, [items, setLocation]);
 
+  // Load coupon from localStorage (set by CartPage)
+  useEffect(() => {
+    const savedCoupon = localStorage.getItem("appliedCoupon");
+    const savedDiscount = localStorage.getItem("couponDiscount");
+    
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      } catch (e) {
+        console.error("Failed to parse saved coupon", e);
+      }
+    }
+    
+    if (savedDiscount) {
+      setCouponDiscount(parseFloat(savedDiscount));
+    }
+  }, []);
+
   const shippingCost = total > 1000 ? 0 : 100;
-  const finalTotal = total + shippingCost + 2; // Add PhonePe processing fee
+  const subtotalAfterDiscount = total - couponDiscount;
+  const finalTotal = subtotalAfterDiscount + shippingCost; // Removed processing fee
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -201,6 +225,8 @@ const CheckoutPage = () => {
         shippingInfo,
         paymentMethod: "PHONEPE",
         subtotal: total,
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: couponDiscount || 0,
         shippingCost,
         total: finalTotal,
         merchantTransactionId,
@@ -502,6 +528,17 @@ const CheckoutPage = () => {
                         ₹{total.toLocaleString()}
                       </span>
                     </div>
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-500 flex items-center">
+                          <Ticket className="w-4 h-4 mr-1" />
+                          Coupon Discount ({appliedCoupon?.code})
+                        </span>
+                        <span className="text-green-500 font-medium">
+                          -₹{couponDiscount.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Shipping</span>
                       <span className="text-white">
@@ -514,10 +551,6 @@ const CheckoutPage = () => {
                           `₹${shippingCost}`
                         )}
                       </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Processing Fee</span>
-                      <span className="text-white">₹2</span>
                     </div>
                     <div className="border-t border-[#333] pt-2">
                       <div className="flex justify-between text-lg font-bold">

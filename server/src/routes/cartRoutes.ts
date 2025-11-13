@@ -1,6 +1,7 @@
 import express from "express";
 import { body } from "express-validator";
 import { authenticateToken } from "../middleware/auth.js";
+import { handleValidationErrors } from "../middleware/validation.js";
 import {
   getCart,
   addToCart,
@@ -43,6 +44,10 @@ const addToCartValidation = [
     .optional()
     .isBoolean()
     .withMessage("inStock must be a boolean"),
+  body("lastModified")
+    .optional()
+    .isNumeric()
+    .withMessage("lastModified must be a number"),
 ];
 
 const updateCartItemValidation = [
@@ -87,10 +92,10 @@ router.use(authenticateToken);
 router.get("/cart", getCart);
 
 // Add item to cart
-router.post("/cart", addToCartValidation, addToCart);
+router.post("/cart", addToCartValidation, handleValidationErrors, addToCart);
 
 // Update cart item quantity
-router.patch("/cart/:productId", updateCartItemValidation, updateCartItem);
+router.patch("/cart/:productId", updateCartItemValidation, handleValidationErrors, updateCartItem);
 
 // Remove item from cart
 router.delete("/cart/:productId", removeFromCart);
@@ -99,6 +104,6 @@ router.delete("/cart/:productId", removeFromCart);
 router.delete("/cart", clearCart);
 
 // Sync cart (replace entire cart)
-router.put("/cart", syncCartValidation, syncCart);
+router.put("/cart", syncCartValidation, handleValidationErrors, syncCart);
 
 export default router;

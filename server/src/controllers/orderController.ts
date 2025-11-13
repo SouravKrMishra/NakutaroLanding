@@ -23,6 +23,8 @@ export const createOrder = async (
       subtotal,
       shippingCost,
       total,
+      couponCode,
+      couponDiscount,
     } = req.body;
 
     // Validate required fields
@@ -43,10 +45,34 @@ export const createOrder = async (
       subtotal,
       shippingCost,
       codFee,
+      couponCode: couponCode || null,
+      couponDiscount: couponDiscount || 0,
       total: finalTotal,
     });
 
     await order.save();
+
+    // Apply coupon if one was used (record usage)
+    if (couponCode) {
+      try {
+        const { applyCoupon } = await import("../controllers/couponController.js");
+        // Create a mock request/response for applyCoupon
+        const mockReq = {
+          body: {
+            code: couponCode,
+            userId: userId.toString(),
+            orderId: order._id.toString(),
+          },
+        } as any;
+        const mockRes = {
+          json: (data: any) => data,
+        } as any;
+        await applyCoupon(mockReq, mockRes, () => {});
+      } catch (error) {
+        // Don't fail the order if coupon application fails
+        console.error("Failed to apply coupon:", error);
+      }
+    }
 
     // Add items to purchase history for recommendations
     for (const item of items) {
@@ -280,6 +306,8 @@ export const createOrderForPhonepe = async (
       total,
       merchantTransactionId,
       testMode,
+      couponCode,
+      couponDiscount,
     } = req.body;
 
     // Validate required fields
@@ -287,9 +315,9 @@ export const createOrderForPhonepe = async (
       return next(createError("Missing required fields", 400));
     }
 
-    // Calculate PhonePe processing fee
-    const phonepeFee = 2;
-    const finalTotal = total + phonepeFee;
+    // No processing fee - removed as requested
+    const phonepeFee = 0;
+    const finalTotal = total; // Total already includes discount from frontend
 
     // Generate order number
     const date = new Date();
@@ -315,6 +343,8 @@ export const createOrderForPhonepe = async (
       subtotal,
       shippingCost,
       phonepeFee,
+      couponCode: couponCode || null,
+      couponDiscount: couponDiscount || 0,
       total: finalTotal,
       status: testMode ? "CONFIRMED" : "PENDING_PAYMENT",
       paymentStatus: testMode ? "COMPLETED" : "PENDING",
@@ -323,6 +353,28 @@ export const createOrderForPhonepe = async (
     });
 
     await order.save();
+
+    // Apply coupon if one was used (record usage)
+    if (couponCode) {
+      try {
+        const { applyCoupon } = await import("../controllers/couponController.js");
+        // Create a mock request/response for applyCoupon
+        const mockReq = {
+          body: {
+            code: couponCode,
+            userId: userId.toString(),
+            orderId: order._id.toString(),
+          },
+        } as any;
+        const mockRes = {
+          json: (data: any) => data,
+        } as any;
+        await applyCoupon(mockReq, mockRes, () => {});
+      } catch (error) {
+        // Don't fail the order if coupon application fails
+        console.error("Failed to apply coupon:", error);
+      }
+    }
 
     // Add items to purchase history for recommendations (including test orders)
     for (const item of items) {

@@ -41,7 +41,9 @@ export const getCart = async (
       }
 
       const deletedProductIds = new Set(
-        products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+        products
+          .filter((p: any) => p.isDeleted)
+          .map((p: any) => p._id.toString())
       );
 
       // Treat invalid ObjectIds as unavailable/deleted
@@ -59,11 +61,16 @@ export const getCart = async (
         isAvailable: !deletedProductIds.has(item.productId.toString()),
       })) as any;
 
-      res.json({ cart: { ...cartObj, items: itemsWithDeletedInfo } });
+      res.json({
+        success: true,
+        cart: { ...cartObj, items: itemsWithDeletedInfo },
+      });
     } else {
-      res.json({ cart });
+      const cartObject = cart.toObject();
+      res.json({ success: true, cart: cartObject });
     }
   } catch (error) {
+    console.error("Error fetching cart:", error);
     next(createError("Failed to fetch cart", 500));
   }
 };
@@ -95,8 +102,12 @@ export const addToCart = async (
       return next(createError("Missing required fields", 400));
     }
 
+    // Extract actual product ID from the composite ID (e.g., "690b1e9ebe5ab2df42d78947_Color:Black|Size:S")
+    // The productId may contain variant information after an underscore
+    const actualProductId = productId.split("_")[0];
+
     // Check if product is deleted
-    const product = await Product.findOne({ _id: productId });
+    const product = await Product.findOne({ _id: actualProductId });
     if (!product || product.isDeleted) {
       return next(createError("Product is not available", 400));
     }
@@ -130,11 +141,16 @@ export const addToCart = async (
 
     await cart.save();
 
+    // Convert mongoose document to plain object to avoid serialization issues
+    const cartObject = cart.toObject();
+
     res.json({
+      success: true,
       message: "Item added to cart successfully",
-      cart,
+      cart: cartObject,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error adding item to cart:", error);
     next(createError("Failed to add item to cart", 500));
   }
 };
@@ -180,14 +196,17 @@ export const updateCartItem = async (
       if (cart.items.length === 0) {
         await Cart.findOneAndDelete({ userId });
         res.json({
+          success: true,
           message: "Cart updated successfully",
           cart: { items: [] },
         });
       } else {
         await cart.save();
+        const cartObject = cart.toObject();
         res.json({
+          success: true,
           message: "Cart updated successfully",
-          cart,
+          cart: cartObject,
         });
       }
     } else {
@@ -195,12 +214,15 @@ export const updateCartItem = async (
       cart.items[itemIndex].quantity = quantity;
       await cart.save();
 
+      const cartObject = cart.toObject();
       res.json({
+        success: true,
         message: "Cart updated successfully",
-        cart,
+        cart: cartObject,
       });
     }
   } catch (error) {
+    console.error("Error updating cart:", error);
     next(createError("Failed to update cart", 500));
   }
 };
@@ -239,17 +261,21 @@ export const removeFromCart = async (
     if (cart.items.length === 0) {
       await Cart.findOneAndDelete({ userId });
       res.json({
+        success: true,
         message: "Item removed from cart successfully",
         cart: { items: [] },
       });
     } else {
       await cart.save();
+      const cartObject = cart.toObject();
       res.json({
+        success: true,
         message: "Item removed from cart successfully",
-        cart,
+        cart: cartObject,
       });
     }
   } catch (error) {
+    console.error("Error removing item from cart:", error);
     next(createError("Failed to remove item from cart", 500));
   }
 };
@@ -270,10 +296,12 @@ export const clearCart = async (
     await Cart.findOneAndDelete({ userId });
 
     res.json({
+      success: true,
       message: "Cart cleared successfully",
       cart: { items: [] },
     });
   } catch (error) {
+    console.error("Error clearing cart:", error);
     next(createError("Failed to clear cart", 500));
   }
 };
@@ -309,17 +337,21 @@ export const syncCart = async (
     if (cart.items.length === 0) {
       await Cart.findOneAndDelete({ userId });
       res.json({
+        success: true,
         message: "Cart synced successfully",
         cart: { items: [] },
       });
     } else {
       await cart.save();
+      const cartObject = cart.toObject();
       res.json({
+        success: true,
         message: "Cart synced successfully",
-        cart,
+        cart: cartObject,
       });
     }
   } catch (error) {
+    console.error("Error syncing cart:", error);
     next(createError("Failed to sync cart", 500));
   }
 };

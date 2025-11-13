@@ -69,6 +69,105 @@ type Product = {
   isNew?: boolean;
   onSale?: boolean;
   attributes?: { name: string; options: string[] }[];
+  colors?: string[];
+  images?: Array<{ src: string; color?: string | null }>;
+};
+
+// Helper function to get the default color's primary image
+const getDefaultColorPrimaryImage = (item: any): string => {
+  if (!item.images || item.images.length === 0) return "";
+
+  // Try to find the primary image for the default color
+  if (item.defaultColor) {
+    const primaryForDefaultColor = item.images.find(
+      (img: any) =>
+        img.color === item.defaultColor && img.isPrimaryForColor === true
+    );
+    if (primaryForDefaultColor)
+      return primaryForDefaultColor.src || primaryForDefaultColor.url || "";
+
+    // If no primary image for default color, get the first image of that color
+    const firstOfDefaultColor = item.images.find(
+      (img: any) => img.color === item.defaultColor
+    );
+    if (firstOfDefaultColor)
+      return firstOfDefaultColor.src || firstOfDefaultColor.url || "";
+  }
+
+  // Fallback to any primary image
+  const anyPrimary = item.images.find(
+    (img: any) => img.isPrimaryForColor === true
+  );
+  if (anyPrimary) return anyPrimary.src || anyPrimary.url || "";
+
+  // Final fallback to first image
+  return item.images[0]?.src || item.images[0]?.url || "";
+};
+
+// Helper function to extract available colors from product data
+const getAvailableColors = (item: any): string[] => {
+  // First, try to get colors from the colors array (this contains actual available colors)
+  if (item.colors && Array.isArray(item.colors) && item.colors.length > 0) {
+    const filteredColors = item.colors.filter(
+      (color: string) => color && color.trim() !== ""
+    );
+    if (filteredColors.length > 0) {
+      return filteredColors;
+    }
+  }
+
+  // If no colors array, extract unique colors from images (each image has a color field)
+  if (item.images && Array.isArray(item.images) && item.images.length > 0) {
+    const colorSet = new Set<string>();
+    item.images.forEach((img: any) => {
+      // Check both 'color' and 'url' fields (some APIs might use different field names)
+      const imageColor = img.color || img.colour;
+      if (
+        imageColor &&
+        typeof imageColor === "string" &&
+        imageColor.trim() !== ""
+      ) {
+        colorSet.add(imageColor.trim());
+      }
+    });
+    const colorsFromImages = Array.from(colorSet);
+    if (colorsFromImages.length > 0) {
+      return colorsFromImages;
+    }
+  }
+
+  // Don't use attributes as they contain all possible color options, not actual available colors
+  return [];
+};
+
+// Helper function to map color names to hex values for display
+const getColorHex = (colorName: string): string => {
+  const colorMap: { [key: string]: string } = {
+    black: "#000000",
+    white: "#FFFFFF",
+    beige: "#F5F5DC",
+    lavender: "#E6E6FA",
+    pink: "#FFC0CB",
+    "lime green": "#32CD32",
+    "dark green": "#006400",
+    red: "#FF0000",
+    blue: "#0000FF",
+    green: "#008000",
+    yellow: "#FFFF00",
+    orange: "#FFA500",
+    purple: "#800080",
+    gray: "#808080",
+    grey: "#808080",
+    brown: "#A52A2A",
+    navy: "#000080",
+    maroon: "#800000",
+    teal: "#008080",
+    cyan: "#00FFFF",
+    magenta: "#FF00FF",
+  };
+
+  const normalizedName = colorName.toLowerCase().trim();
+  return colorMap[normalizedName] || "#CCCCCC"; // Default gray if color not found
 };
 
 // URL parameter management functions
@@ -429,12 +528,14 @@ const ProductsPage = () => {
           price: item.price?.toString() || "0",
           rating: item.average_rating ? parseFloat(item.average_rating) : 0,
           reviews: item.rating_count || 0,
-          image: item.images?.[0]?.src || "",
+          image: getDefaultColorPrimaryImage(item),
           category:
             item.category || item.categories?.[0]?.name || "Uncategorized",
           isNew: false,
           onSale: item.onSale || false,
           attributes: item.attributes || [],
+          colors: getAvailableColors(item),
+          images: item.images || [],
         }));
         setFeaturedProducts(mappedFeaturedProducts);
       } catch (err) {}
@@ -531,19 +632,39 @@ const ProductsPage = () => {
             // If including out of stock, allow all
             return true;
           })
-          .map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            price: item.price?.toString() || "0",
-            rating: item.average_rating ? parseFloat(item.average_rating) : 0,
-            reviews: item.rating_count || 0,
-            image: item.images?.[0]?.src || "",
-            category:
-              item.category || item.categories?.[0]?.name || "Uncategorized",
-            isNew: false,
-            onSale: item.onSale || false,
-            attributes: item.attributes || [],
-          }));
+          .map((item: any, index: number) => {
+            const availableColors = getAvailableColors(item);
+            // Debug: Log first few products to see what we're getting
+            if (index < 3) {
+              console.log(`Product ${index + 1} data:`, {
+                id: item.id,
+                name: item.name,
+                rawColors: item.colors,
+                rawImages: item.images?.map((img: any) => ({
+                  src: img.src || img.url,
+                  color: img.color,
+                })),
+                extractedColors: availableColors,
+                colorsLength: availableColors.length,
+                willShowPalette: availableColors.length > 1,
+              });
+            }
+            return {
+              id: item.id,
+              name: item.name,
+              price: item.price?.toString() || "0",
+              rating: item.average_rating ? parseFloat(item.average_rating) : 0,
+              reviews: item.rating_count || 0,
+              image: getDefaultColorPrimaryImage(item),
+              category:
+                item.category || item.categories?.[0]?.name || "Uncategorized",
+              isNew: false,
+              onSale: item.onSale || false,
+              attributes: item.attributes || [],
+              colors: availableColors,
+              images: item.images || [],
+            };
+          });
 
         setProducts(mappedProducts);
         setTotalProducts(totalProducts);
@@ -704,6 +825,26 @@ const ProductsPage = () => {
                           }`}
                         />
                       </button>
+                      {/* Color Palette */}
+                      {product.colors && product.colors.length > 1 && (
+                        <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10 z-10">
+                          {product.colors
+                            .slice(0, 4)
+                            .map((color: string, idx: number) => (
+                              <div
+                                key={idx}
+                                className="w-4 h-4 rounded-full border border-white/30 shadow-sm hover:scale-110 transition-transform duration-200"
+                                style={{ backgroundColor: getColorHex(color) }}
+                                title={color}
+                              />
+                            ))}
+                          {product.colors.length > 4 && (
+                            <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                              +{product.colors.length - 4}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </Link>
                   <div className="p-3 sm:p-4 flex flex-col flex-grow">
@@ -997,6 +1138,28 @@ const ProductsPage = () => {
                                   }`}
                                 />
                               </button>
+                              {/* Color Palette */}
+                              {product.colors && product.colors.length > 1 && (
+                                <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  {product.colors
+                                    .slice(0, 4)
+                                    .map((color: string, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="w-4 h-4 rounded-full border border-white/30 shadow-sm"
+                                        style={{
+                                          backgroundColor: getColorHex(color),
+                                        }}
+                                        title={color}
+                                      />
+                                    ))}
+                                  {product.colors.length > 4 && (
+                                    <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                                      +{product.colors.length - 4}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </Link>
                           <div className="p-3 sm:p-4 flex flex-col flex-grow">
@@ -1200,6 +1363,28 @@ const ProductsPage = () => {
                                 }`}
                               />
                             </button>
+                            {/* Color Palette */}
+                            {product.colors && product.colors.length > 1 && (
+                              <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                {product.colors
+                                  .slice(0, 4)
+                                  .map((color: string, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="w-4 h-4 rounded-full border border-white/30 shadow-sm"
+                                      style={{
+                                        backgroundColor: getColorHex(color),
+                                      }}
+                                      title={color}
+                                    />
+                                  ))}
+                                {product.colors.length > 4 && (
+                                  <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                                    +{product.colors.length - 4}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </Link>
                           <div className="md:w-3/4 p-6 flex flex-col">
                             <div className="flex flex-col items-start mb-2">

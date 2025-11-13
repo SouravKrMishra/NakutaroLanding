@@ -34,8 +34,7 @@ const transactionSchema = new Schema<ITransaction>(
     merchantTransactionId: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
+      unique: true, // unique already creates an index automatically
     },
     phonepeTransactionId: {
       type: String,

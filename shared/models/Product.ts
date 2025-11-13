@@ -64,8 +64,28 @@ const productSchema = new mongoose.Schema(
           type: Boolean,
           default: false,
         },
+        color: {
+          type: String,
+          default: null,
+        },
+        isPrimaryForColor: {
+          type: Boolean,
+          default: false,
+        },
       },
     ],
+    sizes: {
+      type: [String],
+      default: [],
+    },
+    colors: {
+      type: [String],
+      default: [],
+    },
+    defaultColor: {
+      type: String,
+      default: null,
+    },
     sku: {
       type: String,
       unique: true,

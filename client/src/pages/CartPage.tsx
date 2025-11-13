@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import {
   ShoppingCart,
   Trash2,
@@ -22,16 +23,27 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
+  Ticket,
+  Loader2,
+  X,
 } from "lucide-react";
 import { Link } from "wouter";
+import axios from "axios";
+import { buildApiUrl } from "@/lib/api.ts";
 
 const CartPage = () => {
   const [, setLocation] = useLocation();
   const { items, total, itemCount, removeItem, updateQuantity, clearCart } =
     useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   // Authentication is now handled by ProtectedRoute wrapper
 
@@ -117,7 +129,72 @@ const CartPage = () => {
   };
 
   const shippingCost = total > 1000 ? 0 : 100;
-  const finalTotal = total + shippingCost;
+  const subtotalAfterDiscount = total - couponDiscount;
+  const finalTotal = subtotalAfterDiscount + shippingCost;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a coupon code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsValidatingCoupon(true);
+    try {
+      const response = await axios.post(buildApiUrl("/api/coupons/validate"), {
+        code: couponCode,
+        userId: user?.id || null,
+        cartItems: items.map((item) => ({
+          productId: item.productId || item.id,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+        })),
+        cartTotal: total,
+      });
+
+      if (response.data.valid) {
+        setAppliedCoupon(response.data.coupon);
+        setCouponDiscount(response.data.coupon.discountAmount);
+        // Save to localStorage for checkout page
+        localStorage.setItem("appliedCoupon", JSON.stringify(response.data.coupon));
+        localStorage.setItem("couponDiscount", response.data.coupon.discountAmount.toString());
+        toast({
+          title: "Coupon Applied!",
+          description: response.data.message,
+        });
+      } else {
+        toast({
+          title: "Invalid Coupon",
+          description: response.data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to apply coupon",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCode("");
+    // Remove from localStorage
+    localStorage.removeItem("appliedCoupon");
+    localStorage.removeItem("couponDiscount");
+    toast({
+      title: "Coupon Removed",
+      description: "The coupon has been removed from your cart",
+    });
+  };
 
   // Authentication is now handled by ProtectedRoute wrapper
 
@@ -334,6 +411,98 @@ const CartPage = () => {
                         shipping
                       </div>
                     )}
+
+                    {/* Coupon Section */}
+                    <div className="border-t border-[#333] pt-3">
+                      <div className="space-y-2">
+                        {appliedCoupon ? (
+                          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-2">
+                                <Ticket className="w-4 h-4 text-green-500 mt-0.5" />
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium text-green-500">
+                                      {appliedCoupon.code}
+                                    </span>
+                                    <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-xs">
+                                      Applied
+                                    </Badge>
+                                  </div>
+                                  {appliedCoupon.description && (
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {appliedCoupon.description}
+                                    </p>
+                                  )}
+                                  <p className="text-sm font-medium text-green-500 mt-1">
+                                    Saved ₹{couponDiscount.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleRemoveCoupon}
+                                className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Ticket className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-400">
+                                Have a coupon code?
+                              </span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Input
+                                value={couponCode}
+                                onChange={(e) =>
+                                  setCouponCode(e.target.value.toUpperCase())
+                                }
+                                placeholder="Enter coupon code"
+                                className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 uppercase"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleApplyCoupon();
+                                  }
+                                }}
+                              />
+                              <Button
+                                onClick={handleApplyCoupon}
+                                disabled={
+                                  isValidatingCoupon || !couponCode.trim()
+                                }
+                                className="bg-accent hover:bg-accent/80 text-white"
+                              >
+                                {isValidatingCoupon ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  "Apply"
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Discount line */}
+                    {couponDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-500 flex items-center">
+                          <Ticket className="w-4 h-4 mr-1" />
+                          Coupon Discount
+                        </span>
+                        <span className="text-green-500 font-medium">
+                          -₹{couponDiscount.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="border-t border-[#333] pt-3">
                       <div className="flex justify-between text-lg font-bold">
                         <span className="text-white">Total</span>
@@ -341,6 +510,12 @@ const CartPage = () => {
                           ₹{finalTotal.toLocaleString()}
                         </span>
                       </div>
+                      {couponDiscount > 0 && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          You saved ₹{couponDiscount.toLocaleString()} with this
+                          coupon!
+                        </p>
+                      )}
                     </div>
                   </div>
 
