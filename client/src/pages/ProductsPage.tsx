@@ -71,6 +71,8 @@ type Product = {
   attributes?: { name: string; options: string[] }[];
   colors?: string[];
   images?: Array<{ src: string; color?: string | null }>;
+  description?: string;
+  shortDescription?: string;
 };
 
 // Helper function to get the default color's primary image
@@ -536,6 +538,8 @@ const ProductsPage = () => {
           attributes: item.attributes || [],
           colors: getAvailableColors(item),
           images: item.images || [],
+          description: item.description || "",
+          shortDescription: item.shortDescription || "",
         }));
         setFeaturedProducts(mappedFeaturedProducts);
       } catch (err) {}
@@ -632,39 +636,23 @@ const ProductsPage = () => {
             // If including out of stock, allow all
             return true;
           })
-          .map((item: any, index: number) => {
-            const availableColors = getAvailableColors(item);
-            // Debug: Log first few products to see what we're getting
-            if (index < 3) {
-              console.log(`Product ${index + 1} data:`, {
-                id: item.id,
-                name: item.name,
-                rawColors: item.colors,
-                rawImages: item.images?.map((img: any) => ({
-                  src: img.src || img.url,
-                  color: img.color,
-                })),
-                extractedColors: availableColors,
-                colorsLength: availableColors.length,
-                willShowPalette: availableColors.length > 1,
-              });
-            }
-            return {
-              id: item.id,
-              name: item.name,
-              price: item.price?.toString() || "0",
-              rating: item.average_rating ? parseFloat(item.average_rating) : 0,
-              reviews: item.rating_count || 0,
-              image: getDefaultColorPrimaryImage(item),
-              category:
-                item.category || item.categories?.[0]?.name || "Uncategorized",
-              isNew: false,
-              onSale: item.onSale || false,
-              attributes: item.attributes || [],
-              colors: availableColors,
-              images: item.images || [],
-            };
-          });
+          .map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price?.toString() || "0",
+            rating: item.average_rating ? parseFloat(item.average_rating) : 0,
+            reviews: item.rating_count || 0,
+            image: getDefaultColorPrimaryImage(item),
+            category:
+              item.category || item.categories?.[0]?.name || "Uncategorized",
+            isNew: false,
+            onSale: item.onSale || false,
+            attributes: item.attributes || [],
+            colors: getAvailableColors(item),
+            images: item.images || [],
+            description: item.description || "",
+            shortDescription: item.shortDescription || "",
+          }));
 
         setProducts(mappedProducts);
         setTotalProducts(totalProducts);
@@ -1408,10 +1396,9 @@ const ProductsPage = () => {
                               </span>
                             </div>
                             <p className="text-gray-400 mb-4 flex-grow">
-                              Premium quality {product.category.toLowerCase()}{" "}
-                              featuring your favorite anime characters.
-                              Officially licensed merchandise with the best
-                              quality and authentic designs.
+                              {product.shortDescription ||
+                                product.description ||
+                                `Premium quality ${product.category.toLowerCase()} featuring your favorite anime characters. Officially licensed merchandise with the best quality and authentic designs.`}
                             </p>
                             <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                               {showAttributeSelection[product.id] ? (
