@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { productService } from "../services/productService.ts";
-import { createError } from "../middleware/errorHandler.ts";
-import { ProductFilters, CategoryFilters } from "../types/index.ts";
+import { productService } from "../services/productService.js";
+import { createError } from "../middleware/errorHandler.js";
+import { ProductFilters, CategoryFilters } from "../types/index.js";
 import Stock from "../../../shared/models/Stock.js";
 
 export const getProductById = async (

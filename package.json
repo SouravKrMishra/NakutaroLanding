@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
     "build:backend": "tsc -p tsconfig.backend.json",
     "start": "NODE_ENV=production node dist/index.js"
@@ -73,7 +74,6 @@
     "react-google-recaptcha-v3": "^1.11.0",
     "react-hook-form": "^7.56.2",
     "react-icons": "^5.4.0",
-    
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
     "simple-icons": "^15.1.0",

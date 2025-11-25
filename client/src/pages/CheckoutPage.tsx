@@ -48,7 +48,7 @@ const CheckoutPage = () => {
   const [phonepeTransactionId, setPhonepeTransactionId] = useState("");
   const [phonepePaymentUrl, setPhonepePaymentUrl] = useState("");
   const [showPhonepeRedirect, setShowPhonepeRedirect] = useState(false);
-  
+
   // Coupon state - retrieve from localStorage (set by CartPage)
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
@@ -77,12 +77,15 @@ const CheckoutPage = () => {
 
       try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch("/api/auth/user/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || ""}/api/auth/user/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+          }
+        );
 
         if (response.ok) {
           const userData = await response.json();
@@ -125,7 +128,7 @@ const CheckoutPage = () => {
   useEffect(() => {
     const savedCoupon = localStorage.getItem("appliedCoupon");
     const savedDiscount = localStorage.getItem("couponDiscount");
-    
+
     if (savedCoupon) {
       try {
         setAppliedCoupon(JSON.parse(savedCoupon));
@@ -133,7 +136,7 @@ const CheckoutPage = () => {
         console.error("Failed to parse saved coupon", e);
       }
     }
-    
+
     if (savedDiscount) {
       setCouponDiscount(parseFloat(savedDiscount));
     }
@@ -235,15 +238,18 @@ const CheckoutPage = () => {
       const token = localStorage.getItem("authToken");
 
       // Create order first
-      const orderResponse = await fetch("/api/orders/phonepe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: JSON.stringify(orderData),
-      });
+      const orderResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/orders/phonepe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(orderData),
+        }
+      );
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
@@ -253,23 +259,28 @@ const CheckoutPage = () => {
       const orderResult = await orderResponse.json();
 
       // Then initiate PhonePe payment
-      const paymentResponse = await fetch("/api/payments/phonepe/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          amount: finalTotal * 100, // Convert rupees to paise for PhonePe
-          merchantTransactionId,
-          merchantUserId: user?.id || "USER_" + Date.now(),
-          mobileNumber: shippingInfo.phone,
-          callbackUrl: `${window.location.origin}/api/payments/phonepe/callback`,
-          redirectUrl: `${window.location.origin}/api/payments/phonepe/redirect?orderId=${orderResult.order.id}&merchantTransactionId=${merchantTransactionId}`,
-          merchantOrderId: orderResult.order.orderNumber,
-        }),
-      });
+      const paymentResponse = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL || ""
+        }/api/payments/phonepe/initiate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            amount: finalTotal * 100, // Convert rupees to paise for PhonePe
+            merchantTransactionId,
+            merchantUserId: user?.id || "USER_" + Date.now(),
+            mobileNumber: shippingInfo.phone,
+            callbackUrl: `${window.location.origin}/api/payments/phonepe/callback`,
+            redirectUrl: `${window.location.origin}/api/payments/phonepe/redirect?orderId=${orderResult.order.id}&merchantTransactionId=${merchantTransactionId}`,
+            merchantOrderId: orderResult.order.orderNumber,
+          }),
+        }
+      );
 
       if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json();

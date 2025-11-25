@@ -123,7 +123,9 @@ const OrderSuccessPage = () => {
         if (transactionId) queryParams.append("transactionId", transactionId);
 
         const response = await fetch(
-          `/api/orders/success/validate?${queryParams}`,
+          `${
+            import.meta.env.VITE_API_BASE_URL || ""
+          }/api/orders/success/validate?${queryParams}`,
           {
             method: "GET",
             headers: {
@@ -140,14 +142,19 @@ const OrderSuccessPage = () => {
           // For test orders, try to get order data directly from orders API
           if (orderId && window.location.search.includes("test=true")) {
             try {
-              const directResponse = await fetch(`/api/orders/${orderId}`, {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                credentials: "include",
-              });
+              const directResponse = await fetch(
+                `${
+                  import.meta.env.VITE_API_BASE_URL || ""
+                }/api/orders/${orderId}`,
+                {
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include",
+                }
+              );
 
               if (directResponse.ok) {
                 const directData = await directResponse.json();

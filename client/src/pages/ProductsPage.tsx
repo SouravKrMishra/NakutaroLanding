@@ -58,6 +58,15 @@ const sortOptions: SortOption[] = [
   "Newest First",
 ];
 
+type ProductImage = {
+  id?: number;
+  src: string;
+  url?: string;
+  color?: string | null;
+  colour?: string | null;
+  isPrimaryForColor?: boolean;
+};
+
 type Product = {
   id: string;
   name: string;
@@ -70,7 +79,8 @@ type Product = {
   onSale?: boolean;
   attributes?: { name: string; options: string[] }[];
   colors?: string[];
-  images?: Array<{ src: string; color?: string | null }>;
+  images?: ProductImage[];
+  defaultColor?: string;
   description?: string;
   shortDescription?: string;
 };
@@ -142,6 +152,24 @@ const getAvailableColors = (item: any): string[] => {
   return [];
 };
 
+const orderColorsByDefault = (
+  colors: string[],
+  defaultColor?: string
+): string[] => {
+  if (!defaultColor) return colors;
+
+  const normalizedDefault = defaultColor.toLowerCase().trim();
+  const index = colors.findIndex(
+    (color) => color?.toLowerCase().trim() === normalizedDefault
+  );
+
+  if (index <= 0) return colors;
+
+  const orderedColors = [...colors];
+  const [defaultEntry] = orderedColors.splice(index, 1);
+  return [defaultEntry, ...orderedColors];
+};
+
 // Helper function to map color names to hex values for display
 const getColorHex = (colorName: string): string => {
   const colorMap: { [key: string]: string } = {
@@ -170,6 +198,36 @@ const getColorHex = (colorName: string): string => {
 
   const normalizedName = colorName.toLowerCase().trim();
   return colorMap[normalizedName] || "#CCCCCC"; // Default gray if color not found
+};
+
+const normalizeColorName = (color?: string | null) =>
+  color?.toString().trim().toLowerCase() || "";
+
+// Helper function to get image for a specific color
+const getImageForColor = (product: Product, colorName: string): string => {
+  if (!product.images || product.images.length === 0) {
+    return "";
+  }
+
+  const normalizedTarget = normalizeColorName(colorName);
+
+  const primaryForColor = product.images.find((img) => {
+    const imageColor = normalizeColorName(img.color || img.colour);
+    return imageColor === normalizedTarget && img.isPrimaryForColor;
+  });
+  if (primaryForColor) {
+    return primaryForColor.src || primaryForColor.url || "";
+  }
+
+  const firstOfColor = product.images.find((img) => {
+    const imageColor = normalizeColorName(img.color || img.colour);
+    return imageColor === normalizedTarget;
+  });
+  if (firstOfColor) {
+    return firstOfColor.src || firstOfColor.url || "";
+  }
+
+  return "";
 };
 
 // URL parameter management functions
@@ -261,6 +319,9 @@ const ProductsPage = () => {
   }>({});
   const [showAttributeSelection, setShowAttributeSelection] = useState<{
     [productId: string]: boolean;
+  }>({});
+  const [selectedProductColors, setSelectedProductColors] = useState<{
+    [productId: string]: string;
   }>({});
   const pageSize = 12;
   const isUpdatingFromUrl = useRef(false);
@@ -455,6 +516,35 @@ const ProductsPage = () => {
     setSelectedAttributes((prev) => ({ ...prev, [productId]: {} }));
   };
 
+  const handleColorClick = (
+    productId: string,
+    color: string,
+    event: React.MouseEvent
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedProductColors((prev) => {
+      const next = { ...prev };
+      if (prev[productId] === color) {
+        delete next[productId];
+      } else {
+        next[productId] = color;
+      }
+      return next;
+    });
+  };
+
+  const getProductImage = (product: Product): string => {
+    const selectedColor = selectedProductColors[product.id];
+    if (selectedColor) {
+      const colorImage = getImageForColor(product, selectedColor);
+      if (colorImage) {
+        return colorImage;
+      }
+    }
+    return product.image;
+  };
+
   const debouncedPriceRange = useDebounce(committedPriceRange, 1000);
   const debouncedRatings = useDebounce(ratings, 1000);
 
@@ -536,7 +626,11 @@ const ProductsPage = () => {
           isNew: false,
           onSale: item.onSale || false,
           attributes: item.attributes || [],
-          colors: getAvailableColors(item),
+          colors: orderColorsByDefault(
+            getAvailableColors(item),
+            item.defaultColor
+          ),
+          defaultColor: item.defaultColor,
           images: item.images || [],
           description: item.description || "",
           shortDescription: item.shortDescription || "",
@@ -648,7 +742,11 @@ const ProductsPage = () => {
             isNew: false,
             onSale: item.onSale || false,
             attributes: item.attributes || [],
-            colors: getAvailableColors(item),
+            colors: orderColorsByDefault(
+              getAvailableColors(item),
+              item.defaultColor
+            ),
+            defaultColor: item.defaultColor,
             images: item.images || [],
             description: item.description || "",
             shortDescription: item.shortDescription || "",
@@ -787,7 +885,7 @@ const ProductsPage = () => {
                   <Link href={`/product/${product.id}`}>
                     <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
                       <img
-                        src={product.image}
+                        src={getProductImage(product)}
                         alt={product.name}
                         className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                       />
@@ -820,10 +918,17 @@ const ProductsPage = () => {
                             .slice(0, 4)
                             .map((color: string, idx: number) => (
                               <div
-                                key={idx}
-                                className="w-4 h-4 rounded-full border border-white/30 shadow-sm hover:scale-110 transition-transform duration-200"
+                                key={`${color}-${idx}`}
+                                onClick={(e) =>
+                                  handleColorClick(product.id, color, e)
+                                }
+                                className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                  selectedProductColors[product.id] === color
+                                    ? "border-white border-2 shadow-lg scale-110"
+                                    : "border-white/30 shadow-sm hover:scale-110"
+                                }`}
                                 style={{ backgroundColor: getColorHex(color) }}
-                                title={color}
+                                title={`Show ${color}`}
                               />
                             ))}
                           {product.colors.length > 4 && (
@@ -1098,7 +1203,7 @@ const ProductsPage = () => {
                           <Link href={`/product/${product.id}`}>
                             <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
                               <img
-                                src={product.image}
+                                src={getProductImage(product)}
                                 alt={product.name}
                                 className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
                               />
@@ -1133,8 +1238,16 @@ const ProductsPage = () => {
                                     .slice(0, 4)
                                     .map((color: string, idx: number) => (
                                       <div
-                                        key={idx}
-                                        className="w-4 h-4 rounded-full border border-white/30 shadow-sm"
+                                        key={`${color}-${idx}`}
+                                        onClick={(e) =>
+                                          handleColorClick(product.id, color, e)
+                                        }
+                                        className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                          selectedProductColors[product.id] ===
+                                          color
+                                            ? "border-white border-2 shadow-lg scale-110"
+                                            : "border-white/30 shadow-sm hover:scale-110"
+                                        }`}
                                         style={{
                                           backgroundColor: getColorHex(color),
                                         }}
@@ -1325,7 +1438,7 @@ const ProductsPage = () => {
                             className="md:w-1/4 h-48 md:h-auto overflow-hidden relative cursor-pointer"
                           >
                             <img
-                              src={product.image}
+                              src={getProductImage(product)}
                               alt={product.name}
                               className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
                             />
@@ -1358,8 +1471,16 @@ const ProductsPage = () => {
                                   .slice(0, 4)
                                   .map((color: string, idx: number) => (
                                     <div
-                                      key={idx}
-                                      className="w-4 h-4 rounded-full border border-white/30 shadow-sm"
+                                      key={`${color}-${idx}`}
+                                      onClick={(e) =>
+                                        handleColorClick(product.id, color, e)
+                                      }
+                                      className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                        selectedProductColors[product.id] ===
+                                        color
+                                          ? "border-white border-2 shadow-lg scale-110"
+                                          : "border-white/30 shadow-sm hover:scale-110"
+                                      }`}
                                       style={{
                                         backgroundColor: getColorHex(color),
                                       }}

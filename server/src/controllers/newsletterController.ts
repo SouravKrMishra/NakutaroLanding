@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Newsletter } from "../../../shared/models/Newsletter.ts";
+import { Newsletter } from "../../../shared/models/Newsletter.js";
 
 export const subscribeToNewsletter = async (req: Request, res: Response) => {
   try {

@@ -87,7 +87,7 @@ export const validateCoupon = async (
     }
 
     // Check product applicability
-    if (coupon.selectionType !== "all" && cartItems && cartItems.length > 0) {
+    if (cartItems && cartItems.length > 0) {
       // Extract actual product IDs from variant-based IDs (format: "productId_Size:S|Color:Black")
       const productIds = cartItems.map((item: any) => {
         const productId = item.productId || item.id;

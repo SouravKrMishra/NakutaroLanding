@@ -53,13 +53,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const token = localStorage.getItem("authToken");
         if (token) {
           // Verify token with backend
-          const response = await fetch("/api/auth/verify", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: "include",
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL || ""}/api/auth/verify`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              credentials: "include",
+            }
+          );
 
           if (response.ok) {
             const userData = await response.json();
@@ -89,21 +92,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         body.recaptchaToken = recaptchaToken;
       }
 
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/auth/signin`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
         localStorage.setItem("authToken", data.token);
-
-        
 
         // Trigger cart refresh for multi-device sync
         window.dispatchEvent(
@@ -118,6 +122,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return { success: false, error: errorData.message || "Login failed" };
       }
     } catch (error) {
+      console.error("Login error:", error);
       return { success: false, error: "Network error. Please try again." };
     }
   };
@@ -132,20 +137,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       // Call server logout endpoint to clear cookies
       const token = localStorage.getItem("authToken");
       if (token) {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        });
+        await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || ""}/api/auth/logout`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+          }
+        );
       }
     } catch (error) {
       // Continue with logout even if server call fails
       console.error("Logout server call failed:", error);
     } finally {
-      
-
       // Clear authentication token
       localStorage.removeItem("authToken");
 

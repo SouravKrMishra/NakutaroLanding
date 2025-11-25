@@ -14,9 +14,9 @@ interface RecommendationReason {
 }
 
 interface ProductRecommendation {
-  id: number;
+  id: string;
   name: string;
-  price: string;
+  price: number;
   image: string;
   rating: number;
   reviews: number;
@@ -151,16 +151,18 @@ class RecommendationService {
         for (const product of products.products) {
           if (recommendations.length >= limit) break;
           if (!purchasedProductIds.has(product.id)) {
+            const numericRating = parseFloat(product.average_rating ?? "0");
+            const numericPrice = Number(product.price) || 0;
             recommendations.push({
-              id: product.id,
+              id: String(product.id),
               name: product.name,
-              price: product.price,
+              price: numericPrice,
               image: product.images[0]?.src || "",
-              rating: product.average_rating || 0,
+              rating: Number.isNaN(numericRating) ? 0 : numericRating,
               reviews: product.rating_count || 0,
               category: category,
               reason: `Based on your ${category} purchases`,
-              inStock: product.stock_status === "instock",
+              inStock: product.stock?.status === "in_stock",
               confidence: count / purchaseHistory.length,
             });
           }
@@ -209,16 +211,18 @@ class RecommendationService {
         for (const product of seriesProducts) {
           if (recommendations.length >= limit) break;
           if (!purchasedProductIds.has(product.id)) {
+            const numericRating = parseFloat(product.average_rating ?? "0");
+            const numericPrice = Number(product.price) || 0;
             recommendations.push({
-              id: product.id,
+              id: String(product.id),
               name: product.name,
-              price: product.price,
+              price: numericPrice,
               image: product.images[0]?.src || "",
-              rating: product.average_rating || 0,
+              rating: Number.isNaN(numericRating) ? 0 : numericRating,
               reviews: product.rating_count || 0,
               category: product.categories?.[0]?.name || "Anime",
               reason: `Similar to your ${series} collection`,
-              inStock: product.stock_status === "instock",
+              inStock: product.stock?.status === "in_stock",
               confidence: count / purchaseHistory.length,
             });
           }
@@ -240,21 +244,28 @@ class RecommendationService {
 
       // Filter high-rated products
       const highRatedProducts = products.products
-        .filter((product) => (product.average_rating || 0) >= 4.0)
+        .filter((product) => {
+          const numericRating = parseFloat(product.average_rating ?? "0");
+          return (Number.isNaN(numericRating) ? 0 : numericRating) >= 4.0;
+        })
         .slice(0, limit);
 
-      return highRatedProducts.map((product) => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0]?.src || "",
-        rating: product.average_rating || 0,
-        reviews: product.rating_count || 0,
-        category: product.categories?.[0]?.name || "Anime",
-        reason: "High-rated in your category",
-        inStock: product.stock_status === "instock",
-        confidence: 0.5,
-      }));
+      return highRatedProducts.map((product) => {
+        const numericRating = parseFloat(product.average_rating ?? "0");
+        const numericPrice = Number(product.price) || 0;
+        return {
+          id: String(product.id),
+          name: product.name,
+          price: numericPrice,
+          image: product.images[0]?.src || "",
+          rating: Number.isNaN(numericRating) ? 0 : numericRating,
+          reviews: product.rating_count || 0,
+          category: product.categories?.[0]?.name || "Anime",
+          reason: "High-rated in your category",
+          inStock: product.stock?.status === "instock",
+          confidence: 0.5,
+        };
+      });
     } catch (error) {
       return [];
     }
@@ -263,7 +274,7 @@ class RecommendationService {
   private removeDuplicates(
     recommendations: ProductRecommendation[]
   ): ProductRecommendation[] {
-    const seen = new Set<number>();
+    const seen = new Set<string>();
     return recommendations.filter((rec) => {
       if (seen.has(rec.id)) {
         return false;

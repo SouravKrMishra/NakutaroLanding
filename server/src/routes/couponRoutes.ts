@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validateCoupon, applyCoupon } from "../controllers/couponController.ts";
+import { validateCoupon, applyCoupon } from "../controllers/couponController.js";
 
 const router = Router();
 

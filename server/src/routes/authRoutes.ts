@@ -5,9 +5,10 @@ import {
   verify,
   logout,
   getUserProfile,
-} from "../controllers/authController.ts";
+} from "../controllers/authController.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { body } from "express-validator";
+import { handleValidationErrors } from "../middleware/validation.js";
 
 const router = Router();
 
@@ -30,6 +31,7 @@ router.post(
     body("state").notEmpty().withMessage("State is required"),
     body("pincode").notEmpty().withMessage("Pincode is required"),
   ],
+  handleValidationErrors,
   signup
 );
 
@@ -40,6 +42,7 @@ router.post(
     body("email").isEmail().withMessage("Invalid email address"),
     body("password").notEmpty().withMessage("Password is required"),
   ],
+  handleValidationErrors,
   signin
 );
 

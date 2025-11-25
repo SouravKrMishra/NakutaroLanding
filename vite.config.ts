@@ -1,3 +1,5 @@
+// @ts-nocheck - This file uses import.meta which is not compatible with CommonJS compilation
+// It's only used by Vite (ES modules) and imported conditionally in server/vite.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -12,15 +14,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://192.168.192.138:5000",
-        // target: "http://localhost:5000",
+        target: process.env.VITE_API_URL || "http://localhost:5000",
         changeOrigin: true,
       },
     },
-    hmr: {
-      host: "192.168.192.138", // your laptop's ZeroTier IP
-      port: 5173,
-    },
+
     headers: {
       "Content-Security-Policy":
         process.env.NODE_ENV === "development"

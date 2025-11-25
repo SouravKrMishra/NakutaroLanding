@@ -1,17 +1,28 @@
 import express from "express";
 import { createServer } from "http";
-import { config } from "./src/config/index.ts";
-import { logger } from "./src/middleware/logger.ts";
-import { errorHandler } from "./src/middleware/errorHandler.ts";
-import apiRoutes from "./src/routes/index.ts";
-import { setupVite, serveStatic } from "./vite.ts";
-import connectDB from "../shared/db.ts";
+import { config } from "./src/config/index.js";
+import { logger } from "./src/middleware/logger.js";
+import { errorHandler } from "./src/middleware/errorHandler.js";
+import apiRoutes from "./src/routes/index.js";
+import { setupVite, serveStatic } from "./vite.js";
+import connectDB from "../shared/db.js";
 import cookieParser from "cookie-parser";
-import { SchedulerService } from "./src/services/schedulerService.ts";
+import cors from "cors";
+import { SchedulerService } from "./src/services/schedulerService.js";
 // Import types to ensure global declarations are loaded
-import "./src/types/index.ts";
+import "./src/types/index.js";
 
 const app = express();
+
+// CORS middleware - must be before other middleware
+app.use(
+  cors({
+    origin: config.cors.origin,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Middleware
 app.use(express.json());
@@ -21,6 +32,16 @@ app.use(cookieParser());
 
 // Routes
 app.use("/api", apiRoutes);
+
+// 404 handler for API routes
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: {
+      message: `API route not found: ${req.method} ${req.originalUrl}`,
+    },
+  });
+});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

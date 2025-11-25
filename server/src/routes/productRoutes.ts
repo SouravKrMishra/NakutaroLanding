@@ -5,7 +5,7 @@ import {
   getCategories,
   getProductById,
   getStockData,
-} from "../controllers/productController.ts";
+} from "../controllers/productController.js";
 
 const router = Router();
 

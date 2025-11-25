@@ -1,6 +1,7 @@
 // API configuration utility
-// Prefer explicit env variable if provided (works in both dev and prod)
-export const API_BASE_URL = import.meta.env.DEV ? "" : "";
+// In production, if frontend and backend are on same domain, use relative URLs
+// If on different domains, set VITE_API_BASE_URL environment variable
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 // Helper function to build API URLs
 export const buildApiUrl = (endpoint: string): string => {

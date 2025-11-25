@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { User } from "../../../shared/models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { config } from "../config/index.ts";
+import { config } from "../config/index.js";
 import { validationResult } from "express-validator";
 import { verifyRecaptcha } from "../services/recaptchaService.js";
 
@@ -81,7 +81,7 @@ export const signup = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email, name: user.name },
       config.jwt.secret as string,
-      { expiresIn: "7d" }
+      { expiresIn: (config.jwt.expiresIn || "7d") as any }
     );
 
     // Set httpOnly cookie (optional, for extra security)
@@ -158,7 +158,7 @@ export const signin = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email, name: user.name },
       config.jwt.secret as string,
-      { expiresIn: "7d" }
+      { expiresIn: (config.jwt.expiresIn || "7d") as any }
     );
     // Set httpOnly cookie (optional)
     res.cookie("token", token, {

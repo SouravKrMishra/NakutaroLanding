@@ -102,8 +102,20 @@ const ProductDetailPage = () => {
     setError(null);
     try {
       const response = await axios.get(
-        buildApiUrl(`/api/products/${productId}`)
+        buildApiUrl(`/api/products/${productId}`),
+        {
+          validateStatus: (status) => status >= 200 && status < 300,
+        }
       );
+      
+      // Validate that response is JSON (not HTML error page)
+      const contentType = response.headers["content-type"] || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          `Expected JSON response but received ${contentType}. The backend API may not be available.`
+        );
+      }
+      
       const data = response.data;
 
       // Transform MongoDB product to match frontend expectations
@@ -132,10 +144,22 @@ const ProductDetailPage = () => {
 
       setProduct(transformedProduct);
     } catch (err: any) {
-      if (err.response?.status === 404) {
-        setError("This product is no longer available.");
+      console.error("Failed to fetch product:", err);
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+        if (err.response.status === 404) {
+          setError("This product is no longer available.");
+        } else {
+          setError(`Failed to fetch product details. Server error: ${err.response.status}`);
+        }
+      } else if (err.request) {
+        console.error("No response received from server. Is the backend running?");
+        console.error("Request URL:", err.config?.url);
+        setError("Failed to fetch product details. Backend server is not responding.");
       } else {
-        setError("Failed to fetch product details.");
+        console.error("Error setting up request:", err.message);
+        setError("Failed to fetch product details. Please check your connection.");
       }
     } finally {
       setLoading(false);
@@ -145,10 +169,30 @@ const ProductDetailPage = () => {
   const fetchStockData = async () => {
     setStockLoading(true);
     try {
-      const response = await axios.get(buildApiUrl("/api/stock-data"));
+      const response = await axios.get(buildApiUrl("/api/stock-data"), {
+        validateStatus: (status) => status >= 200 && status < 300,
+      });
+      
+      // Validate that response is JSON (not HTML error page)
+      const contentType = response.headers["content-type"] || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          `Expected JSON response but received ${contentType}. The backend API may not be available.`
+        );
+      }
+      
       setStockData(response.data.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch stock data:", err);
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+      } else if (err.request) {
+        console.error("No response received from server for stock data");
+        console.error("Request URL:", err.config?.url);
+      } else {
+        console.error("Error fetching stock data:", err.message);
+      }
     } finally {
       setStockLoading(false);
     }

@@ -1,15 +1,20 @@
 import { Router } from "express";
-import productRoutes from "./productRoutes.ts";
-import newsletterRoutes from "./newsletterRoutes.ts";
-import authRoutes from "./authRoutes.ts";
-import wishlistRoutes from "./wishlistRoutes.ts";
-import recommendationRoutes from "./recommendationRoutes.ts";
-import orderRoutes from "./orderRoutes.ts";
-import cartRoutes from "./cartRoutes.ts";
-import paymentRoutes from "./paymentRoutes.ts";
-import couponRoutes from "./couponRoutes.ts";
+import productRoutes from "./productRoutes.js";
+import newsletterRoutes from "./newsletterRoutes.js";
+import authRoutes from "./authRoutes.js";
+import wishlistRoutes from "./wishlistRoutes.js";
+import recommendationRoutes from "./recommendationRoutes.js";
+import orderRoutes from "./orderRoutes.js";
+import cartRoutes from "./cartRoutes.js";
+import paymentRoutes from "./paymentRoutes.js";
+import couponRoutes from "./couponRoutes.js";
 
 const router = Router();
+
+// Health check endpoint
+router.get("/health", (req, res) => {
+  res.json({ status: "ok", message: "API is running" });
+});
 
 // Mount route modules
 // Mount specific routes first to avoid conflicts

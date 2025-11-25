@@ -3,8 +3,8 @@ import {
   ProductFilters,
   ProductResponse,
   CategoryFilters,
-} from "../types/index.ts";
-import { Product as ProductModel } from "../../../shared/models/Product.ts";
+} from "../types/index.js";
+import { Product as ProductModel } from "../../../shared/models/Product.js";
 
 class ProductService {
   async getProducts(filters: ProductFilters): Promise<ProductResponse> {
