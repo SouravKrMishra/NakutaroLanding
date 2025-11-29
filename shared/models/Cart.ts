@@ -32,6 +32,11 @@ const cartItemSchema = new mongoose.Schema({
     required: true,
     default: true,
   },
+  variants: {
+    type: Map,
+    of: String,
+    default: {},
+  },
 });
 
 const cartSchema = new mongoose.Schema({

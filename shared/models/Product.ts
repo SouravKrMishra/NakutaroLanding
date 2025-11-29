@@ -17,10 +17,6 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    shortDescription: {
-      type: String,
-      default: "",
-    },
     price: {
       type: Number,
       required: true,
@@ -105,6 +101,12 @@ const productSchema = new mongoose.Schema(
       of: String,
       default: {},
     },
+    keyHighlights: [
+      {
+        title: String,
+        value: String,
+      },
+    ],
     dimensions: {
       length: Number,
       width: Number,
@@ -178,59 +180,5 @@ const productSchema = new mongoose.Schema(
 // Index for search
 productSchema.index({ name: "text", description: "text", tags: "text" });
 productSchema.index({ category: 1, status: 1 });
-productSchema.index({ featured: 1, status: 1 });
-productSchema.index({ createdAt: -1 });
 
-// Generate slug from name if not provided
-productSchema.pre("save", async function (next) {
-  // Generate slug if not provided
-  if (!this.slug && this.name) {
-    let baseSlug = this.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-    let slug = baseSlug;
-    let counter = 1;
-
-    // Ensure slug is unique
-    while (true) {
-      const existingProduct = await mongoose.model("Product").findOne({ slug });
-      if (!existingProduct || existingProduct._id.equals(this._id)) {
-        break;
-      }
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    this.slug = slug;
-  }
-
-  // Set inventory type based on category
-  if (!this.inventoryType) {
-    this.inventoryType = ["T-Shirts", "Hoodies"].includes(this.category)
-      ? "shared_stock"
-      : "individual_stock";
-  }
-
-  // Update stock status based on inventory type and quantity
-  if (this.inventoryType === "individual_stock" && this.stock) {
-    if (this.stock.quantity === 0) {
-      this.stock.status = "out_of_stock";
-    } else if (this.stock.quantity <= this.stock.lowStockThreshold) {
-      this.stock.status = "low_stock";
-    } else {
-      this.stock.status = "in_stock";
-    }
-  } else if (this.inventoryType === "shared_stock") {
-    // Shared stock items don't use individual stock field
-    // Remove stock field if it exists for shared stock items
-    this.stock = undefined;
-  }
-
-  next();
-});
-
-// Notifications removed
-
-export const Product = mongoose.model("Product", productSchema);
+export default mongoose.model("Product", productSchema);

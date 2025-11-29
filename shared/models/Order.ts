@@ -38,6 +38,14 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      size: {
+        type: String,
+        default: null,
+      },
+      color: {
+        type: String,
+        default: null,
+      },
     },
   ],
   shippingInfo: {
@@ -153,6 +161,10 @@ const orderSchema = new mongoose.Schema({
     default: null,
   },
   testMode: {
+    type: Boolean,
+    default: false,
+  },
+  stockAdjusted: {
     type: Boolean,
     default: false,
   },

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card.tsx";
 import {
   CheckCircle,
+  Check,
   Package,
   Truck,
   Mail,
@@ -38,6 +39,8 @@ interface OrderData {
     quantity: number;
     image: string;
     category: string;
+    size?: string;
+    color?: string;
   }>;
   shippingInfo: {
     firstName: string;
@@ -229,10 +232,13 @@ const OrderSuccessPage = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#181818] to-[#1a1a1a] text-white pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Validating Your Order</h2>
+      <div className="min-h-screen bg-[#121212] text-white pt-28 flex items-center justify-center relative overflow-hidden">
+        <div className="bg-grid-pattern absolute inset-0 opacity-20 pointer-events-none"></div>
+        <div className="text-center relative z-10">
+          <Loader2 className="w-12 h-12 animate-spin text-accent mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2 text-white">
+            Validating Your Order
+          </h2>
           <p className="text-gray-400">
             Please wait while we verify your payment...
           </p>
@@ -244,10 +250,13 @@ const OrderSuccessPage = () => {
   // Error state - show loading while redirecting
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#181818] to-[#1a1a1a] text-white pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Redirecting...</h2>
+      <div className="min-h-screen bg-[#121212] text-white pt-28 flex items-center justify-center relative overflow-hidden">
+        <div className="bg-grid-pattern absolute inset-0 opacity-20 pointer-events-none"></div>
+        <div className="text-center relative z-10">
+          <Loader2 className="w-12 h-12 animate-spin text-accent mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2 text-white">
+            Redirecting...
+          </h2>
           <p className="text-gray-400">Taking you to the right place...</p>
         </div>
       </div>
@@ -257,10 +266,13 @@ const OrderSuccessPage = () => {
   // No order data state - show loading while redirecting
   if (!orderData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#181818] to-[#1a1a1a] text-white pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Redirecting...</h2>
+      <div className="min-h-screen bg-[#121212] text-white pt-28 flex items-center justify-center relative overflow-hidden">
+        <div className="bg-grid-pattern absolute inset-0 opacity-20 pointer-events-none"></div>
+        <div className="text-center relative z-10">
+          <Loader2 className="w-12 h-12 animate-spin text-accent mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2 text-white">
+            Redirecting...
+          </h2>
           <p className="text-gray-400">Taking you to your dashboard...</p>
         </div>
       </div>
@@ -268,14 +280,17 @@ const OrderSuccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#181818] to-[#1a1a1a] text-white pt-28">
+    <div className="min-h-screen bg-[#121212] text-white pt-28 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="bg-grid-pattern absolute inset-0 opacity-10 pointer-events-none z-0"></div>
+
       {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-500/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent opacity-10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent opacity-10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="container mx-auto px-4 py-16 relative">
+      <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Success Header */}
           <div
@@ -286,28 +301,30 @@ const OrderSuccessPage = () => {
             }`}
           >
             {/* Animated Success Icon */}
-            <div className="relative mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-green-500/25 animate-bounce">
-                <CheckCircle className="w-16 h-16 text-white" />
+            <div className="relative mb-8 flex justify-center">
+              <div className="absolute w-40 h-40 bg-accent/25 blur-3xl rounded-full animate-pulse"></div>
+              <div className="relative w-28 h-28 bg-gradient-to-br from-[#ff5858] via-[#d72323] to-[#8b0e0e] rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(255,88,88,0.45)] ring-4 ring-[#ff5858]/20">
+                <Check className="w-14 h-14 text-white" strokeWidth={3.5} />
+                <div className="absolute inset-0 rounded-full border border-white/10"></div>
               </div>
               {/* Floating sparkles */}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-ping"></div>
-              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-400 rounded-full animate-ping delay-300"></div>
-              <div className="absolute top-1/2 -left-4 w-3 h-3 bg-pink-400 rounded-full animate-ping delay-700"></div>
+              <div className="absolute -top-2 -right-10 w-6 h-6 bg-white/30 rounded-full animate-ping"></div>
+              <div className="absolute top-1/2 -left-8 w-3 h-3 bg-accent rounded-full animate-ping delay-500"></div>
             </div>
 
             {/* Success Message */}
-            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent drop-shadow-lg tracking-tight">
               Payment Successful! 🎉
             </h1>
-            <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto leading-relaxed">
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-accent to-transparent mx-auto mb-6"></div>
+            <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-2xl mx-auto leading-relaxed font-light">
               Thank you for your purchase! Your order has been confirmed and is
               being processed.
             </p>
-            <div className="flex items-center justify-center gap-2 text-green-400">
+            <div className="flex items-center justify-center gap-2 text-accent">
               <Sparkles className="w-5 h-5" />
-              <span className="text-sm font-medium">
-                Order #{orderData.orderNumber}
+              <span className="text-sm font-medium tracking-wider">
+                ORDER #{orderData.orderNumber}
               </span>
               <Sparkles className="w-5 h-5" />
             </div>
@@ -322,73 +339,87 @@ const OrderSuccessPage = () => {
             }`}
           >
             {/* Order Summary Card */}
-            <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] border-[#333] hover:border-green-500/30 transition-all duration-300">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-green-400 flex items-center gap-2">
+            <Card className="bg-[#181818] border-[#333] hover:border-accent transition-all duration-300 shadow-lg hover:shadow-accent/10">
+              <CardHeader className="pb-4 border-b border-[#2a2a2a]">
+                <CardTitle className="text-accent flex items-center gap-2">
                   <Package className="w-5 h-5" />
                   Order Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Order Number</span>
-                  <span className="text-white font-mono text-sm bg-[#333] px-2 py-1 rounded">
+              <CardContent className="space-y-4 pt-4">
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">Order Number</span>
+                  <span className="text-white font-mono text-sm bg-[#121212] px-2 py-1 rounded border border-[#333]">
                     #{orderData.orderNumber}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Payment Method</span>
-                  <span className="text-green-400 flex items-center gap-1">
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">Payment Method</span>
+                  <span className="text-accent flex items-center gap-1 text-sm font-medium">
                     <CheckCircle className="w-4 h-4" />
                     {orderData.paymentMethod}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Status</span>
-                  <span className="text-green-400 font-medium">
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">Status</span>
+                  <span className="text-green-400 font-medium text-sm bg-green-400/10 px-2 py-1 rounded">
                     {orderData.status === "PAID" ||
                     orderData.status === "CONFIRMED"
                       ? "Confirmed"
                       : orderData.status}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Total Amount</span>
-                  <span className="text-white font-semibold">
-                    ₹{orderData.total.toFixed(2)}
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">Total Amount</span>
+                  <span className="text-white font-bold">
+                    ₹{orderData.total.toLocaleString("en-IN")}
                   </span>
                 </div>
               </CardContent>
             </Card>
 
             {/* Delivery Information Card */}
-            <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] border-[#333] hover:border-blue-500/30 transition-all duration-300">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-blue-400 flex items-center gap-2">
-                  <Truck className="w-5 h-5" />
+            <Card className="bg-[#181818] border-[#333] hover:border-white/30 transition-all duration-300 shadow-lg">
+              <CardHeader className="pb-4 border-b border-[#2a2a2a]">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-accent" />
                   Delivery Info
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Estimated Delivery</span>
-                  <span className="text-white font-medium">
+              <CardContent className="space-y-4 pt-4">
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">
+                    Estimated Delivery
+                  </span>
+                  <span className="text-white font-medium text-sm">
                     {new Date(orderData.estimatedDelivery).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Delivery Address</span>
-                  <span className="text-blue-400 text-sm text-right max-w-[200px]">
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">
+                    Delivery Address
+                  </span>
+                  <span
+                    className="text-gray-200 text-sm text-right max-w-[200px] line-clamp-2"
+                    title={`${orderData.shippingInfo.address}, ${orderData.shippingInfo.city}`}
+                  >
                     {orderData.shippingInfo.address},{" "}
                     {orderData.shippingInfo.city}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#444]">
-                  <span className="text-gray-300">Confirmation Email</span>
-                  <span className="text-green-400 flex items-center gap-1">
-                    <Mail className="w-4 h-4" />
-                    Sent to {orderData.shippingInfo.email}
+                <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
+                  <span className="text-gray-400 text-sm">
+                    Confirmation Email
                   </span>
+                  <div className="text-right">
+                    <div className="text-accent flex items-center justify-end gap-1 text-sm">
+                      <Mail className="w-3 h-3" />
+                      Sent
+                    </div>
+                    <span className="text-xs text-gray-500 truncate max-w-[150px] block">
+                      {orderData.shippingInfo.email}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -396,67 +427,98 @@ const OrderSuccessPage = () => {
 
           {/* Ordered Items */}
           <Card
-            className={`bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] border-[#333] mb-8 transition-all duration-1000 delay-400 ${
+            className={`bg-[#181818] border-[#333] mb-8 transition-all duration-1000 delay-400 ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <CardHeader>
-              <CardTitle className="text-orange-400 flex items-center gap-2">
-                <Package className="w-5 h-5" />
+            <CardHeader className="border-b border-[#2a2a2a]">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Package className="w-5 h-5 text-accent" />
                 Ordered Items ({orderData.items.length})
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="space-y-4">
                 {orderData.items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center space-x-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#444]"
+                    className="flex items-center space-x-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#333] hover:border-accent/30 transition-colors"
                   >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold">{item.name}</h3>
-                      <p className="text-gray-400 text-sm">{item.category}</p>
-                      <p className="text-gray-300 text-sm">
-                        Quantity: {item.quantity} × ₹{item.price}
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#121212] border border-[#333] flex-shrink-0">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold truncate mb-1">
+                        {item.name}
+                      </h3>
+                      <p className="text-accent text-xs font-medium mb-2">
+                        {item.category}
+                      </p>
+
+                      {/* Size and Color Details */}
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {item.size && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#121212] border border-[#333] text-gray-300">
+                            Size:
+                            <span className="ml-1 text-white font-semibold">
+                              {item.size}
+                            </span>
+                          </span>
+                        )}
+                        {item.color && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#121212] border border-[#333] text-gray-300">
+                            Color:
+                            <span className="ml-1 text-white font-semibold capitalize">
+                              {item.color}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-gray-400 text-xs">
+                        Qty: {item.quantity} × ₹
+                        {parseFloat(
+                          item.price.replace(/[^\d.]/g, "")
+                        ).toLocaleString("en-IN")}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-white font-semibold">
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-white font-bold">
                         ₹
                         {(
                           parseFloat(item.price.replace(/[^\d.]/g, "")) *
                           item.quantity
-                        ).toFixed(2)}
+                        ).toLocaleString("en-IN")}
                       </p>
                     </div>
                   </div>
                 ))}
-                <div className="border-t border-[#444] pt-4">
-                  <div className="flex justify-between items-center text-lg">
-                    <span className="text-gray-300">Subtotal:</span>
-                    <span className="text-white font-semibold">
-                      ₹{orderData.subtotal.toFixed(2)}
+
+                <div className="border-t border-[#2a2a2a] pt-4 mt-4 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-400">Subtotal:</span>
+                    <span className="text-gray-200 font-medium">
+                      ₹{orderData.subtotal.toLocaleString("en-IN")}
                     </span>
                   </div>
                   {orderData.shippingCost > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Shipping:</span>
-                      <span className="text-white">
-                        ₹{orderData.shippingCost.toFixed(2)}
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Shipping:</span>
+                      <span className="text-gray-200 font-medium">
+                        ₹{orderData.shippingCost.toLocaleString("en-IN")}
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center text-xl font-bold border-t border-[#444] pt-2 mt-2">
+                  <div className="flex justify-between items-center text-lg font-bold border-t border-[#2a2a2a] pt-3 mt-2">
                     <span className="text-white">Total:</span>
-                    <span className="text-green-400">
-                      ₹{orderData.total.toFixed(2)}
+                    <span className="text-accent">
+                      ₹{orderData.total.toLocaleString("en-IN")}
                     </span>
                   </div>
                 </div>
@@ -466,31 +528,34 @@ const OrderSuccessPage = () => {
 
           {/* Order Timeline */}
           <Card
-            className={`bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] border-[#333] mb-8 transition-all duration-1000 delay-500 ${
+            className={`bg-[#181818] border-[#333] mb-8 transition-all duration-1000 delay-500 ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <CardHeader>
-              <CardTitle className="text-purple-400 flex items-center gap-2">
-                <Clock className="w-5 h-5" />
+            <CardHeader className="border-b border-[#2a2a2a]">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-accent" />
                 Order Timeline
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
+            <CardContent className="pt-6">
+              <div className="space-y-0 relative">
+                {/* Vertical Line */}
+                <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-[#333] z-0"></div>
+
                 {/* Step 1 - Completed */}
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="flex items-start space-x-4 relative z-10 pb-8">
+                  <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent/20 border-4 border-[#181818]">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-semibold">
+                  <div className="flex-1 pt-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-white font-bold text-lg">
                         Order Confirmed
                       </h3>
-                      <span className="text-green-400 text-xs bg-green-500/20 px-2 py-1 rounded-full">
+                      <span className="text-white text-[10px] font-bold bg-accent px-2 py-0.5 rounded uppercase tracking-wider">
                         Completed
                       </span>
                     </div>
@@ -498,84 +563,72 @@ const OrderSuccessPage = () => {
                       Your payment has been processed and your order is
                       confirmed.
                     </p>
-                    <div className="text-xs text-gray-500 mt-1">Just now</div>
+                    <div className="text-xs text-gray-500 mt-1 font-mono">
+                      Just now
+                    </div>
                   </div>
                 </div>
 
-                {/* Connecting Line */}
-                <div className="ml-4 w-0.5 h-6 bg-gradient-to-b from-green-500 to-blue-500"></div>
-
                 {/* Step 2 - In Progress */}
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1 animate-pulse">
-                    <Package className="w-5 h-5 text-white" />
+                <div className="flex items-start space-x-4 relative z-10 pb-8">
+                  <div className="w-10 h-10 bg-[#2a2a2a] rounded-full flex items-center justify-center flex-shrink-0 border-4 border-[#181818]">
+                    <Package className="w-5 h-5 text-accent" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-semibold">
+                  <div className="flex-1 pt-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-gray-200 font-semibold text-lg">
                         Order Processing
                       </h3>
-                      <span className="text-blue-400 text-xs bg-blue-500/20 px-2 py-1 rounded-full">
+                      <span className="text-accent text-[10px] font-bold bg-accent/10 border border-accent/20 px-2 py-0.5 rounded uppercase tracking-wider">
                         In Progress
                       </span>
                     </div>
-                    <p className="text-gray-400 text-sm">
-                      We're preparing your items for shipment. This usually
-                      takes 1-2 business days.
+                    <p className="text-gray-500 text-sm">
+                      We're preparing your items for shipment.
                     </p>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-gray-500 mt-1 font-mono">
                       Expected: Today
                     </div>
                   </div>
                 </div>
 
-                {/* Connecting Line */}
-                <div className="ml-4 w-0.5 h-6 bg-gradient-to-b from-blue-500 to-purple-500"></div>
-
                 {/* Step 3 - Pending */}
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <Truck className="w-5 h-5 text-gray-300" />
+                <div className="flex items-start space-x-4 relative z-10 pb-8">
+                  <div className="w-10 h-10 bg-[#121212] rounded-full flex items-center justify-center flex-shrink-0 border border-[#333]">
+                    <Truck className="w-5 h-5 text-gray-600" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 pt-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-semibold">Shipped</h3>
-                      <span className="text-gray-400 text-xs bg-gray-500/20 px-2 py-1 rounded-full">
+                      <h3 className="text-gray-500 font-medium text-lg">
+                        Shipped
+                      </h3>
+                      <span className="text-gray-600 text-[10px] font-bold bg-[#2a2a2a] px-2 py-0.5 rounded uppercase tracking-wider">
                         Pending
                       </span>
                     </div>
-                    <p className="text-gray-400 text-sm">
-                      Your order will be shipped and you'll receive tracking
-                      information via email.
+                    <p className="text-gray-600 text-sm">
+                      Your order will be shipped shortly.
                     </p>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Expected: 1-2 days
-                    </div>
                   </div>
                 </div>
 
-                {/* Connecting Line */}
-                <div className="ml-4 w-0.5 h-6 bg-gradient-to-b from-purple-500 to-pink-500"></div>
-
                 {/* Step 4 - Pending */}
-                <div className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <MapPin className="w-5 h-5 text-gray-300" />
+                <div className="flex items-start space-x-4 relative z-10">
+                  <div className="w-10 h-10 bg-[#121212] rounded-full flex items-center justify-center flex-shrink-0 border border-[#333]">
+                    <MapPin className="w-5 h-5 text-gray-600" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 pt-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-semibold">Delivered</h3>
-                      <span className="text-gray-400 text-xs bg-gray-500/20 px-2 py-1 rounded-full">
+                      <h3 className="text-gray-500 font-medium text-lg">
+                        Delivered
+                      </h3>
+                      <span className="text-gray-600 text-[10px] font-bold bg-[#2a2a2a] px-2 py-0.5 rounded uppercase tracking-wider">
                         Pending
                       </span>
                     </div>
-                    <p className="text-gray-400 text-sm">
-                      Your package will be delivered to your doorstep within 3-5
-                      business days.
+                    <p className="text-gray-600 text-sm">
+                      Estimated arrival in 3-5 business days.
                     </p>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Expected: 3-5 days
-                    </div>
                   </div>
                 </div>
               </div>
@@ -592,67 +645,45 @@ const OrderSuccessPage = () => {
           >
             <Button
               onClick={() => setLocation("/")}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-green-500/25 transition-all duration-300"
+              className="bg-accent hover:bg-accent-dark text-white px-8 py-6 text-lg font-bold shadow-lg shadow-accent/20 transition-all duration-300 rounded-lg flex items-center justify-center gap-2"
             >
-              <Home className="w-5 h-5 mr-2" />
+              <Home className="w-5 h-5" />
               Back to Home
             </Button>
             <Button
               onClick={() => setLocation("/products")}
               variant="outline"
-              className="border-2 border-purple-500 text-purple-400 hover:bg-purple-500/20 px-8 py-3 text-lg font-semibold transition-all duration-300"
+              className="bg-transparent border-2 border-[#333] text-white hover:bg-[#222] hover:border-gray-500 px-8 py-6 text-lg font-bold transition-all duration-300 rounded-lg flex items-center justify-center gap-2"
             >
-              <ShoppingBag className="w-5 h-5 mr-2" />
+              <ShoppingBag className="w-5 h-5" />
               Continue Shopping
             </Button>
           </div>
 
-          {/* Special Offers & Support */}
+          {/* Support Card */}
           <div
-            className={`grid md:grid-cols-2 gap-6 mb-8 transition-all duration-1000 delay-900 ${
+            className={`grid md:grid-cols-1 gap-6 mb-8 transition-all duration-1000 delay-900 ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-8"
             }`}
           >
-            {/* Special Offer Card */}
-            <Card className="bg-gradient-to-br from-yellow-900/20 to-orange-900/20 border-yellow-500/30 hover:border-yellow-500/50 transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Gift className="w-8 h-8 text-white" />
+            <Card className="bg-gradient-to-r from-[#1a1a1a] to-[#121212] border-[#333] hover:border-[#444] transition-all duration-300">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-[#2a2a2a] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#333]">
+                  <Phone className="w-8 h-8 text-gray-300" />
                 </div>
-                <h3 className="text-yellow-400 font-semibold mb-2">
-                  Special Offer!
+                <h3 className="text-white font-bold text-xl mb-2">
+                  Need Help with your Order?
                 </h3>
-                <p className="text-gray-300 text-sm mb-4">
-                  Get 15% off your next order with code{" "}
-                  <span className="bg-yellow-500/20 px-2 py-1 rounded text-yellow-300 font-mono">
-                    WELCOME15
-                  </span>
-                </p>
-                <Button
-                  onClick={() => setLocation("/products")}
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white text-sm"
-                >
-                  Shop Now
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Support Card */}
-            <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/30 hover:border-blue-500/50 transition-all duration-300">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Phone className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-blue-400 font-semibold mb-2">Need Help?</h3>
-                <p className="text-gray-300 text-sm mb-4">
-                  Our support team is here to help with any questions about your
-                  order.
+                <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+                  Our support team is here to help. Reference your Order #
+                  {orderData.orderNumber} when contacting us.
                 </p>
                 <Button
                   variant="outline"
-                  className="border-blue-500 text-blue-400 hover:bg-blue-500/20 text-sm"
+                  className="bg-transparent border-gray-600 text-white hover:bg-gray-800 hover:text-white"
+                  onClick={() => setLocation("/contact")}
                 >
                   Contact Support
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -669,20 +700,16 @@ const OrderSuccessPage = () => {
                 : "opacity-0 translate-y-8"
             }`}
           >
-            <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-8">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
+            <div className="inline-flex flex-col items-center">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
               </div>
-              <h3 className="text-green-400 font-semibold text-lg mb-2">
-                Thank You for Choosing Us!
-              </h3>
-              <p className="text-gray-300 text-sm max-w-md mx-auto">
-                We're committed to providing you with the best shopping
-                experience. Your satisfaction is our priority!
+              <p className="text-gray-500 text-xs uppercase tracking-widest font-bold">
+                Thank you for shopping with Anime India
               </p>
             </div>
           </div>

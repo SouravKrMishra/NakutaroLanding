@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useCart } from "@/lib/CartContext.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useToast } from "@/hooks/use-toast.ts";
-import { Ticket } from "lucide-react";
+import { Ticket, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import {
   Card,
@@ -25,6 +25,8 @@ import {
   ShoppingCart,
   Smartphone,
 } from "lucide-react";
+import axios from "axios";
+import { buildApiUrl } from "@/lib/api.ts";
 
 interface ShippingInfo {
   firstName: string;
@@ -52,6 +54,19 @@ const CheckoutPage = () => {
   // Coupon state - retrieve from localStorage (set by CartPage)
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
+
+  // Stock data state
+  const [stockData, setStockData] = useState<any>(null);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockErrors, setStockErrors] = useState<
+    Array<{
+      itemName: string;
+      size: string;
+      color: string;
+      requested: number;
+      available: number;
+    }>
+  >([]);
 
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: "",
@@ -142,6 +157,129 @@ const CheckoutPage = () => {
     }
   }, []);
 
+  // Fetch stock data for verification
+  useEffect(() => {
+    const fetchStockData = async () => {
+      setStockLoading(true);
+      try {
+        const response = await axios.get(buildApiUrl("/api/stock-data"), {
+          validateStatus: (status) => status >= 200 && status < 300,
+        });
+
+        const contentType = response.headers["content-type"] || "";
+        if (contentType.includes("application/json")) {
+          setStockData(response.data.data);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch stock data:", err);
+      } finally {
+        setStockLoading(false);
+      }
+    };
+
+    fetchStockData();
+  }, []);
+
+  // Helper function to resolve product type from category
+  const resolveStockProductType = (category: string): "tshirt" | "hoodie" => {
+    const categoryLower = category?.toLowerCase() || "";
+    return categoryLower.includes("hoodie") ? "hoodie" : "tshirt";
+  };
+
+  // Helper function to get available stock for a size-color combination
+  const getAvailableStock = (item: any): number => {
+    if (!stockData || !item.variants) return 0;
+
+    const sizeKey = Object.keys(item.variants).find((key) =>
+      key.toLowerCase().includes("size")
+    );
+    const colorKey = Object.keys(item.variants).find((key) =>
+      key.toLowerCase().includes("color")
+    );
+
+    if (!sizeKey || !colorKey) return 0;
+
+    const size = item.variants[sizeKey];
+    const color = item.variants[colorKey];
+    const key = `${size}-${color}`;
+    const productType = resolveStockProductType(item.category);
+
+    const typeStock = stockData.types?.[productType]?.stock;
+    if (typeStock && key in typeStock) {
+      return typeStock[key]?.quantity || 0;
+    }
+
+    // Fallback to legacy stock map if types were not provided
+    if (stockData.stock && key in stockData.stock) {
+      return stockData.stock[key]?.quantity || 0;
+    }
+
+    return 0;
+  };
+
+  // Verify stock before proceeding to payment
+  const verifyStock = (): boolean => {
+    if (!stockData) {
+      // If stock data is not loaded, allow proceeding (backend will verify)
+      return true;
+    }
+
+    const errors: Array<{
+      itemName: string;
+      size: string;
+      color: string;
+      requested: number;
+      available: number;
+    }> = [];
+
+    items.forEach((item) => {
+      // Only check stock for clothing items with variants
+      if (item.variants && Object.keys(item.variants).length > 0) {
+        const availableStock = getAvailableStock(item);
+
+        if (availableStock === 0) {
+          const sizeKey = Object.keys(item.variants).find((key) =>
+            key.toLowerCase().includes("size")
+          );
+          const colorKey = Object.keys(item.variants).find((key) =>
+            key.toLowerCase().includes("color")
+          );
+
+          errors.push({
+            itemName: item.name,
+            size: sizeKey ? item.variants[sizeKey] : "N/A",
+            color: colorKey ? item.variants[colorKey] : "N/A",
+            requested: item.quantity,
+            available: 0,
+          });
+        } else if (item.quantity > availableStock) {
+          const sizeKey = Object.keys(item.variants).find((key) =>
+            key.toLowerCase().includes("size")
+          );
+          const colorKey = Object.keys(item.variants).find((key) =>
+            key.toLowerCase().includes("color")
+          );
+
+          errors.push({
+            itemName: item.name,
+            size: sizeKey ? item.variants[sizeKey] : "N/A",
+            color: colorKey ? item.variants[colorKey] : "N/A",
+            requested: item.quantity,
+            available: availableStock,
+          });
+        }
+      }
+    });
+
+    if (errors.length > 0) {
+      setStockErrors(errors);
+      return false;
+    }
+
+    setStockErrors([]);
+    return true;
+  };
+
   const shippingCost = total > 1000 ? 0 : 100;
   const subtotalAfterDiscount = total - couponDiscount;
   const finalTotal = subtotalAfterDiscount + shippingCost; // Removed processing fee
@@ -172,6 +310,17 @@ const CheckoutPage = () => {
       toast({
         title: "Missing Information",
         description: "Please fill in all required shipping fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify stock before proceeding
+    if (!verifyStock()) {
+      toast({
+        title: "Stock Verification Failed",
+        description:
+          "Some items in your cart are out of stock or have insufficient quantity. Please review and update your cart.",
         variant: "destructive",
       });
       return;
@@ -208,19 +357,58 @@ const CheckoutPage = () => {
         .substr(2, 9)}`;
 
       // Map cart items to order items format
-      const orderItems = items.map((item) => ({
-        productId:
-          typeof item.id === "string" && item.id.includes("_")
-            ? parseInt(item.id.split("_")[0]) // Extract numeric product ID from variant-based ID
-            : typeof item.id === "number"
-            ? item.id
-            : parseInt(item.id.toString()), // Fallback for other string formats
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image,
-        category: item.category,
-      }));
+      const orderItems = items.map((item) => {
+        // Extract product ID (handle variant-based IDs)
+        let productId = item.id;
+        if (typeof item.id === "string" && item.id.includes("_")) {
+          // Extract product ID from variant ID (format: id_key:value|key:value)
+          const parts = item.id.split("_");
+          productId = parts[0];
+        }
+        // No parseInt needed as IDs can be strings (ObjectIds) or numbers
+
+        // Extract size and color from variants object
+        let size: string | null = null;
+        let color: string | null = null;
+
+        if (item.variants) {
+          const entries = Object.entries(item.variants);
+          // Check for size in variants (case-insensitive)
+          const sizeEntry = entries.find(
+            ([key]) => key.toLowerCase() === "size"
+          );
+          if (sizeEntry) {
+            size = sizeEntry[1]?.toString().toUpperCase() || null;
+          }
+
+          // Check for color in variants (case-insensitive)
+          const colorEntry = entries.find(
+            ([key]) => key.toLowerCase() === "color"
+          );
+          if (colorEntry) {
+            color =
+              colorEntry[1]
+                ?.toString()
+                .split(" ")
+                .map(
+                  (part) =>
+                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                )
+                .join(" ") || null;
+          }
+        }
+
+        return {
+          productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          category: item.category,
+          size,
+          color,
+        };
+      });
 
       // First, create the order
       const orderData = {
@@ -510,25 +698,83 @@ const CheckoutPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* Stock Errors */}
+                  {stockErrors.length > 0 && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center text-red-400 font-medium">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        Stock Issues Detected
+                      </div>
+                      {stockErrors.map((error, idx) => (
+                        <div key={idx} className="text-xs text-red-300">
+                          <strong>{error.itemName}</strong> ({error.size}{" "}
+                          {error.color}): Requested {error.requested}, Available{" "}
+                          {error.available}
+                        </div>
+                      ))}
+                      <div className="text-xs text-red-300 mt-2">
+                        Please return to cart and update quantities.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Items */}
                   <div className="space-y-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between text-sm"
-                      >
-                        <span className="text-gray-400">
-                          {item.name} (x{item.quantity})
-                        </span>
-                        <span className="text-white">
-                          ₹
-                          {(
-                            parseFloat(item.price.replace(/[^\d.]/g, "")) *
-                            item.quantity
-                          ).toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
+                    {items.map((item) => {
+                      const availableStock = item.variants
+                        ? getAvailableStock(item)
+                        : null;
+                      const hasStockIssue =
+                        availableStock !== null &&
+                        (availableStock === 0 ||
+                          item.quantity > availableStock);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex justify-between text-sm ${
+                            hasStockIssue ? "text-red-400" : ""
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <span
+                              className={
+                                hasStockIssue ? "text-red-400" : "text-gray-400"
+                              }
+                            >
+                              {item.name} (x{item.quantity})
+                            </span>
+                            {item.variants &&
+                              Object.keys(item.variants).length > 0 && (
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                  {Object.entries(item.variants)
+                                    .map(([key, value]) => `${key}: ${value}`)
+                                    .join(", ")}
+                                </div>
+                              )}
+                            {hasStockIssue && (
+                              <div className="text-xs text-red-400 mt-0.5 flex items-center">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                {availableStock === 0
+                                  ? "Out of stock"
+                                  : `Only ${availableStock} available`}
+                              </div>
+                            )}
+                          </div>
+                          <span
+                            className={
+                              hasStockIssue ? "text-red-400" : "text-white"
+                            }
+                          >
+                            ₹
+                            {(
+                              parseFloat(item.price.replace(/[^\d.]/g, "")) *
+                              item.quantity
+                            ).toLocaleString()}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Totals */}

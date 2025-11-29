@@ -28,7 +28,7 @@ router.get(
   checkPhonepePaymentStatus
 );
 router.post("/phonepe/callback", phonepeCallback); // No auth required for callback
-router.get("/phonepe/redirect", phonepeRedirect); // No auth required; user browser returns here
+router.all("/phonepe/redirect", phonepeRedirect); // Handle both GET and POST redirects
 router.post("/phonepe/refund", authenticateToken, refundPhonepePayment);
 
 // Check refund status endpoint

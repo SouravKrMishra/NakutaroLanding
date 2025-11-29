@@ -4,7 +4,7 @@ import {
   ProductResponse,
   CategoryFilters,
 } from "../types/index.js";
-import { Product as ProductModel } from "../../../shared/models/Product.js";
+import ProductModel from "../../../shared/models/Product.js";
 
 class ProductService {
   async getProducts(filters: ProductFilters): Promise<ProductResponse> {
@@ -265,7 +265,6 @@ class ProductService {
       name: product.name,
       slug: product.slug,
       description: product.description || "",
-      shortDescription: product.shortDescription || "",
       price: product.salePrice || product.price,
       regularPrice: product.regularPrice || product.price,
       salePrice: product.salePrice,
@@ -291,6 +290,7 @@ class ProductService {
       tags: product.tags || [],
       attributes: attributes,
       specifications: product.specifications || {},
+      keyHighlights: product.keyHighlights || [],
     };
   }
 }

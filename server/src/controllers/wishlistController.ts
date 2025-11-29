@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Wishlist } from "../../../shared/models/Wishlist.js";
-import { Product } from "../../../shared/models/Product.js";
+import Product from "../../../shared/models/Product.js";
 import { validationResult } from "express-validator";
 
 // Get user's wishlist

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import { Order } from "../../../shared/models/Order.js";
-import { Product } from "../../../shared/models/Product.js";
+import Product from "../../../shared/models/Product.js";
 import Transaction from "../../../shared/models/Transaction.js";
 import { createError } from "../middleware/errorHandler.js";
 
@@ -55,7 +55,9 @@ export const createOrder = async (
     // Apply coupon if one was used (record usage)
     if (couponCode) {
       try {
-        const { applyCoupon } = await import("../controllers/couponController.js");
+        const { applyCoupon } = await import(
+          "../controllers/couponController.js"
+        );
         // Create a mock request/response for applyCoupon
         const mockReq = {
           body: {
@@ -357,7 +359,9 @@ export const createOrderForPhonepe = async (
     // Apply coupon if one was used (record usage)
     if (couponCode) {
       try {
-        const { applyCoupon } = await import("../controllers/couponController.js");
+        const { applyCoupon } = await import(
+          "../controllers/couponController.js"
+        );
         // Create a mock request/response for applyCoupon
         const mockReq = {
           body: {

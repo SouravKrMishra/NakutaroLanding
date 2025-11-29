@@ -82,7 +82,6 @@ type Product = {
   images?: ProductImage[];
   defaultColor?: string;
   description?: string;
-  shortDescription?: string;
 };
 
 // Helper function to get the default color's primary image
@@ -633,7 +632,6 @@ const ProductsPage = () => {
           defaultColor: item.defaultColor,
           images: item.images || [],
           description: item.description || "",
-          shortDescription: item.shortDescription || "",
         }));
         setFeaturedProducts(mappedFeaturedProducts);
       } catch (err) {}
@@ -749,7 +747,6 @@ const ProductsPage = () => {
             defaultColor: item.defaultColor,
             images: item.images || [],
             description: item.description || "",
-            shortDescription: item.shortDescription || "",
           }));
 
         setProducts(mappedProducts);
@@ -1517,8 +1514,7 @@ const ProductsPage = () => {
                               </span>
                             </div>
                             <p className="text-gray-400 mb-4 flex-grow">
-                              {product.shortDescription ||
-                                product.description ||
+                              {product.description ||
                                 `Premium quality ${product.category.toLowerCase()} featuring your favorite anime characters. Officially licensed merchandise with the best quality and authentic designs.`}
                             </p>
                             <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">

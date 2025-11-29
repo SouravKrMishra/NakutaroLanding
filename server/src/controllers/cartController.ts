@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Cart } from "../../../shared/models/Cart.js";
-import { Product } from "../../../shared/models/Product.js";
+import Product from "../../../shared/models/Product.js";
 import { createError } from "../middleware/errorHandler.js";
 import mongoose from "mongoose";
 
@@ -59,6 +59,11 @@ export const getCart = async (
         ...item,
         isDeleted: deletedProductIds.has(item.productId.toString()),
         isAvailable: !deletedProductIds.has(item.productId.toString()),
+        // Ensure variants is an object (convert Map to object if needed)
+        variants:
+          item.variants instanceof Map
+            ? Object.fromEntries(item.variants)
+            : item.variants || {},
       })) as any;
 
       res.json({
@@ -67,7 +72,21 @@ export const getCart = async (
       });
     } else {
       const cartObject = cart.toObject();
-      res.json({ success: true, cart: cartObject });
+      // Ensure variants are properly converted from Map to object
+      const transformedCart = {
+        ...cartObject,
+        items:
+          cartObject.items && cartObject.items.length > 0
+            ? cartObject.items.map((item: any) => ({
+                ...item,
+                variants:
+                  item.variants instanceof Map
+                    ? Object.fromEntries(item.variants)
+                    : item.variants || {},
+              }))
+            : [],
+      };
+      res.json({ success: true, cart: transformedCart });
     }
   } catch (error) {
     console.error("Error fetching cart:", error);
@@ -95,6 +114,7 @@ export const addToCart = async (
       category,
       quantity = 1,
       inStock = true,
+      variants = {},
     } = req.body;
 
     // Validate required fields
@@ -126,9 +146,16 @@ export const addToCart = async (
     if (existingItemIndex !== -1) {
       // Update quantity of existing item
       cart.items[existingItemIndex].quantity += quantity;
+      // Also update variants if provided (in case they changed)
+      if (variants && Object.keys(variants).length > 0) {
+        cart.items[existingItemIndex].variants = new Map<string, string>(
+          Object.entries(variants).map(([k, v]) => [k, String(v)])
+        );
+        cart.items[existingItemIndex].markModified("variants");
+      }
     } else {
-      // Add new item
-      cart.items.push({
+      // Add new item - use Mongoose's create method for subdocuments
+      const newItem = {
         productId,
         name,
         price,
@@ -136,18 +163,56 @@ export const addToCart = async (
         category,
         quantity,
         inStock,
-      });
+        variants:
+          variants && Object.keys(variants).length > 0
+            ? new Map<string, string>(
+                Object.entries(variants).map(([k, v]) => [k, String(v)])
+              )
+            : new Map<string, string>(),
+      };
+
+      // Push the item and then explicitly set variants to ensure Mongoose recognizes it
+      cart.items.push(newItem);
+
+      // Mark the variants field as modified to ensure Mongoose saves it
+      const addedItem = cart.items[cart.items.length - 1];
+      if (variants && Object.keys(variants).length > 0) {
+        const variantsMap = new Map<string, string>(
+          Object.entries(variants).map(([k, v]) => [k, String(v)])
+        );
+        addedItem.variants = variantsMap;
+      }
+      // Always mark variants as modified, even if empty
+      addedItem.markModified("variants");
     }
+
+    // Mark the entire items array as modified to ensure all changes are saved
+    cart.markModified("items");
 
     await cart.save();
 
     // Convert mongoose document to plain object to avoid serialization issues
     const cartObject = cart.toObject();
 
+    // Convert Map variants to plain objects for JSON response
+    const transformedCart = {
+      ...cartObject,
+      items:
+        cartObject.items && cartObject.items.length > 0
+          ? cartObject.items.map((item: any) => ({
+              ...item,
+              variants:
+                item.variants instanceof Map
+                  ? Object.fromEntries(item.variants)
+                  : item.variants || {},
+            }))
+          : [],
+    };
+
     res.json({
       success: true,
       message: "Item added to cart successfully",
-      cart: cartObject,
+      cart: transformedCart,
     });
   } catch (error: any) {
     console.error("Error adding item to cart:", error);
@@ -203,10 +268,24 @@ export const updateCartItem = async (
       } else {
         await cart.save();
         const cartObject = cart.toObject();
+        // Convert Map variants to plain objects for JSON response
+        const transformedCart = {
+          ...cartObject,
+          items:
+            cartObject.items && cartObject.items.length > 0
+              ? cartObject.items.map((item: any) => ({
+                  ...item,
+                  variants:
+                    item.variants instanceof Map
+                      ? Object.fromEntries(item.variants)
+                      : item.variants || {},
+                }))
+              : [],
+        };
         res.json({
           success: true,
           message: "Cart updated successfully",
-          cart: cartObject,
+          cart: transformedCart,
         });
       }
     } else {
@@ -215,10 +294,24 @@ export const updateCartItem = async (
       await cart.save();
 
       const cartObject = cart.toObject();
+      // Convert Map variants to plain objects for JSON response
+      const transformedCart = {
+        ...cartObject,
+        items:
+          cartObject.items && cartObject.items.length > 0
+            ? cartObject.items.map((item: any) => ({
+                ...item,
+                variants:
+                  item.variants instanceof Map
+                    ? Object.fromEntries(item.variants)
+                    : item.variants || {},
+              }))
+            : [],
+      };
       res.json({
         success: true,
         message: "Cart updated successfully",
-        cart: cartObject,
+        cart: transformedCart,
       });
     }
   } catch (error) {
@@ -268,10 +361,24 @@ export const removeFromCart = async (
     } else {
       await cart.save();
       const cartObject = cart.toObject();
+      // Convert Map variants to plain objects for JSON response
+      const transformedCart = {
+        ...cartObject,
+        items:
+          cartObject.items && cartObject.items.length > 0
+            ? cartObject.items.map((item: any) => ({
+                ...item,
+                variants:
+                  item.variants instanceof Map
+                    ? Object.fromEntries(item.variants)
+                    : item.variants || {},
+              }))
+            : [],
+      };
       res.json({
         success: true,
         message: "Item removed from cart successfully",
-        cart: cartObject,
+        cart: transformedCart,
       });
     }
   } catch (error) {
@@ -327,10 +434,25 @@ export const syncCart = async (
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      cart = new Cart({ userId, items: items });
+      // Convert variants objects to Maps for new cart
+      const itemsWithMaps = items.map((item: any) => ({
+        ...item,
+        variants:
+          item.variants && Object.keys(item.variants).length > 0
+            ? new Map(Object.entries(item.variants))
+            : new Map(),
+      }));
+      cart = new Cart({ userId, items: itemsWithMaps });
     } else {
-      // Clear existing items and add new ones
-      cart.items.splice(0, cart.items.length, ...items);
+      // Clear existing items and add new ones - convert variants to Maps
+      const itemsWithMaps = items.map((item: any) => ({
+        ...item,
+        variants:
+          item.variants && Object.keys(item.variants).length > 0
+            ? new Map(Object.entries(item.variants))
+            : new Map(),
+      }));
+      cart.items.splice(0, cart.items.length, ...itemsWithMaps);
     }
 
     // If cart is now empty, delete the entire cart document
@@ -344,10 +466,24 @@ export const syncCart = async (
     } else {
       await cart.save();
       const cartObject = cart.toObject();
+      // Convert Map variants to plain objects for JSON response
+      const transformedCart = {
+        ...cartObject,
+        items:
+          cartObject.items && cartObject.items.length > 0
+            ? cartObject.items.map((item: any) => ({
+                ...item,
+                variants:
+                  item.variants instanceof Map
+                    ? Object.fromEntries(item.variants)
+                    : item.variants || {},
+              }))
+            : [],
+      };
       res.json({
         success: true,
         message: "Cart synced successfully",
-        cart: cartObject,
+        cart: transformedCart,
       });
     }
   } catch (error) {

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IStock extends Document {
+  productType: "tshirt" | "hoodie";
   size: string;
   color: string;
   quantity: number;
@@ -11,6 +12,12 @@ export interface IStock extends Document {
 
 const StockSchema = new Schema<IStock>(
   {
+    productType: {
+      type: String,
+      required: true,
+      enum: ["tshirt", "hoodie"],
+      default: "tshirt",
+    },
     size: {
       type: String,
       required: true,
@@ -47,7 +54,7 @@ const StockSchema = new Schema<IStock>(
   }
 );
 
-// Create compound index to ensure unique size-color combinations
-StockSchema.index({ size: 1, color: 1 }, { unique: true });
+// Create compound index to ensure unique productType-size-color combinations
+StockSchema.index({ productType: 1, size: 1, color: 1 }, { unique: true });
 
 export default mongoose.model<IStock>("Stock", StockSchema);

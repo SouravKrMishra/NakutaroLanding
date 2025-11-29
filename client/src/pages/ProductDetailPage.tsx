@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import { useRoute, Link } from "wouter";
@@ -26,6 +26,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
@@ -33,6 +34,17 @@ import { useWishlist } from "@/lib/WishlistContext.tsx";
 import { useCart } from "@/lib/CartContext.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useToast } from "@/hooks/use-toast.ts";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion.tsx";
+
+type KeyHighlight = {
+  title: string;
+  value: string;
+};
 
 type Product = {
   id: string;
@@ -55,11 +67,59 @@ type Product = {
   stock_status?: string;
   deliveryInfo?: string;
   returnPolicy?: string;
+  keyHighlights?: KeyHighlight[];
   specifications?: { [key: string]: string };
   average_rating: string;
   rating_count: number;
   categories: { name: string }[];
   stock_quantity: null | number;
+};
+
+const STOCK_SIZE_CONFIG: Record<"tshirt" | "hoodie", string[]> = {
+  tshirt: ["S", "M", "L", "XL", "XXL"],
+  hoodie: ["S", "M", "L", "XL", "XXL"],
+};
+
+const resolveStockProductType = (
+  product?: Product | null
+): "tshirt" | "hoodie" => {
+  if (!product) {
+    return "tshirt";
+  }
+
+  const candidateCategories = [
+    product.category,
+    ...(product.categories?.map((cat) => cat.name) ?? []),
+  ]
+    .filter(Boolean)
+    .map((name) => name?.toLowerCase() ?? "");
+
+  return candidateCategories.some((name) => name.includes("hoodie"))
+    ? "hoodie"
+    : "tshirt";
+};
+
+const getAllowedSizesForProduct = (
+  product?: Product | null
+): string[] | null => {
+  if (!product || !Array.isArray(product.sizes) || product.sizes.length === 0) {
+    return null;
+  }
+
+  const normalized = product.sizes
+    .filter((size) => typeof size === "string" && size.trim() !== "")
+    .map((size) => size.trim());
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  if (normalized.includes("All Sizes")) {
+    const productType = resolveStockProductType(product);
+    return STOCK_SIZE_CONFIG[productType];
+  }
+
+  return normalized;
 };
 
 const ProductDetailPage = () => {
@@ -69,9 +129,6 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<"description" | "specifications">(
-    "description"
-  );
   const [activeImage, setActiveImage] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<{
     [key: string]: string;
@@ -89,10 +146,21 @@ const ProductDetailPage = () => {
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [pincode, setPincode] = useState("");
+  const [pincodeStatus, setPincodeStatus] = useState<{
+    estimatedDate: string;
+    message: string;
+  } | null>(null);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+  const [pincodeChecking, setPincodeChecking] = useState(false);
+
+  // Refs for scroll handling
+  const rightSectionRef = useRef<HTMLDivElement>(null);
+  const leftSectionRef = useRef<HTMLDivElement>(null);
 
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { addItem: addToCart } = useCart();
+  const { addItem: addToCart, items } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -107,7 +175,7 @@ const ProductDetailPage = () => {
           validateStatus: (status) => status >= 200 && status < 300,
         }
       );
-      
+
       // Validate that response is JSON (not HTML error page)
       const contentType = response.headers["content-type"] || "";
       if (!contentType.includes("application/json")) {
@@ -115,7 +183,7 @@ const ProductDetailPage = () => {
           `Expected JSON response but received ${contentType}. The backend API may not be available.`
         );
       }
-      
+
       const data = response.data;
 
       // Transform MongoDB product to match frontend expectations
@@ -140,6 +208,9 @@ const ProductDetailPage = () => {
         categories: data.categories || [
           { name: data.category || "Uncategorized" },
         ],
+        keyHighlights: Array.isArray(data.keyHighlights)
+          ? data.keyHighlights
+          : [],
       };
 
       setProduct(transformedProduct);
@@ -151,15 +222,23 @@ const ProductDetailPage = () => {
         if (err.response.status === 404) {
           setError("This product is no longer available.");
         } else {
-          setError(`Failed to fetch product details. Server error: ${err.response.status}`);
+          setError(
+            `Failed to fetch product details. Server error: ${err.response.status}`
+          );
         }
       } else if (err.request) {
-        console.error("No response received from server. Is the backend running?");
+        console.error(
+          "No response received from server. Is the backend running?"
+        );
         console.error("Request URL:", err.config?.url);
-        setError("Failed to fetch product details. Backend server is not responding.");
+        setError(
+          "Failed to fetch product details. Backend server is not responding."
+        );
       } else {
         console.error("Error setting up request:", err.message);
-        setError("Failed to fetch product details. Please check your connection.");
+        setError(
+          "Failed to fetch product details. Please check your connection."
+        );
       }
     } finally {
       setLoading(false);
@@ -172,7 +251,7 @@ const ProductDetailPage = () => {
       const response = await axios.get(buildApiUrl("/api/stock-data"), {
         validateStatus: (status) => status >= 200 && status < 300,
       });
-      
+
       // Validate that response is JSON (not HTML error page)
       const contentType = response.headers["content-type"] || "";
       if (!contentType.includes("application/json")) {
@@ -180,7 +259,7 @@ const ProductDetailPage = () => {
           `Expected JSON response but received ${contentType}. The backend API may not be available.`
         );
       }
-      
+
       setStockData(response.data.data);
     } catch (err: any) {
       console.error("Failed to fetch stock data:", err);
@@ -420,12 +499,14 @@ const ProductDetailPage = () => {
     name,
     price,
     description,
+    keyHighlights = [],
     images,
     average_rating,
     rating_count,
     stock_status,
     categories,
     attributes,
+    returnPolicy,
   } = product;
 
   const hasValidSale =
@@ -438,7 +519,24 @@ const ProductDetailPage = () => {
   const isSizeColorAvailable = (size: string, color: string): boolean => {
     if (!stockData) return true; // Default to available if no stock data
     const key = `${size}-${color}`;
-    return stockData.stock[key]?.available || false;
+    const productType = resolveStockProductType(product);
+
+    const typeStock = stockData.types?.[productType]?.stock;
+    if (typeStock && key in typeStock) {
+      return Boolean(typeStock[key]?.available);
+    }
+
+    // Fallback to legacy stock map if types were not provided
+    if (stockData.stock && key in stockData.stock) {
+      return Boolean(stockData.stock[key]?.available);
+    }
+
+    // If hoodie stock missing but tshirt exists, reuse tshirt to avoid undefined
+    if (stockData.types?.tshirt?.stock?.[key]) {
+      return Boolean(stockData.types.tshirt.stock[key]?.available);
+    }
+
+    return false;
   };
 
   const renderStars = (rating: number) => {
@@ -456,6 +554,38 @@ const ProductDetailPage = () => {
         ))}
       </div>
     );
+  };
+
+  const formatDeliveryDate = (daysFromNow: number) => {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + daysFromNow);
+    return targetDate.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  const handlePincodeCheck = () => {
+    if (!pincode || !/^\d{6}$/.test(pincode)) {
+      setPincodeError("Please enter a valid 6-digit PIN code.");
+      setPincodeStatus(null);
+      return;
+    }
+
+    setPincodeChecking(true);
+    setPincodeError(null);
+
+    setTimeout(() => {
+      const offset = 3 + ((parseInt(pincode.slice(-2), 10) || 0) % 4); // 3-6 days
+      const estimatedDate = formatDeliveryDate(offset);
+
+      setPincodeStatus({
+        estimatedDate,
+        message: `Estimated delivery by ${estimatedDate}`,
+      });
+      setPincodeChecking(false);
+    }, 600);
   };
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
@@ -1049,6 +1179,24 @@ const ProductDetailPage = () => {
     }
   };
 
+  const getAvailableStock = (size: string, color: string): number => {
+    if (!stockData) return 0;
+    const key = `${size}-${color}`;
+    const productType = resolveStockProductType(product);
+
+    const typeStock = stockData.types?.[productType]?.stock;
+    if (typeStock && key in typeStock) {
+      return typeStock[key]?.quantity || 0;
+    }
+
+    // Fallback to legacy stock map if types were not provided
+    if (stockData.stock && key in stockData.stock) {
+      return stockData.stock[key]?.quantity || 0;
+    }
+
+    return 0;
+  };
+
   const handleAddToCart = async () => {
     if (!product) return;
 
@@ -1083,6 +1231,62 @@ const ProductDetailPage = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check stock availability for clothing items
+    const sizeAttribute = product.attributes?.find((attr) =>
+      attr.name.toLowerCase().includes("size")
+    );
+    const colorAttribute = product.attributes?.find((attr) =>
+      attr.name.toLowerCase().includes("color")
+    );
+
+    if (sizeAttribute && colorAttribute) {
+      const selectedSize = selectedVariants[sizeAttribute.name];
+      const selectedColor = selectedVariants[colorAttribute.name];
+
+      if (selectedSize && selectedColor) {
+        const availableStock = getAvailableStock(selectedSize, selectedColor);
+
+        // Check if item is already in cart
+        const variantString = Object.entries(selectedVariants)
+          .map(([key, value]) => `${key}:${value}`)
+          .join("|");
+        const cartItemId = `${product.id}_${variantString}`;
+        const existingCartItem = items.find(
+          (item) => String(item.id) === cartItemId
+        );
+        const alreadyInCartQuantity = existingCartItem?.quantity || 0;
+
+        const totalRequested = quantity + alreadyInCartQuantity;
+
+        if (availableStock === 0) {
+          toast({
+            title: "Out of Stock",
+            description: `Sorry, ${selectedSize} ${selectedColor} is currently out of stock.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (totalRequested > availableStock) {
+          const maxCanAdd = availableStock - alreadyInCartQuantity;
+          if (maxCanAdd <= 0) {
+            toast({
+              title: "Stock Limit Reached",
+              description: `You already have ${alreadyInCartQuantity} of this item in your cart. Only ${availableStock} available in stock.`,
+              variant: "destructive",
+            });
+            return;
+          }
+          toast({
+            title: "Limited Stock Available",
+            description: `Only ${availableStock} available in stock. You can add ${maxCanAdd} more (${alreadyInCartQuantity} already in cart).`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     try {
@@ -1249,7 +1453,7 @@ const ProductDetailPage = () => {
   };
 
   return (
-    <div className="product-detail-page pt-20 sm:pt-28 pb-12 sm:pb-16 overflow-hidden">
+    <div className="product-detail-page pt-20 sm:pt-28 pb-12 sm:pb-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
         <div className="flex items-center text-xs sm:text-sm text-gray-400 overflow-x-auto pb-2">
           <a
@@ -1273,8 +1477,8 @@ const ProductDetailPage = () => {
       </div>
 
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-start">
+          <div ref={leftSectionRef} className="lg:sticky lg:top-28 self-start">
             {/* Main image - full width on mobile */}
             <div className="mb-4 sm:mb-0">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -1547,164 +1751,186 @@ const ProductDetailPage = () => {
             })()}
           </div>
 
-          <div>
-            <div className="mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-[#2D2D2D]">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-2 leading-tight">
-                {name}
-              </h1>
+          <div ref={rightSectionRef} className="space-y-5 pb-6">
+            {/* Product Header */}
+            <div className="space-y-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 leading-tight text-white">
+                  {name}
+                </h1>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
-                <div className="flex items-center">
-                  {renderStars(parseFloat(average_rating))}
-                  <span className="ml-2 text-gray-400 text-xs sm:text-sm">
-                    ({parseFloat(average_rating).toFixed(1)}) {rating_count}{" "}
-                    reviews
-                  </span>
-                </div>
-
-                <span className="text-gray-400 hidden sm:inline">•</span>
-
-                <div className="text-xs sm:text-sm">
-                  <span
-                    className={`px-2 py-1 rounded-full ${
-                      stock_status === "instock"
-                        ? "bg-green-900/20 text-green-500"
-                        : "bg-red-900/20 text-red-500"
-                    }`}
-                  >
-                    {stock_status === "instock" ? "In Stock" : "Out of Stock"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-2xl sm:text-3xl font-bold text-accent mb-3 sm:mb-4">
-                {hasValidSale ? (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                    <span>₹{product.salePrice}</span>
-                    <span className="text-base sm:text-lg text-gray-400 line-through">
-                      ₹{product.regularPrice}
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    {renderStars(parseFloat(average_rating))}
+                    <span className="text-gray-400 text-sm">
+                      ({parseFloat(average_rating).toFixed(1)})
+                    </span>
+                    <span className="text-gray-500 text-sm">
+                      {rating_count} {rating_count === 1 ? "review" : "reviews"}
                     </span>
                   </div>
-                ) : (
-                  <span>₹{product.regularPrice ?? price}</span>
-                )}
-              </div>
 
-              <div
-                className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6 line-clamp-3 sm:line-clamp-none"
-                dangerouslySetInnerHTML={{
-                  __html: description || "No description available.",
-                }}
-              />
+                  <span className="text-gray-600 hidden sm:inline">•</span>
+
+                  <div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        stock_status === "instock"
+                          ? "bg-green-900/30 text-green-400 border border-green-800/50"
+                          : "bg-red-900/30 text-red-400 border border-red-800/50"
+                      }`}
+                    >
+                      {stock_status === "instock" ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline gap-3 mb-6">
+                  {hasValidSale ? (
+                    <>
+                      <span className="text-3xl sm:text-4xl font-bold text-accent">
+                        ₹{product.salePrice}
+                      </span>
+                      <span className="text-xl text-gray-500 line-through">
+                        ₹{product.regularPrice}
+                      </span>
+                      <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
+                        SALE
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-3xl sm:text-4xl font-bold text-accent">
+                      ₹{product.regularPrice ?? price}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-[#2D2D2D]">
+
+            {/* Size Selection & Quantity */}
+            <div className="space-y-5 pb-5 border-b border-[#2D2D2D]">
               {attributes
                 ?.filter((attr) => !attr.name.toLowerCase().includes("color"))
                 .map((attr) => (
-                  <div className="mb-3 sm:mb-4" key={attr.name}>
-                    <label className="block text-sm sm:text-base font-medium mb-2">
+                  <div key={attr.name}>
+                    <label className="block text-sm font-semibold text-gray-300 mb-3">
                       {attr.name}
                       {attr.name.toLowerCase().includes("size") ||
                       attr.name.toLowerCase().includes("variant") ? (
                         <span className="text-red-500 ml-1">*</span>
                       ) : null}
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {attr.options.map((option) => {
-                        const isSelected =
-                          selectedVariants[attr.name] === option;
-                        const isSizeAttribute = attr.name
-                          .toLowerCase()
-                          .includes("size");
+                    {(() => {
+                      const isSizeAttribute = attr.name
+                        .toLowerCase()
+                        .includes("size");
+                      const allowedSizes = getAllowedSizesForProduct(product);
+                      const optionsToRender =
+                        isSizeAttribute && allowedSizes
+                          ? allowedSizes
+                          : attr.options;
 
-                        // Check availability for size-color combinations
-                        let isAvailable = true;
-                        if (isSizeAttribute && selectedColor) {
-                          // Find color attribute name
-                          const colorAttribute = attributes?.find((a) =>
-                            a.name.toLowerCase().includes("color")
-                          );
-                          if (colorAttribute) {
-                            isAvailable = isSizeColorAvailable(
-                              option,
-                              selectedColor
-                            );
-                          }
-                        }
+                      return (
+                        <div className="flex flex-wrap gap-2.5">
+                          {optionsToRender.map((option) => {
+                            const isSelected =
+                              selectedVariants[attr.name] === option;
 
-                        return (
-                          <button
-                            key={option}
-                            onClick={() =>
-                              handleVariantChange(attr.name, option)
+                            // Check availability for size-color combinations
+                            let isAvailable = true;
+                            if (isSizeAttribute && selectedColor) {
+                              // Find color attribute name
+                              const colorAttribute = attributes?.find((a) =>
+                                a.name.toLowerCase().includes("color")
+                              );
+                              if (colorAttribute) {
+                                isAvailable = isSizeColorAvailable(
+                                  option,
+                                  selectedColor
+                                );
+                              }
                             }
-                            disabled={!isAvailable}
-                            className={`px-3 sm:px-4 py-2 border rounded-md text-sm font-medium transition-all duration-300 active:scale-95 ${
-                              !isAvailable
-                                ? "border-gray-600 bg-gray-800 text-gray-500 cursor-not-allowed opacity-50"
-                                : isSelected
-                                ? "border-accent bg-accent/10 text-accent shadow-lg shadow-accent/20"
-                                : "border-[#2D2D2D] text-gray-300 sm:hover:border-gray-400 sm:hover:bg-[#2D2D2D]/50"
-                            }`}
-                          >
-                            {option}
-                            {!isAvailable && (
-                              <span className="ml-1 text-xs text-red-400">
-                                (Out of Stock)
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+
+                            return (
+                              <button
+                                key={option}
+                                onClick={() =>
+                                  handleVariantChange(attr.name, option)
+                                }
+                                disabled={!isAvailable}
+                                className={`px-4 py-2.5 border-2 rounded-lg text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                                  !isAvailable
+                                    ? "border-gray-700 bg-gray-800/50 text-gray-600 cursor-not-allowed"
+                                    : isSelected
+                                    ? "border-accent bg-accent/15 text-accent shadow-md shadow-accent/25"
+                                    : "border-[#2D2D2D] bg-[#1E1E1E] text-gray-300 hover:border-gray-500 hover:bg-[#2D2D2D]"
+                                }`}
+                              >
+                                {option}
+                                {!isAvailable && (
+                                  <span className="ml-1.5 text-xs text-red-400 font-normal">
+                                    (Out of Stock)
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
-              <div className="mb-4 sm:mb-6">
-                <label className="block text-sm sm:text-base font-medium mb-2">
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-3">
                   Quantity
                 </label>
-                <div className="flex items-center w-fit">
+                <div className="flex items-center w-fit border-2 border-[#2D2D2D] rounded-lg overflow-hidden bg-[#1E1E1E]">
                   <button
                     onClick={decrementQuantity}
-                    className="bg-[#2D2D2D] active:bg-[#3D3D3D] sm:hover:bg-[#3D3D3D] text-gray-300 w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center rounded-l-md transition-colors touch-manipulation"
+                    className="bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300 w-11 h-11 flex items-center justify-center transition-colors touch-manipulation"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
-                  <div className="w-16 sm:w-16 h-12 sm:h-10 flex items-center justify-center text-center bg-[#1E1E1E] border-t border-b border-[#2D2D2D] text-base sm:text-sm font-medium">
+                  <div className="w-14 h-11 flex items-center justify-center text-center bg-[#1E1E1E] text-base font-semibold text-white">
                     {quantity}
                   </div>
                   <button
                     onClick={incrementQuantity}
-                    className="bg-[#2D2D2D] active:bg-[#3D3D3D] sm:hover:bg-[#3D3D3D] text-gray-300 w-12 h-12 sm:w-10 sm:h-10 flex items-center justify-center rounded-r-md transition-colors touch-manipulation"
+                    className="bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300 w-11 h-11 flex items-center justify-center transition-colors touch-manipulation"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              <div className="flex flex-row gap-3 sm:gap-4">
+
+              <div className="flex flex-row gap-3 pt-2">
                 <Button
                   onClick={handleAddToCart}
                   disabled={product.stock_status !== "instock"}
-                  className="flex-1 bg-accent hover:bg-accent/90 active:bg-accent/80 text-white font-medium py-2 h-12 rounded-md transition-all duration-300 text-sm touch-manipulation"
+                  className="flex-1 bg-accent hover:bg-accent/90 active:bg-accent/80 text-white font-semibold py-3 h-12 rounded-lg transition-all duration-200 text-base shadow-lg shadow-accent/20 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   Add to Cart
                 </Button>
 
-                <div className="flex gap-2 sm:gap-4">
+                <div className="flex gap-2.5">
                   <Button
                     onClick={handleWishlistToggle}
-                    className={`w-12 h-12 rounded-md flex items-center justify-center transition-all duration-300 touch-manipulation ${
+                    className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 touch-manipulation border-2 ${
                       isInWishlist(product.id)
-                        ? "bg-red-500 border border-red-500 text-white hover:bg-red-600"
-                        : "bg-[#1E1E1E] border border-[#2D2D2D] hover:border-red-500 hover:bg-red-500/10 text-gray-300 hover:text-red-500"
+                        ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
+                        : "bg-[#1E1E1E] border-[#2D2D2D] text-gray-300 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
                     }`}
                     variant="outline"
                   >
                     <Heart
                       className={`h-5 w-5 ${
-                        isInWishlist(product.id) ? "fill-current" : ""
+                        isInWishlist(product.id)
+                          ? "fill-current"
+                          : "stroke-current"
                       }`}
+                      strokeWidth={2}
                     />
                   </Button>
 
@@ -1722,7 +1948,7 @@ const ProductDetailPage = () => {
                           setShowShareMenu(!showShareMenu);
                         }
                       }}
-                      className="w-12 h-12 bg-[#1E1E1E] border border-[#2D2D2D] hover:border-accent text-gray-300 rounded-md flex items-center justify-center transition-colors touch-manipulation"
+                      className="w-12 h-12 bg-[#1E1E1E] border-2 border-[#2D2D2D] hover:border-accent/50 hover:bg-accent/10 text-gray-300 rounded-lg flex items-center justify-center transition-all duration-200 touch-manipulation"
                       variant="outline"
                     >
                       <Share2 className="h-5 w-5" />
@@ -1933,71 +2159,172 @@ const ProductDetailPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              {/* Delivery Section */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5 space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                    Check for Delivery Details
+                  </h3>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <div className="flex-1">
+                      <Input
+                        value={pincode}
+                        onChange={(e) =>
+                          setPincode(
+                            e.target.value.replace(/\D/g, "").slice(0, 6)
+                          )
+                        }
+                        placeholder="Enter PIN code"
+                        className="bg-[#121212] border-[#2D2D2D] text-white h-11 focus:border-accent/50"
+                        maxLength={6}
+                      />
+                    </div>
+                    <Button
+                      onClick={handlePincodeCheck}
+                      disabled={pincodeChecking || !pincode}
+                      className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-semibold h-11 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {pincodeChecking ? "Checking..." : "Check"}
+                    </Button>
+                  </div>
+                </div>
 
-      {/* Product Details Tabs */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-8 sm:mt-16">
-        <div className="bg-[#1E1E1E] rounded-lg border border-[#2D2D2D]">
-          {/* Tabs */}
-          <div className="border-b border-[#2D2D2D]">
-            <div className="flex overflow-x-auto">
-              <button
-                onClick={() => setActiveTab("description")}
-                className={`px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "description"
-                    ? "text-accent border-b-2 border-accent"
-                    : "text-gray-400 active:text-gray-300 sm:hover:text-gray-300"
-                }`}
-              >
-                Description
-              </button>
+                {pincodeError && (
+                  <div className="rounded-lg bg-red-900/20 border border-red-800/50 px-4 py-2.5">
+                    <p className="text-sm text-red-400">{pincodeError}</p>
+                  </div>
+                )}
+
+                {pincodeStatus && (
+                  <div className="rounded-lg bg-green-900/20 border border-green-800/50 px-4 py-2.5">
+                    <p className="text-sm font-medium text-green-400">
+                      {pincodeStatus.message}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 rounded-lg bg-blue-900/20 border border-blue-800/50 px-4 py-3">
+                  <div className="p-1.5 rounded-lg bg-blue-500/20">
+                    <Truck className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-blue-300">
+                    This product is eligible for FREE SHIPPING
+                  </span>
+                </div>
+              </div>
+              {/* Key Highlights Section */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-lg font-bold text-white">
+                    Key Highlights
+                  </h3>
+                  <span className="text-xs text-gray-500 font-medium">
+                    Added by our team
+                  </span>
+                </div>
+                {keyHighlights && keyHighlights.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {keyHighlights.map((highlight, index) => (
+                      <div
+                        key={`${highlight.title}-${index}`}
+                        className="rounded-lg border border-[#2D2D2D] bg-[#121212] px-4 py-3.5 hover:border-[#3D3D3D] transition-colors"
+                      >
+                        <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1.5">
+                          {highlight.title}
+                        </p>
+                        <p className="text-sm font-semibold text-white leading-relaxed">
+                          {highlight.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-gray-500">
+                      Key highlights will appear here once added.
+                    </p>
+                  </div>
+                )}
+              </div>
+              {/* Product Description & Returns Accordion */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] overflow-hidden">
+                <Accordion type="single" collapsible defaultValue="description">
+                  <AccordionItem
+                    value="description"
+                    className="border-b border-[#2D2D2D]"
+                  >
+                    <AccordionTrigger className="px-5 py-4 text-base font-semibold text-white hover:no-underline hover:text-accent transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-accent/10">
+                          <Package className="h-4 w-4 text-accent" />
+                        </div>
+                        <div className="text-left">
+                          <div>Product Description</div>
+                          <div className="text-xs font-normal text-gray-500 mt-0.5">
+                            Manufacture, Care and Fit
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-5 pb-5">
+                      <div
+                        className="prose prose-invert max-w-none text-sm text-gray-300 leading-relaxed"
+                        dangerouslySetInnerHTML={{
+                          __html: description || "No description available.",
+                        }}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="returns" className="border-b-0">
+                    <AccordionTrigger className="px-5 py-4 text-base font-semibold text-white hover:no-underline hover:text-accent transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-green-500/10">
+                          <RotateCcw className="h-4 w-4 text-green-400" />
+                        </div>
+                        <div className="text-left">
+                          <div>15 Days Returns & Exchange</div>
+                          <div className="text-xs font-normal text-gray-500 mt-0.5">
+                            Know about return & exchange policy
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-5 pb-5">
+                      <p className="text-sm text-gray-300 leading-relaxed">
+                        {returnPolicy ||
+                          "Enjoy hassle-free returns & exchanges within 15 days of delivery. Keep the product unused with all original tags and packaging to initiate a request."}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+              {/* Specifications Section */}
               {product.specifications &&
                 Object.keys(product.specifications).length > 0 && (
-                  <button
-                    onClick={() => setActiveTab("specifications")}
-                    className={`px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                      activeTab === "specifications"
-                        ? "text-accent border-b-2 border-accent"
-                        : "text-gray-400 active:text-gray-300 sm:hover:text-gray-300"
-                    }`}
-                  >
-                    Specifications
-                  </button>
-                )}
-            </div>
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-4 sm:p-6">
-            {activeTab === "description" && (
-              <div
-                className="text-sm sm:text-base text-gray-300 prose prose-invert max-w-none prose-sm sm:prose-base"
-                dangerouslySetInnerHTML={{
-                  __html: description || "No description available.",
-                }}
-              />
-            )}
-
-            {activeTab === "specifications" && product.specifications && (
-              <div className="space-y-3 sm:space-y-4">
-                {Object.entries(product.specifications).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex flex-col sm:flex-row border-b border-[#2D2D2D] pb-3 gap-1 sm:gap-0"
-                  >
-                    <div className="w-full sm:w-1/3 font-medium text-gray-300 text-sm sm:text-base">
-                      {key}
-                    </div>
-                    <div className="w-full sm:w-2/3 text-gray-400 text-sm sm:text-base">
-                      {value}
+                  <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5">
+                    <h3 className="text-lg font-bold text-white mb-5">
+                      Specifications
+                    </h3>
+                    <div className="space-y-3.5">
+                      {Object.entries(product.specifications).map(
+                        ([key, value]) => (
+                          <div
+                            key={key}
+                            className="flex flex-col sm:flex-row border-b border-[#2D2D2D] pb-3.5 gap-2 sm:gap-4 last:border-0 last:pb-0"
+                          >
+                            <span className="text-sm font-medium text-gray-400 sm:w-1/3">
+                              {key}
+                            </span>
+                            <span className="text-sm text-gray-200 sm:w-2/3 font-medium">
+                              {value}
+                            </span>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                )}
+            </div>
           </div>
         </div>
       </section>

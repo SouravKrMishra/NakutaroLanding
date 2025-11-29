@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/lib/CartContext.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
@@ -45,12 +45,85 @@ const CartPage = () => {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
 
+  // Stock data state
+  const [stockData, setStockData] = useState<any>(null);
+  const [stockLoading, setStockLoading] = useState(false);
+
   // Authentication is now handled by ProtectedRoute wrapper
 
   // Scroll to top when component mounts
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  // Refetch stock data on demand
+  const fetchStockData = useCallback(async () => {
+    setStockLoading(true);
+    try {
+      const response = await axios.get(buildApiUrl("/api/stock-data"), {
+        validateStatus: (status) => status >= 200 && status < 300,
+      });
+
+      const contentType = response.headers["content-type"] || "";
+      if (contentType.includes("application/json")) {
+        const newData = response.data.data;
+        setStockData(newData);
+        return newData;
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch stock data:", err);
+    } finally {
+      setStockLoading(false);
+    }
+    return null;
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchStockData();
+  }, [fetchStockData]);
+
+  // Helper function to resolve product type from category
+  const resolveStockProductType = (category: string): "tshirt" | "hoodie" => {
+    const categoryLower = category?.toLowerCase() || "";
+    return categoryLower.includes("hoodie") ? "hoodie" : "tshirt";
+  };
+
+  // Helper function to get available stock for a size-color combination
+  const getAvailableStockWithData = (item: any, data: any): number => {
+    if (!data || !item.variants) return 0;
+
+    const sizeKey = Object.keys(item.variants).find((key) =>
+      key.toLowerCase().includes("size")
+    );
+    const colorKey = Object.keys(item.variants).find((key) =>
+      key.toLowerCase().includes("color")
+    );
+
+    if (!sizeKey || !colorKey) return 0;
+
+    const size = item.variants[sizeKey];
+    const color = item.variants[colorKey];
+    const key = `${size}-${color}`;
+    const productType = resolveStockProductType(item.category);
+
+    const typeStock = data.types?.[productType]?.stock;
+    if (typeStock && key in typeStock) {
+      return typeStock[key]?.quantity || 0;
+    }
+
+    // Fallback to legacy stock map if types were not provided
+    if (data.stock && key in data.stock) {
+      return data.stock[key]?.quantity || 0;
+    }
+
+    return 0;
+  };
+
+  // Legacy wrapper for existing calls
+  const getAvailableStock = (item: any): number => {
+    return getAvailableStockWithData(item, stockData);
+  };
 
   const handleQuantityChange = async (
     id: string | number,
@@ -64,14 +137,51 @@ const CartPage = () => {
           description: "Item has been removed from your cart.",
           variant: "destructive",
         });
-      } else {
-        await updateQuantity(id, newQuantity);
-        toast({
-          title: "Quantity Updated",
-          description: "Item quantity has been updated.",
-          variant: "default",
-        });
+        return;
       }
+
+      // Find the cart item
+      const cartItem = items.find((item) => String(item.id) === String(id));
+      if (!cartItem) {
+        toast({
+          title: "Error",
+          description: "Item not found in cart.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check stock availability for clothing items
+      if (cartItem.variants) {
+        const availableStock = getAvailableStock(cartItem);
+
+        if (availableStock === 0) {
+          toast({
+            title: "Out of Stock",
+            description:
+              "This item is currently out of stock. Please remove it from your cart.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (newQuantity > availableStock) {
+          toast({
+            title: "Limited Stock Available",
+            description: `Only ${availableStock} available in stock. Maximum quantity set to ${availableStock}.`,
+            variant: "destructive",
+          });
+          // Set quantity to available stock instead of rejecting
+          newQuantity = availableStock;
+        }
+      }
+
+      await updateQuantity(id, newQuantity);
+      toast({
+        title: "Quantity Updated",
+        description: "Item quantity has been updated.",
+        variant: "default",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -115,7 +225,7 @@ const CartPage = () => {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) {
       toast({
         title: "Empty Cart",
@@ -124,6 +234,43 @@ const CartPage = () => {
       });
       return;
     }
+
+    // Fetch fresh stock data before verification
+    setStockLoading(true);
+    const freshStockData = await fetchStockData();
+
+    if (!freshStockData) {
+      toast({
+        title: "Connection Error",
+        description: "Could not verify stock. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify stock before proceeding
+    let hasStockIssues = false;
+    for (const item of items) {
+      if (item.variants) {
+        // Use fresh data for verification
+        const availableStock = getAvailableStockWithData(item, freshStockData);
+        if (availableStock === 0 || item.quantity > availableStock) {
+          hasStockIssues = true;
+          break;
+        }
+      }
+    }
+
+    if (hasStockIssues) {
+      toast({
+        title: "Stock Verification Failed",
+        description:
+          "Some items in your cart are out of stock or have insufficient quantity. Please remove or update them before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCheckingOut(true);
     setLocation("/checkout");
   };
@@ -159,8 +306,14 @@ const CartPage = () => {
         setAppliedCoupon(response.data.coupon);
         setCouponDiscount(response.data.coupon.discountAmount);
         // Save to localStorage for checkout page
-        localStorage.setItem("appliedCoupon", JSON.stringify(response.data.coupon));
-        localStorage.setItem("couponDiscount", response.data.coupon.discountAmount.toString());
+        localStorage.setItem(
+          "appliedCoupon",
+          JSON.stringify(response.data.coupon)
+        );
+        localStorage.setItem(
+          "couponDiscount",
+          response.data.coupon.discountAmount.toString()
+        );
         toast({
           title: "Coupon Applied!",
           description: response.data.message,
@@ -345,16 +498,39 @@ const CartPage = () => {
                             <span className="w-12 text-center text-white font-medium">
                               {item.quantity}
                             </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity + 1)
-                              }
-                              className="w-8 h-8 p-0 border-[#444] text-gray-600 hover:bg-[#333]"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
+                            {(() => {
+                              const availableStock = item.variants
+                                ? getAvailableStock(item)
+                                : null;
+                              const isAtMaxStock =
+                                availableStock !== null &&
+                                item.quantity >= availableStock;
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleQuantityChange(
+                                      item.id,
+                                      item.quantity + 1
+                                    )
+                                  }
+                                  disabled={isAtMaxStock}
+                                  className={`w-8 h-8 p-0 border-[#444] ${
+                                    isAtMaxStock
+                                      ? "text-gray-500 cursor-not-allowed opacity-50"
+                                      : "text-gray-600 hover:bg-[#333]"
+                                  }`}
+                                  title={
+                                    isAtMaxStock
+                                      ? `Only ${availableStock} available in stock`
+                                      : "Increase quantity"
+                                  }
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              );
+                            })()}
                           </div>
                           <Button
                             size="sm"
@@ -365,6 +541,32 @@ const CartPage = () => {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
+                        {/* Stock warning for clothing items */}
+                        {item.variants &&
+                          (() => {
+                            const availableStock = getAvailableStock(item);
+                            if (
+                              availableStock !== null &&
+                              availableStock > 0 &&
+                              item.quantity >= availableStock
+                            ) {
+                              return (
+                                <div className="mt-2 text-xs text-orange-400 flex items-center">
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  Only {availableStock} available in stock
+                                </div>
+                              );
+                            }
+                            if (availableStock === 0) {
+                              return (
+                                <div className="mt-2 text-xs text-red-400 flex items-center">
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  Out of stock - Please remove from cart
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                       </div>
                     </div>
                   ))}

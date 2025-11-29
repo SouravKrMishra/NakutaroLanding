@@ -289,6 +289,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               category: item.category,
               quantity: item.quantity,
               inStock: item.inStock,
+              variants: item.variants || {},
               lastModified: item.lastModified || Date.now(),
             }));
 
@@ -366,6 +367,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             category: item.category,
             quantity: item.quantity,
             inStock: item.inStock,
+            variants: item.variants || {},
           }));
 
           await axios.put(
@@ -430,6 +432,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           category: item.category,
           quantity,
           inStock: item.inStock,
+          variants: item.variants || {},
           lastModified: timestamp,
         },
         {
@@ -543,6 +546,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         category: item.category,
         quantity: item.quantity,
         inStock: item.inStock,
+        variants: item.variants || {},
       }));
 
       // Update cart with fresh data from database

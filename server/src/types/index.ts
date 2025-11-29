@@ -3,7 +3,6 @@ export interface Product {
   name: string;
   slug?: string;
   description?: string;
-  shortDescription?: string;
   price: number;
   regularPrice?: number;
   salePrice?: number;
@@ -32,44 +31,44 @@ export interface Product {
   tags?: string[];
   attributes?: any[];
   specifications?: any;
+  keyHighlights?: Array<{ title: string; value: string }>;
 }
 
 export interface ProductFilters {
   page?: number;
   per_page?: number;
-  orderby?: string;
   category?: string;
   min_price?: number;
   max_price?: number;
-  min_rating?: number;
+  sort?: string;
+  search?: string;
+  featured?: boolean;
+  on_sale?: boolean;
   stock_status?: string;
-}
-
-export interface ProductResponse {
-  products: Product[];
-  totalProducts: number;
-  totalPages: number;
+  orderby?: string;
+  min_rating?: number;
 }
 
 export interface CategoryFilters {
   hide_empty?: boolean;
 }
 
-export interface Category {
-  id: number;
-  name: string;
-  count: number;
+export interface PaginatedResponse<T> {
+  products: T[];
+  pagination: {
+    total: number;
+    pages: number;
+    page: number;
+    per_page: number;
+    totalProducts?: number;
+    totalPages?: number;
+  };
+  totalProducts?: number;
+  totalPages?: number;
 }
 
-// Extend Express Request interface for authentication
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        name: string;
-      };
-    }
-  }
+export interface ProductResponse {
+  products: Product[];
+  totalProducts: number;
+  totalPages: number;
 }

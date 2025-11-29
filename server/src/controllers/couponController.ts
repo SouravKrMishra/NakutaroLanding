@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Coupon } from "../../../shared/models/Coupon.js";
-import { Product } from "../../../shared/models/Product.js";
+import Product from "../../../shared/models/Product.js";
 import { createError } from "../middleware/errorHandler.js";
 
 // Validate coupon (for frontend use)
