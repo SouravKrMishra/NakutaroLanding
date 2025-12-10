@@ -1,5 +1,7 @@
 import express from "express";
 import { createServer } from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import { config } from "./src/config/index.js";
 import { logger } from "./src/middleware/logger.js";
 import { errorHandler } from "./src/middleware/errorHandler.js";
@@ -12,15 +14,38 @@ import { SchedulerService } from "./src/services/schedulerService.js";
 // Import types to ensure global declarations are loaded
 import "./src/types/index.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
+// Trust proxy to get real client IP (important when behind nginx, load balancer, etc.)
+app.set("trust proxy", true);
 
 // CORS middleware - must be before other middleware
 app.use(
   cors({
-    origin: config.cors.origin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const allowedOrigins = Array.isArray(config.cors.origin)
+        ? config.cors.origin
+        : [config.cors.origin];
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
   })
 );
 
@@ -29,6 +54,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(logger);
 app.use(cookieParser());
+
+// Serve uploaded files
+// Use environment variable for upload path, or default to project root
+const uploadsPath = process.env.UPLOAD_PATH
+  ? process.env.UPLOAD_PATH
+  : path.join(__dirname, "../uploads");
+
+console.log(`Serving uploads from: ${uploadsPath}`);
+app.use("/uploads", express.static(uploadsPath));
 
 // Routes
 app.use("/api", apiRoutes);

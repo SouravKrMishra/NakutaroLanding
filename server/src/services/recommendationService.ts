@@ -15,6 +15,7 @@ interface RecommendationReason {
 
 interface ProductRecommendation {
   id: string;
+  slug?: string;
   name: string;
   price: number;
   image: string;
@@ -155,6 +156,7 @@ class RecommendationService {
             const numericPrice = Number(product.price) || 0;
             recommendations.push({
               id: String(product.id),
+              slug: product.slug,
               name: product.name,
               price: numericPrice,
               image: product.images[0]?.src || "",
@@ -215,6 +217,7 @@ class RecommendationService {
             const numericPrice = Number(product.price) || 0;
             recommendations.push({
               id: String(product.id),
+              slug: product.slug,
               name: product.name,
               price: numericPrice,
               image: product.images[0]?.src || "",
@@ -255,6 +258,7 @@ class RecommendationService {
         const numericPrice = Number(product.price) || 0;
         return {
           id: String(product.id),
+          slug: product.slug,
           name: product.name,
           price: numericPrice,
           image: product.images[0]?.src || "",

@@ -24,6 +24,7 @@ import {
   MapPin,
   ShoppingCart,
   Smartphone,
+  Wallet,
 } from "lucide-react";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
@@ -50,6 +51,12 @@ const CheckoutPage = () => {
   const [phonepeTransactionId, setPhonepeTransactionId] = useState("");
   const [phonepePaymentUrl, setPhonepePaymentUrl] = useState("");
   const [showPhonepeRedirect, setShowPhonepeRedirect] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"PHONEPE" | "cod">(
+    "PHONEPE"
+  );
+  const [codEnabled, setCodEnabled] = useState(true); // Default to true
+  const [phonepeAvailable, setPhonepeAvailable] = useState(true); // Default to true
+  const [paymentSettingsLoading, setPaymentSettingsLoading] = useState(true);
 
   // Coupon state - retrieve from localStorage (set by CartPage)
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -84,6 +91,76 @@ const CheckoutPage = () => {
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  // Fetch payment gateway statuses
+  React.useEffect(() => {
+    const fetchPaymentStatuses = async () => {
+      setPaymentSettingsLoading(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || ""}/api/payments/status`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const phonepeEnabled = data.phonepe?.enabled ?? false;
+          const codEnabledStatus = data.cod?.enabled ?? true;
+
+          setPhonepeAvailable(phonepeEnabled);
+          setCodEnabled(codEnabledStatus);
+
+          // If current payment method is disabled, switch to an available one
+          if (paymentMethod === "cod" && !codEnabledStatus) {
+            // Switch to PhonePe if available, otherwise keep COD (will show error)
+            if (phonepeEnabled) {
+              setPaymentMethod("PHONEPE");
+            }
+          } else if (paymentMethod === "PHONEPE" && !phonepeEnabled) {
+            // Switch to COD if available, otherwise keep PhonePe (will show error)
+            if (codEnabledStatus) {
+              setPaymentMethod("cod");
+            }
+          }
+
+          // If no payment method is available, default to the first available one
+          if (!phonepeEnabled && !codEnabledStatus) {
+            // Both disabled - this will show an error message
+            setPaymentMethod("PHONEPE");
+          } else if (!phonepeEnabled && codEnabledStatus) {
+            setPaymentMethod("cod");
+          } else if (phonepeEnabled && !codEnabledStatus) {
+            setPaymentMethod("PHONEPE");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment gateway statuses:", error);
+        // Default to enabled on error for backward compatibility
+        setPhonepeAvailable(true);
+        setCodEnabled(true);
+      } finally {
+        setPaymentSettingsLoading(false);
+      }
+    };
+
+    // Fetch immediately
+    fetchPaymentStatuses();
+
+    // Refetch every 15 seconds to get latest payment gateway status
+    const intervalId = setInterval(fetchPaymentStatuses, 15000);
+
+    // Also refetch when page becomes visible (user switches tabs/windows)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPaymentStatuses();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []); // Empty deps - only run on mount/unmount
 
   // Fetch user details from database and pre-fill form
   React.useEffect(() => {
@@ -282,7 +359,7 @@ const CheckoutPage = () => {
 
   const shippingCost = total > 1000 ? 0 : 100;
   const subtotalAfterDiscount = total - couponDiscount;
-  const finalTotal = subtotalAfterDiscount + shippingCost; // Removed processing fee
+  const finalTotal = subtotalAfterDiscount + shippingCost;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -304,8 +381,194 @@ const CheckoutPage = () => {
     );
   };
 
+  // Create COD order
+  const createCODOrder = async () => {
+    // Check if COD is enabled
+    if (!codEnabled) {
+      toast({
+        title: "COD Not Available",
+        description:
+          "Cash on Delivery is currently disabled. Please use PhonePe payment.",
+        variant: "destructive",
+      });
+      setPaymentMethod("PHONEPE");
+      return;
+    }
+
+    if (!validateShipping()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required shipping fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify stock before proceeding
+    if (!verifyStock()) {
+      toast({
+        title: "Stock Verification Failed",
+        description:
+          "Some items in your cart are out of stock or have insufficient quantity. Please review and update your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to continue with checkout.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    // Check if token exists
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Map cart items to order items format
+      const orderItems = items.map((item) => {
+        // Extract product ID (handle variant-based IDs)
+        let productId = item.id;
+        if (typeof item.id === "string" && item.id.includes("_")) {
+          // Extract product ID from variant ID (format: id_key:value|key:value)
+          const parts = item.id.split("_");
+          productId = parts[0];
+        }
+
+        // Extract size and color from variants object
+        let size: string | null = null;
+        let color: string | null = null;
+
+        if (item.variants) {
+          const entries = Object.entries(item.variants);
+          // Check for size in variants (case-insensitive)
+          const sizeEntry = entries.find(
+            ([key]) => key.toLowerCase() === "size"
+          );
+          if (sizeEntry) {
+            size = sizeEntry[1]?.toString().toUpperCase() || null;
+          }
+
+          // Check for color in variants (case-insensitive)
+          const colorEntry = entries.find(
+            ([key]) => key.toLowerCase() === "color"
+          );
+          if (colorEntry) {
+            color =
+              colorEntry[1]
+                ?.toString()
+                .split(" ")
+                .map(
+                  (part) =>
+                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                )
+                .join(" ") || null;
+          }
+        }
+
+        return {
+          productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          category: item.category,
+          size,
+          color,
+        };
+      });
+
+      // Create order data
+      const orderData = {
+        items: orderItems,
+        shippingInfo,
+        paymentMethod: "cod",
+        subtotal: total,
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: couponDiscount || 0,
+        shippingCost,
+        total: finalTotal,
+      };
+
+      // Create order
+      const orderResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/orders`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(orderData),
+        }
+      );
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        // Extract validation errors if available
+        let errorMessage = errorData.message || "Failed to create order";
+        if (
+          errorData.errors &&
+          Array.isArray(errorData.errors) &&
+          errorData.errors.length > 0
+        ) {
+          const firstError = errorData.errors[0];
+          errorMessage = firstError.msg || firstError.message || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const orderResult = await orderResponse.json();
+
+      // Clear cart
+      clearCart();
+
+      // Redirect to success page
+      setLocation(
+        `/order-success?orderId=${
+          orderResult.order._id || orderResult.order.id
+        }`
+      );
+    } catch (error: any) {
+      toast({
+        title: "Order Error",
+        description: error.message || "Failed to create order",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Initialize PhonePe payment
   const initializePhonepePayment = async () => {
+    // Check if PhonePe is enabled
+    if (!phonepeAvailable) {
+      toast({
+        title: "PhonePe Not Available",
+        description:
+          "PhonePe payment gateway is currently disabled. Please use Cash on Delivery.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!validateShipping()) {
       toast({
         title: "Missing Information",
@@ -441,7 +704,17 @@ const CheckoutPage = () => {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        throw new Error(errorData.message || "Failed to create order");
+        // Extract validation errors if available
+        let errorMessage = errorData.message || "Failed to create order";
+        if (
+          errorData.errors &&
+          Array.isArray(errorData.errors) &&
+          errorData.errors.length > 0
+        ) {
+          const firstError = errorData.errors[0];
+          errorMessage = firstError.msg || firstError.message || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const orderResult = await orderResponse.json();
@@ -819,6 +1092,177 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
+                  {/* Payment Method Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-gray-300 text-sm font-medium">
+                      Select Payment Method
+                    </Label>
+
+                    {paymentSettingsLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <span className="text-gray-400">
+                          Loading payment options...
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        {!phonepeAvailable && !codEnabled ? (
+                          <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-6 text-center shadow-lg">
+                            <div className="flex flex-col items-center space-y-3">
+                              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50">
+                                <AlertCircle className="w-8 h-8 text-red-400" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-bold text-red-400 mb-1">
+                                  Payment Methods Unavailable
+                                </h3>
+                                <p className="text-sm text-gray-300 leading-relaxed">
+                                  All payment methods are currently disabled.
+                                  Please check back later or contact our support
+                                  team for assistance.
+                                </p>
+                              </div>
+                              <div className="mt-2 pt-3 border-t border-red-500/30 w-full">
+                                <p className="text-xs text-gray-400">
+                                  Need help? Contact us at{" "}
+                                  <a
+                                    href="mailto:support@animeindia.org"
+                                    className="text-red-400 hover:text-red-300 underline font-medium"
+                                  >
+                                    support@animeindia.org
+                                  </a>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* PhonePe Option */}
+                            <div
+                              onClick={() => {
+                                if (phonepeAvailable) {
+                                  setPaymentMethod("PHONEPE");
+                                }
+                              }}
+                              className={`p-4 rounded-lg border-2 transition-all ${
+                                !phonepeAvailable
+                                  ? "border-gray-600 bg-gray-800/50 cursor-not-allowed opacity-50"
+                                  : paymentMethod === "PHONEPE"
+                                  ? "border-purple-500 bg-purple-500/10 cursor-pointer"
+                                  : "border-[#444] bg-[#2a2a2a] hover:border-purple-500/50 cursor-pointer"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                      paymentMethod === "PHONEPE"
+                                        ? "border-purple-500 bg-purple-500"
+                                        : "border-gray-500"
+                                    }`}
+                                  >
+                                    {paymentMethod === "PHONEPE" && (
+                                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                                    )}
+                                  </div>
+                                  <Smartphone
+                                    className={`w-5 h-5 ${
+                                      !phonepeAvailable
+                                        ? "text-gray-500"
+                                        : "text-purple-400"
+                                    }`}
+                                  />
+                                  <div>
+                                    <div
+                                      className={`font-medium ${
+                                        !phonepeAvailable
+                                          ? "text-gray-500"
+                                          : "text-white"
+                                      }`}
+                                    >
+                                      PhonePe Payment
+                                      {!phonepeAvailable && (
+                                        <span className="ml-2 text-xs text-red-400">
+                                          (Disabled)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {!phonepeAvailable
+                                        ? "This payment method is currently unavailable"
+                                        : "UPI, Cards, Net Banking, Wallets"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* COD Option */}
+                            <div
+                              onClick={() => {
+                                if (codEnabled) {
+                                  setPaymentMethod("cod");
+                                }
+                              }}
+                              className={`p-4 rounded-lg border-2 transition-all ${
+                                !codEnabled
+                                  ? "border-gray-600 bg-gray-800/50 cursor-not-allowed opacity-50"
+                                  : paymentMethod === "cod"
+                                  ? "border-green-500 bg-green-500/10 cursor-pointer"
+                                  : "border-[#444] bg-[#2a2a2a] hover:border-green-500/50 cursor-pointer"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                      paymentMethod === "cod"
+                                        ? "border-green-500 bg-green-500"
+                                        : "border-gray-500"
+                                    }`}
+                                  >
+                                    {paymentMethod === "cod" && (
+                                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                                    )}
+                                  </div>
+                                  <Wallet
+                                    className={`w-5 h-5 ${
+                                      !codEnabled
+                                        ? "text-gray-500"
+                                        : "text-green-400"
+                                    }`}
+                                  />
+                                  <div>
+                                    <div
+                                      className={`font-medium ${
+                                        !codEnabled
+                                          ? "text-gray-500"
+                                          : "text-white"
+                                      }`}
+                                    >
+                                      Cash on Delivery (COD)
+                                      {!codEnabled && (
+                                        <span className="ml-2 text-xs text-red-400">
+                                          (Disabled)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {!codEnabled
+                                        ? "This payment method is currently unavailable"
+                                        : "Pay when you receive • No extra charges"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+
                   {/* Security Notice */}
                   <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">
                     <div className="flex items-center text-green-400 mb-2">
@@ -826,40 +1270,95 @@ const CheckoutPage = () => {
                       Secure Checkout
                     </div>
                     <p className="text-xs text-gray-400">
-                      Your payment information is encrypted and secure. We never
-                      store your card details.
+                      {paymentMethod === "PHONEPE"
+                        ? "Your payment information is encrypted and secure. We never store your card details."
+                        : "Your order will be confirmed once you receive the items. Payment is collected at delivery."}
                     </p>
                   </div>
 
-                  {/* PhonePe Payment Button */}
+                  {/* Payment Button */}
                   <Button
-                    onClick={initializePhonepePayment}
-                    disabled={isProcessing}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3"
+                    onClick={
+                      paymentMethod === "PHONEPE"
+                        ? initializePhonepePayment
+                        : createCODOrder
+                    }
+                    disabled={
+                      isProcessing ||
+                      paymentSettingsLoading ||
+                      (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
+                      (paymentMethod === "cod" && !codEnabled)
+                    }
+                    className={`w-full py-3 ${
+                      paymentMethod === "PHONEPE"
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    } text-white ${
+                      (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
+                      (paymentMethod === "cod" && !codEnabled)
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                   >
                     {isProcessing ? (
                       <div className="flex items-center">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                         Processing...
                       </div>
-                    ) : (
+                    ) : paymentMethod === "PHONEPE" ? (
                       <div className="flex items-center">
                         <Smartphone className="w-5 h-5 mr-2" />
-                        Pay with PhonePe
+                        {!phonepeAvailable
+                          ? "PhonePe Unavailable"
+                          : "Pay with PhonePe"}
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <Wallet className="w-5 h-5 mr-2" />
+                        {!codEnabled ? "COD Unavailable" : "Place Order (COD)"}
                       </div>
                     )}
                   </Button>
 
-                  <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">
-                    <div className="flex items-center text-purple-400 mb-2">
-                      <Smartphone className="w-4 h-4 mr-2" />
-                      PhonePe Payment
+                  {/* Show message if no payment methods available */}
+                  {!phonepeAvailable &&
+                    !codEnabled &&
+                    !paymentSettingsLoading && (
+                      <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-5 text-center shadow-lg">
+                        <div className="flex items-center justify-center space-x-3 mb-2">
+                          <AlertCircle className="w-5 h-5 text-red-400" />
+                          <p className="text-red-400 font-semibold">
+                            Unable to Process Payment
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-300 mb-3">
+                          All payment methods are currently unavailable. Please
+                          try again later.
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          For assistance, contact{" "}
+                          <a
+                            href="mailto:support@animeindia.org"
+                            className="text-red-400 hover:text-red-300 underline"
+                          >
+                            support@animeindia.org
+                          </a>
+                        </p>
+                      </div>
+                    )}
+
+                  {paymentMethod === "PHONEPE" && (
+                    <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">
+                      <div className="flex items-center text-purple-400 mb-2">
+                        <Smartphone className="w-4 h-4 mr-2" />
+                        PhonePe Payment
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        <strong>Supported:</strong> UPI, Credit/Debit Cards, Net
+                        Banking, Wallets
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      <strong>Supported:</strong> UPI, Credit/Debit Cards, Net
-                      Banking, Wallets
-                    </p>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

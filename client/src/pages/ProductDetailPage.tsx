@@ -48,6 +48,7 @@ type KeyHighlight = {
 
 type Product = {
   id: string;
+  slug?: string;
   name: string;
   price: string;
   regularPrice?: string;
@@ -564,6 +565,18 @@ const ProductDetailPage = () => {
       day: "numeric",
       month: "short",
     });
+  };
+
+  // Format description to preserve line breaks
+  // Only convert newlines to <br> if the content doesn't already contain HTML tags
+  const formatDescription = (text: string | undefined): string => {
+    if (!text) return "No description available.";
+    const trimmed = text.trim();
+    // Check if content already contains HTML tags
+    const hasHtmlTags = /<[^>]+>/g.test(trimmed);
+    // If HTML is present, return as-is (HTML handles its own formatting)
+    // Otherwise, convert newlines to <br> tags
+    return hasHtmlTags ? trimmed : trimmed.replace(/\n/g, "<br>");
   };
 
   const handlePincodeCheck = () => {
@@ -1300,6 +1313,7 @@ const ProductDetailPage = () => {
         {
           id: cartItemId,
           productId: product.id, // Keep original product ID for reference
+          slug: product.slug,
           name: product.name,
           price: product.price,
           image: product.images?.[0]?.src || "",
@@ -2218,9 +2232,6 @@ const ProductDetailPage = () => {
                   <h3 className="text-lg font-bold text-white">
                     Key Highlights
                   </h3>
-                  <span className="text-xs text-gray-500 font-medium">
-                    Added by our team
-                  </span>
                 </div>
                 {keyHighlights && keyHighlights.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2270,7 +2281,7 @@ const ProductDetailPage = () => {
                       <div
                         className="prose prose-invert max-w-none text-sm text-gray-300 leading-relaxed"
                         dangerouslySetInnerHTML={{
-                          __html: description || "No description available.",
+                          __html: formatDescription(description),
                         }}
                       />
                     </AccordionContent>
@@ -2368,7 +2379,9 @@ const ProductDetailPage = () => {
                 return (
                   <Link
                     key={relatedProduct.id}
-                    href={`/product/${relatedProduct.id}`}
+                    href={`/product/${
+                      relatedProduct.slug || relatedProduct.id
+                    }`}
                     className="group bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent transition-all duration-300 hover:shadow-lg hover:shadow-accent/10"
                   >
                     <div className="relative aspect-square overflow-hidden bg-[#1E1E1E]">

@@ -198,11 +198,27 @@ class ProductService {
     }));
   }
 
-  async getProductById(id: string): Promise<Product> {
-    const product = await ProductModel.findOne({
-      _id: id,
+  async getProductById(idOrSlug: string): Promise<Product> {
+    // Try to find by slug first, then by ID
+    // Check if it's a valid MongoDB ObjectId (24 hex characters)
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(idOrSlug);
+    
+    const query: any = {
       isDeleted: { $ne: true }, // Exclude soft-deleted products
-    }).lean();
+    };
+
+    if (isObjectId) {
+      // If it looks like an ObjectId, try both ID and slug
+      query.$or = [
+        { _id: idOrSlug },
+        { slug: idOrSlug },
+      ];
+    } else {
+      // If it's not an ObjectId, assume it's a slug
+      query.slug = idOrSlug;
+    }
+
+    const product = await ProductModel.findOne(query).lean();
 
     if (!product) {
       throw new Error("Product not found");

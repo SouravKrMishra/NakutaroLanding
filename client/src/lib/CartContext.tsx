@@ -12,6 +12,7 @@ import { buildApiUrl } from "./api.ts";
 interface CartItem {
   id: string | number; // Changed to string to support variant-based IDs
   productId?: string | number; // Original product ID for reference
+  slug?: string;
   name: string;
   price: string;
   image: string;

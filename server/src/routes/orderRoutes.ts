@@ -17,9 +17,7 @@ const createOrderValidation = [
   body("items")
     .isArray({ min: 1 })
     .withMessage("At least one item is required"),
-  body("items.*.productId")
-    .isNumeric()
-    .withMessage("Product ID must be a number"),
+  body("items.*.productId").notEmpty().withMessage("Product ID is required"),
   body("items.*.name")
     .trim()
     .isLength({ min: 1 })
@@ -90,7 +88,21 @@ const updateOrderValidation = [
 router.use(authenticateToken);
 
 // Create new order
-router.post("/orders", createOrderValidation, createOrder);
+router.post(
+  "/orders",
+  createOrderValidation,
+  (req: any, res: any, next: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
+    createOrder(req, res, next);
+  }
+);
 
 // Create order for PhonePe payment
 router.post(

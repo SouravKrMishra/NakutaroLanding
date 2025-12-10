@@ -3,7 +3,10 @@ import mongoose from "mongoose";
 import { Order } from "../../../shared/models/Order.js";
 import Product from "../../../shared/models/Product.js";
 import Transaction from "../../../shared/models/Transaction.js";
+import { Cart } from "../../../shared/models/Cart.js";
 import { createError } from "../middleware/errorHandler.js";
+import { reduceStockForOrder } from "../services/stockService.js";
+import { isCODEnabled } from "../services/paymentSettingsService.js";
 
 export const createOrder = async (
   req: Request,
@@ -32,13 +35,66 @@ export const createOrder = async (
       return next(createError("Missing required fields", 400));
     }
 
-    // Calculate COD fee if applicable
-    const codFee = paymentMethod === "cod" ? 50 : 0;
-    const finalTotal = total + codFee;
+    // Validate shipping info fields
+    const requiredShippingFields = [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "state",
+      "pincode",
+      "country",
+    ];
+    const missingFields = requiredShippingFields.filter(
+      (field) => !shippingInfo[field as keyof typeof shippingInfo]?.trim()
+    );
+    if (missingFields.length > 0) {
+      return next(
+        createError(
+          `Missing shipping information: ${missingFields.join(", ")}`,
+          400
+        )
+      );
+    }
+
+    // Check if COD is enabled when COD payment method is selected
+    if (paymentMethod === "cod") {
+      const codEnabled = await isCODEnabled();
+      if (!codEnabled) {
+        return next(createError("Cash on Delivery is currently disabled", 400));
+      }
+    }
+
+    // No COD fee - removed as requested
+    const codFee = 0;
+    const finalTotal = total;
+
+    // Determine initial status based on payment method
+    const initialStatus =
+      paymentMethod === "cod" ? "pending" : "PENDING_PAYMENT";
+    const initialPaymentStatus =
+      paymentMethod === "cod" ? "PENDING" : "PENDING";
+
+    // Generate order number (same logic as pre-save hook)
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const random = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0");
+    const orderNumber = `ORD${year}${month}${day}${random}`;
+
+    // Set estimated delivery to 4 days from now
+    const estimatedDelivery = new Date();
+    estimatedDelivery.setDate(estimatedDelivery.getDate() + 4);
 
     // Create order
     const order = new Order({
       userId,
+      orderNumber,
       items,
       shippingInfo,
       paymentMethod,
@@ -48,9 +104,36 @@ export const createOrder = async (
       couponCode: couponCode || null,
       couponDiscount: couponDiscount || 0,
       total: finalTotal,
+      status: initialStatus,
+      paymentStatus: initialPaymentStatus,
+      estimatedDelivery, // Set estimatedDelivery explicitly
     });
 
     await order.save();
+
+    // For COD orders, reduce stock and clear cart immediately
+    if (paymentMethod === "cod") {
+      // Reduce stock for COD orders
+      try {
+        await reduceStockForOrder(order._id);
+      } catch (error) {
+        console.error("Failed to reduce stock for COD order:", error);
+        // Don't fail the order if stock reduction fails
+      }
+
+      // Clear cart for COD orders
+      try {
+        const cart = await Cart.findOne({ userId });
+        if (cart) {
+          cart.items.splice(0, cart.items.length); // Clear array in place
+          await cart.save();
+          console.log(`Cart cleared for user ${userId} (COD order)`);
+        }
+      } catch (error) {
+        console.error("Failed to clear cart for COD order:", error);
+        // Don't fail the order if cart clearing fails
+      }
+    }
 
     // Apply coupon if one was used (record usage)
     if (couponCode) {
@@ -107,8 +190,16 @@ export const createOrder = async (
         estimatedDelivery: order.estimatedDelivery,
       },
     });
-  } catch (error) {
-    next(createError("Failed to create order", 500));
+  } catch (error: any) {
+    console.error("Error creating order:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Request body:", JSON.stringify(req.body, null, 2));
+    next(
+      createError(
+        `Failed to create order: ${error.message || "Unknown error"}`,
+        500
+      )
+    );
   }
 };
 

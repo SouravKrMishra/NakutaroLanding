@@ -1080,7 +1080,7 @@ const DashboardPage = () => {
                               className="flex-1 border-accent text-accent hover:bg-accent/20 hover:text-accent text-xs"
                               disabled={!product.inStock}
                               onClick={() =>
-                                setLocation(`/product/${product.id}`)
+                                setLocation(`/product/${product.slug || product.id}`)
                               }
                             >
                               <Package className="w-3 h-3 mr-1" />

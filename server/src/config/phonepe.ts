@@ -36,7 +36,6 @@ if (hasRealCredentials) {
   try {
     console.log("Initializing PhonePe SDK with credentials...");
     console.log("Environment:", phonepeConfig.environment);
-    console.log("Client ID:", phonepeConfig.clientId);
 
     phonepeClient = StandardCheckoutClient.getInstance(
       phonepeConfig.clientId || "",

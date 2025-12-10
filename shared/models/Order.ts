@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema({
   items: [
     {
       productId: {
-        type: Number,
+        type: mongoose.Schema.Types.Mixed, // Accept both Number and String (ObjectId)
         required: true,
       },
       name: {

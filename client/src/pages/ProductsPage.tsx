@@ -69,6 +69,7 @@ type ProductImage = {
 
 type Product = {
   id: string;
+  slug?: string;
   name: string;
   price: string;
   rating: number;
@@ -201,6 +202,14 @@ const getColorHex = (colorName: string): string => {
 
 const normalizeColorName = (color?: string | null) =>
   color?.toString().trim().toLowerCase() || "";
+
+// Helper function to strip HTML tags from description
+const stripHtml = (html: string | undefined): string => {
+  if (!html) return "";
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
 
 // Helper function to get image for a specific color
 const getImageForColor = (product: Product, colorName: string): string => {
@@ -384,7 +393,7 @@ const ProductsPage = () => {
         description: "Please select a size on the product detail page.",
         variant: "default",
       });
-      setLocation(`/product/${product.id}`);
+      setLocation(`/product/${product.slug || product.id}`);
       return;
     }
 
@@ -615,6 +624,7 @@ const ProductsPage = () => {
         const response = await axios.get(buildApiUrl("/api/featured-products"));
         const mappedFeaturedProducts = response.data.map((item: any) => ({
           id: item.id,
+          slug: item.slug,
           name: item.name,
           price: item.price?.toString() || "0",
           rating: item.average_rating ? parseFloat(item.average_rating) : 0,
@@ -730,6 +740,7 @@ const ProductsPage = () => {
           })
           .map((item: any) => ({
             id: item.id,
+            slug: item.slug,
             name: item.name,
             price: item.price?.toString() || "0",
             rating: item.average_rating ? parseFloat(item.average_rating) : 0,
@@ -879,67 +890,71 @@ const ProductsPage = () => {
                   key={product.id}
                   className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                 >
-                  <Link href={`/product/${product.id}`}>
-                    <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
-                      <img
-                        src={getProductImage(product)}
-                        alt={product.name}
-                        className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
-                      />
-                      {product.isNew && (
-                        <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-                          NEW
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleWishlistToggle(product);
-                        }}
-                        className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
-                          isInWishlist(product.id)
-                            ? "bg-red-500 text-white"
-                            : "bg-black/50 text-white hover:bg-red-500"
-                        }`}
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            isInWishlist(product.id) ? "fill-current" : ""
-                          }`}
+                  <Link href={`/product/${product.slug || product.id}`}>
+                    <div className="w-full flex items-center justify-center">
+                      <div className="relative inline-block overflow-hidden">
+                        <img
+                          src={getProductImage(product)}
+                          alt={product.name}
+                          className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
                         />
-                      </button>
-                      {/* Color Palette */}
-                      {product.colors && product.colors.length > 1 && (
-                        <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10 z-10">
-                          {product.colors
-                            .slice(0, 4)
-                            .map((color: string, idx: number) => (
-                              <div
-                                key={`${color}-${idx}`}
-                                onClick={(e) =>
-                                  handleColorClick(product.id, color, e)
-                                }
-                                className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
-                                  selectedProductColors[product.id] === color
-                                    ? "border-white border-2 shadow-lg scale-110"
-                                    : "border-white/30 shadow-sm hover:scale-110"
-                                }`}
-                                style={{ backgroundColor: getColorHex(color) }}
-                                title={`Show ${color}`}
-                              />
-                            ))}
-                          {product.colors.length > 4 && (
-                            <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
-                              +{product.colors.length - 4}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                        {product.isNew && (
+                          <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+                            NEW
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleWishlistToggle(product);
+                          }}
+                          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 ${
+                            isInWishlist(product.id)
+                              ? "bg-red-500 text-white"
+                              : "bg-black/50 text-white hover:bg-red-500"
+                          }`}
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${
+                              isInWishlist(product.id) ? "fill-current" : ""
+                            }`}
+                          />
+                        </button>
+                        {/* Color Palette */}
+                        {product.colors && product.colors.length > 1 && (
+                          <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10 z-10">
+                            {product.colors
+                              .slice(0, 4)
+                              .map((color: string, idx: number) => (
+                                <div
+                                  key={`${color}-${idx}`}
+                                  onClick={(e) =>
+                                    handleColorClick(product.id, color, e)
+                                  }
+                                  className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                    selectedProductColors[product.id] === color
+                                      ? "border-white border-2 shadow-lg scale-110"
+                                      : "border-white/30 shadow-sm hover:scale-110"
+                                  }`}
+                                  style={{
+                                    backgroundColor: getColorHex(color),
+                                  }}
+                                  title={`Show ${color}`}
+                                />
+                              ))}
+                            {product.colors.length > 4 && (
+                              <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                                +{product.colors.length - 4}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </Link>
                   <div className="p-3 sm:p-4 flex flex-col flex-grow">
                     <div className="flex-grow">
-                      <Link href={`/product/${product.id}`}>
+                      <Link href={`/product/${product.slug || product.id}`}>
                         <div className="flex flex-col items-start mb-2">
                           <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
                             {product.name}
@@ -1197,72 +1212,83 @@ const ProductsPage = () => {
                           key={product.id}
                           className="relative bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                         >
-                          <Link href={`/product/${product.id}`}>
-                            <div className="h-48 sm:h-56 md:h-64 overflow-hidden relative cursor-pointer">
-                              <img
-                                src={getProductImage(product)}
-                                alt={product.name}
-                                className="w-full h-full object-contain sm:object-cover group-hover:scale-110 transition-all duration-500"
-                              />
-                              {product.isNew && (
-                                <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-                                  NEW
-                                </div>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleWishlistToggle(product);
-                                }}
-                                className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
-                                  isInWishlist(product.id)
-                                    ? "bg-red-500 text-white"
-                                    : "bg-black/50 text-white hover:bg-red-500"
-                                }`}
-                              >
-                                <Heart
-                                  className={`h-4 w-4 ${
-                                    isInWishlist(product.id)
-                                      ? "fill-current"
-                                      : ""
-                                  }`}
+                          <Link href={`/product/${product.slug || product.id}`}>
+                            <div className="w-full flex items-center justify-center">
+                              <div className="relative inline-block overflow-hidden">
+                                <img
+                                  src={getProductImage(product)}
+                                  alt={product.name}
+                                  className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
                                 />
-                              </button>
-                              {/* Color Palette */}
-                              {product.colors && product.colors.length > 1 && (
-                                <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  {product.colors
-                                    .slice(0, 4)
-                                    .map((color: string, idx: number) => (
-                                      <div
-                                        key={`${color}-${idx}`}
-                                        onClick={(e) =>
-                                          handleColorClick(product.id, color, e)
-                                        }
-                                        className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
-                                          selectedProductColors[product.id] ===
-                                          color
-                                            ? "border-white border-2 shadow-lg scale-110"
-                                            : "border-white/30 shadow-sm hover:scale-110"
-                                        }`}
-                                        style={{
-                                          backgroundColor: getColorHex(color),
-                                        }}
-                                        title={color}
-                                      />
-                                    ))}
-                                  {product.colors.length > 4 && (
-                                    <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
-                                      +{product.colors.length - 4}
+                                {product.isNew && (
+                                  <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                    NEW
+                                  </div>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleWishlistToggle(product);
+                                  }}
+                                  className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 ${
+                                    isInWishlist(product.id)
+                                      ? "bg-red-500 text-white"
+                                      : "bg-black/50 text-white hover:bg-red-500"
+                                  }`}
+                                >
+                                  <Heart
+                                    className={`h-4 w-4 ${
+                                      isInWishlist(product.id)
+                                        ? "fill-current"
+                                        : ""
+                                    }`}
+                                  />
+                                </button>
+                                {/* Color Palette */}
+                                {product.colors &&
+                                  product.colors.length > 1 && (
+                                    <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                      {product.colors
+                                        .slice(0, 4)
+                                        .map((color: string, idx: number) => (
+                                          <div
+                                            key={`${color}-${idx}`}
+                                            onClick={(e) =>
+                                              handleColorClick(
+                                                product.id,
+                                                color,
+                                                e
+                                              )
+                                            }
+                                            className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                              selectedProductColors[
+                                                product.id
+                                              ] === color
+                                                ? "border-white border-2 shadow-lg scale-110"
+                                                : "border-white/30 shadow-sm hover:scale-110"
+                                            }`}
+                                            style={{
+                                              backgroundColor:
+                                                getColorHex(color),
+                                            }}
+                                            title={color}
+                                          />
+                                        ))}
+                                      {product.colors.length > 4 && (
+                                        <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                                          +{product.colors.length - 4}
+                                        </div>
+                                      )}
                                     </div>
                                   )}
-                                </div>
-                              )}
+                              </div>
                             </div>
                           </Link>
                           <div className="p-3 sm:p-4 flex flex-col flex-grow">
                             <div className="flex-grow">
-                              <Link href={`/product/${product.id}`}>
+                              <Link
+                                href={`/product/${product.slug || product.id}`}
+                              >
                                 <div className="flex flex-col items-start mb-2">
                                   <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
                                     {product.name}
@@ -1431,13 +1457,13 @@ const ProductsPage = () => {
                           className="relative flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
                         >
                           <Link
-                            href={`/product/${product.id}`}
-                            className="md:w-1/4 h-48 md:h-auto overflow-hidden relative cursor-pointer"
+                            href={`/product/${product.slug || product.id}`}
+                            className="md:w-48 aspect-[3/4] md:aspect-auto md:h-48 overflow-hidden relative cursor-pointer bg-[#1E1E1E] flex items-center justify-center"
                           >
                             <img
                               src={getProductImage(product)}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                              className="w-full h-full object-contain group-hover:scale-110 transition-all duration-500"
                             />
                             {product.isNew && (
                               <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
@@ -1513,8 +1539,8 @@ const ProductsPage = () => {
                                 {product.category}
                               </span>
                             </div>
-                            <p className="text-gray-400 mb-4 flex-grow">
-                              {product.description ||
+                            <p className="text-gray-400 mb-4 flex-grow line-clamp-3">
+                              {stripHtml(product.description) ||
                                 `Premium quality ${product.category.toLowerCase()} featuring your favorite anime characters. Officially licensed merchandise with the best quality and authentic designs.`}
                             </p>
                             <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">

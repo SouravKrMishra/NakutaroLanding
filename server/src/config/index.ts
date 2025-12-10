@@ -10,7 +10,7 @@ export const config = {
       ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
       : process.env.NODE_ENV === "production"
       ? "https://animeindia.org"
-      : "*",
+      : "http://localhost:5173",
   },
   jwt: {
     secret: process.env.JWT_SECRET,

@@ -14,6 +14,18 @@ export const errorHandler = (
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 
+  // Only log non-operational errors (actual system errors)
+  // Operational errors (like invalid credentials) are expected business logic failures
+  // and shouldn't be logged as errors
+  if (!err.isOperational && statusCode >= 500) {
+    console.error(`Error: ${message}`, {
+      statusCode,
+      path: req.path,
+      method: req.method,
+      stack: err.stack,
+    });
+  }
+
   res.status(statusCode).json({
     success: false,
     error: {

@@ -177,8 +177,53 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+// Slug generation function
+function generateSlug(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars except hyphens
+    .replace(/\-\-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-+/, "") // Trim hyphens from start
+    .replace(/-+$/, ""); // Trim hyphens from end
+}
+
+// Pre-save hook to generate slug from name if not provided
+productSchema.pre("save", async function (next) {
+  // Always generate slug if it doesn't exist, is empty, or name has changed
+  if (!this.slug || this.slug.trim() === "" || this.isModified("name")) {
+    let baseSlug = generateSlug(this.name);
+
+    // Ensure slug is not empty
+    if (!baseSlug || baseSlug.trim() === "") {
+      baseSlug = `product-${this._id}`;
+    }
+
+    let slug = baseSlug;
+    let counter = 1;
+
+    // Check if slug already exists (excluding current document if updating)
+    const query: any = { slug };
+    if (!this.isNew) {
+      query._id = { $ne: this._id };
+    }
+
+    while (await mongoose.model("Product").findOne(query)) {
+      slug = `${baseSlug}-${counter}`;
+      query.slug = slug;
+      counter++;
+    }
+
+    this.slug = slug;
+  }
+  next();
+});
+
 // Index for search
 productSchema.index({ name: "text", description: "text", tags: "text" });
 productSchema.index({ category: 1, status: 1 });
+productSchema.index({ slug: 1 }); // Index for slug lookups
 
 export default mongoose.model("Product", productSchema);

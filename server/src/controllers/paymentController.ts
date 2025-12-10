@@ -9,6 +9,7 @@ import {
   PhonePeException,
 } from "pg-sdk-node";
 import { reduceStockForOrder } from "../services/stockService.js";
+import { isPhonepeEnabled } from "../services/paymentSettingsService.js";
 
 // Helper to update order and transaction status
 const updatePaymentStatus = async (
@@ -49,6 +50,9 @@ const updatePaymentStatus = async (
   if (transaction.orderId) {
     const order = await Order.findById(transaction.orderId);
     if (order) {
+      const previousStatus = order.status;
+      const previousPaymentStatus = order.paymentStatus;
+
       if (status === "SUCCESS") {
         order.paymentStatus = "COMPLETED";
         order.status = "PAID";
@@ -64,16 +68,35 @@ const updatePaymentStatus = async (
         } catch (err) {
           console.error("Failed to clear cart:", err);
         }
+
+        // Reduce stock for successful payment
+        try {
+          await reduceStockForOrder(order._id);
+          console.log(`Stock reduced for order ${order._id}`);
+        } catch (err) {
+          console.error(`Failed to reduce stock for order ${order._id}:`, err);
+        }
       } else if (status === "FAILED") {
         order.paymentStatus = "FAILED";
         order.status = "PENDING_PAYMENT";
       }
+
       await order.save();
-      if (status === "SUCCESS") {
-        await reduceStockForOrder(order._id);
-      }
-      console.log(`Order ${order._id} updated to ${order.status}`);
+      console.log(
+        `Order ${order._id} status updated: ${previousStatus} -> ${order.status}`
+      );
+      console.log(
+        `Order ${order._id} paymentStatus updated: ${previousPaymentStatus} -> ${order.paymentStatus}`
+      );
+    } else {
+      console.error(
+        `Order not found for transaction ${merchantTransactionId}, orderId: ${transaction.orderId}`
+      );
     }
+  } else {
+    console.warn(
+      `Transaction ${merchantTransactionId} has no associated orderId`
+    );
   }
 
   return { transaction, status };
@@ -81,6 +104,15 @@ const updatePaymentStatus = async (
 
 export const initiatePhonepePayment = async (req: Request, res: Response) => {
   try {
+    // Check if PhonePe is enabled in settings
+    const phonepeEnabled = await isPhonepeEnabled();
+    if (!phonepeEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: "PhonePe payment gateway is currently disabled",
+      });
+    }
+
     if (!hasPhonepeCredentials || !phonepeClient) {
       return res.status(400).json({
         success: false,
@@ -157,7 +189,9 @@ export const initiatePhonepePayment = async (req: Request, res: Response) => {
 
 export const phonepeRedirect = async (req: Request, res: Response) => {
   try {
-    console.log("PhonePe Redirect:", req.method, req.query, req.body);
+    console.log("PhonePe Redirect Handler Called:", req.method, req.url);
+    console.log("Query params:", req.query);
+    console.log("Body:", req.body);
 
     // 1. Extract Data
     const merchantTransactionId =
@@ -175,29 +209,14 @@ export const phonepeRedirect = async (req: Request, res: Response) => {
     }
 
     // 2. Determine Status
+    // Priority: API Check (most reliable) > POST body > Query params
     let state = "PENDING";
     let code = "";
     let message = "";
     let paymentDetails = null;
 
-    // Method A: Trust Request Data (Fastest, but verify logic ideally should use API)
-    // PhonePe sends POST with code/checksum usually
-    if (req.method === "POST" && req.body.code) {
-      code = req.body.code;
-      state = code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED";
-      message = req.body.message || "";
-      paymentDetails = req.body;
-    }
-    // Method B: Trust Query Params (Fallback)
-    else if (req.query.code) {
-      code = req.query.code as string;
-      state = code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED";
-      message = (req.query.message as string) || "";
-      paymentDetails = req.query;
-    }
-
-    // Method C: Server-to-Server Check (Most Secure, Authoritative)
-    // We try this to confirm, but if it fails (e.g. network/env mismatch), we might rely on A/B if available
+    // Method 1: Server-to-Server API Check (Most Secure, Authoritative)
+    // This is the most reliable way to check payment status
     try {
       console.log(`Checking API status for ${merchantTransactionId}...`);
       // Small delay to ensure PhonePe backend is consistent
@@ -206,21 +225,73 @@ export const phonepeRedirect = async (req: Request, res: Response) => {
       const statusResponse = await phonepeClient.getOrderStatus(
         merchantTransactionId
       );
-      console.log("API Status Response:", statusResponse);
+      console.log(
+        "API Status Response:",
+        JSON.stringify(statusResponse, null, 2)
+      );
 
-      if (statusResponse.state) {
-        state = statusResponse.state;
+      if (statusResponse && statusResponse.state) {
+        // PhonePe API returns state as "PAYMENT_SUCCESS", "PAYMENT_PENDING", "PAYMENT_ERROR", etc.
+        // Map to our internal state format
+        const apiState = statusResponse.state.toUpperCase();
+        if (
+          apiState === "PAYMENT_SUCCESS" ||
+          apiState === "COMPLETED" ||
+          apiState === "SUCCESS"
+        ) {
+          state = "COMPLETED";
+        } else if (
+          apiState === "PAYMENT_ERROR" ||
+          apiState === "PAYMENT_FAILURE" ||
+          apiState === "FAILED"
+        ) {
+          state = "FAILED";
+        } else {
+          state = "PENDING";
+        }
+
         paymentDetails = statusResponse;
+        // Extract code and message from API response if available
+        // Use type assertion since PhonePe SDK types may not include all fields
+        const responseData = statusResponse as any;
+        if (responseData.code) {
+          code = responseData.code;
+        }
+        if (responseData.message) {
+          message = responseData.message;
+        }
+        console.log(
+          `Payment status from API: ${statusResponse.state} -> mapped to ${state}`
+        );
+      } else {
+        console.warn("API response missing state field:", statusResponse);
       }
     } catch (apiError: any) {
       console.error("API Status Check Failed:", apiError.message);
-      // If API failed but we have data from A/B, we proceed with that (with warning)
-      if (!code && !paymentDetails) {
-        return res.redirect(
-          `/dashboard?error=VerificationFailed&message=${encodeURIComponent(
-            apiError.message
-          )}`
+      console.error("API Error Details:", apiError);
+
+      // Fallback to request data if API fails
+      // Method 2: Trust POST Request Data
+      if (req.method === "POST" && req.body.code) {
+        code = req.body.code;
+        state = code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED";
+        message = req.body.message || "";
+        paymentDetails = req.body;
+        console.log(`Using POST body data: state=${state}, code=${code}`);
+      }
+      // Method 3: Trust Query Params (Last resort)
+      else if (req.query.code) {
+        code = req.query.code as string;
+        state = code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED";
+        message = (req.query.message as string) || "";
+        paymentDetails = req.query;
+        console.log(`Using query params: state=${state}, code=${code}`);
+      } else {
+        // If API failed and no fallback data, we can't determine status
+        console.error(
+          "Cannot determine payment status: API failed and no fallback data"
         );
+        // Still proceed to update with PENDING status, but log the issue
       }
     }
 
