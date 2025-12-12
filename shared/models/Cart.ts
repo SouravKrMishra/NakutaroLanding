@@ -5,6 +5,10 @@ const cartItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  slug: {
+    type: String,
+    default: null,
+  },
   name: {
     type: String,
     required: true,

@@ -108,6 +108,7 @@ export const addToCart = async (
 
     const {
       productId,
+      slug,
       name,
       price,
       image,
@@ -146,6 +147,10 @@ export const addToCart = async (
     if (existingItemIndex !== -1) {
       // Update quantity of existing item
       cart.items[existingItemIndex].quantity += quantity;
+      // Update slug if provided
+      if (slug) {
+        cart.items[existingItemIndex].slug = slug;
+      }
       // Also update variants if provided (in case they changed)
       if (variants && Object.keys(variants).length > 0) {
         cart.items[existingItemIndex].variants = new Map<string, string>(
@@ -157,6 +162,7 @@ export const addToCart = async (
       // Add new item - use Mongoose's create method for subdocuments
       const newItem = {
         productId,
+        slug: slug || null,
         name,
         price,
         image,

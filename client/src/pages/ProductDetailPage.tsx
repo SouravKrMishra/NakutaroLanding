@@ -1313,6 +1313,7 @@ const ProductDetailPage = () => {
         {
           id: cartItemId,
           productId: product.id, // Keep original product ID for reference
+          productSlug: product.slug,
           slug: product.slug,
           name: product.name,
           price: product.price,

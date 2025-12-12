@@ -202,17 +202,14 @@ class ProductService {
     // Try to find by slug first, then by ID
     // Check if it's a valid MongoDB ObjectId (24 hex characters)
     const isObjectId = /^[0-9a-fA-F]{24}$/.test(idOrSlug);
-    
+
     const query: any = {
       isDeleted: { $ne: true }, // Exclude soft-deleted products
     };
 
     if (isObjectId) {
       // If it looks like an ObjectId, try both ID and slug
-      query.$or = [
-        { _id: idOrSlug },
-        { slug: idOrSlug },
-      ];
+      query.$or = [{ _id: idOrSlug }, { slug: idOrSlug }];
     } else {
       // If it's not an ObjectId, assume it's a slug
       query.slug = idOrSlug;

@@ -224,6 +224,5 @@ productSchema.pre("save", async function (next) {
 // Index for search
 productSchema.index({ name: "text", description: "text", tags: "text" });
 productSchema.index({ category: 1, status: 1 });
-productSchema.index({ slug: 1 }); // Index for slug lookups
 
 export default mongoose.model("Product", productSchema);

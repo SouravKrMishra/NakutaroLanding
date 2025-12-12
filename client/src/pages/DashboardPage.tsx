@@ -130,7 +130,45 @@ const DashboardPage = () => {
 
         const orders = response.data.orders || [];
 
-        // Get the 4 most recent orders for display
+        // Helper function to check if an order is completed/paid (not pending or failed)
+        const isOrderCompleted = (order: any): boolean => {
+          const status = order.status?.toLowerCase() || "";
+          const paymentStatus = order.paymentStatus?.toUpperCase() || "";
+
+          // Exclude cancelled orders
+          if (status === "cancelled") {
+            return false;
+          }
+
+          // Exclude orders with pending or failed payment status
+          if (paymentStatus === "PENDING" || paymentStatus === "FAILED") {
+            return false;
+          }
+
+          // Exclude orders with pending payment status
+          if (
+            status === "pending" ||
+            status === "pending_payment" ||
+            status === "payment_failed"
+          ) {
+            return false;
+          }
+
+          // Include orders that are completed/paid/confirmed
+          return (
+            paymentStatus === "COMPLETED" ||
+            status === "processing" ||
+            status === "shipped" ||
+            status === "delivered" ||
+            status === "paid" ||
+            status === "confirmed"
+          );
+        };
+
+        // Filter out pending/failed orders for analytics
+        const completedOrders = orders.filter(isOrderCompleted);
+
+        // Get the 4 most recent orders for display (all orders, not just completed)
         const recentOrdersData = orders.slice(0, 4).map((order: any) => ({
           id: order.orderNumber,
           customer: `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}`,
@@ -144,18 +182,18 @@ const DashboardPage = () => {
 
         setRecentOrders(recentOrdersData);
 
-        // Calculate analytics
-        if (orders.length > 0) {
-          const totalSpent = orders.reduce(
+        // Calculate analytics using only completed orders
+        if (completedOrders.length > 0) {
+          const totalSpent = completedOrders.reduce(
             (sum: number, order: any) => sum + order.total,
             0
           );
-          const averageOrderValue = totalSpent / orders.length;
+          const averageOrderValue = totalSpent / completedOrders.length;
 
           // Calculate monthly spending (last 30 days)
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const recentOrders = orders.filter(
+          const recentOrders = completedOrders.filter(
             (order: any) => new Date(order.orderDate) >= thirtyDaysAgo
           );
           const monthlySpending = recentOrders.reduce(
@@ -166,7 +204,7 @@ const DashboardPage = () => {
           // Calculate previous month spending (30-60 days ago)
           const sixtyDaysAgo = new Date();
           sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-          const previousMonthOrders = orders.filter(
+          const previousMonthOrders = completedOrders.filter(
             (order: any) =>
               new Date(order.orderDate) >= sixtyDaysAgo &&
               new Date(order.orderDate) < thirtyDaysAgo
@@ -187,11 +225,12 @@ const DashboardPage = () => {
             monthlyChange = 100; // New spending
           }
 
-          // Find customer since date (earliest order)
-          const earliestOrder = orders.reduce((earliest: any, order: any) =>
-            new Date(order.orderDate) < new Date(earliest.orderDate)
-              ? order
-              : earliest
+          // Find customer since date (earliest completed order)
+          const earliestOrder = completedOrders.reduce(
+            (earliest: any, order: any) =>
+              new Date(order.orderDate) < new Date(earliest.orderDate)
+                ? order
+                : earliest
           );
 
           // Calculate months since first order
@@ -210,7 +249,7 @@ const DashboardPage = () => {
           else if (totalSpent >= 50000) loyaltyTier = "Silver";
 
           // Calculate next order due (based on average order frequency)
-          const orderDates = orders
+          const orderDates = completedOrders
             .map((order: any) => new Date(order.orderDate))
             .sort((a: Date, b: Date) => b.getTime() - a.getTime());
           let nextOrderDue = null;
@@ -230,9 +269,9 @@ const DashboardPage = () => {
             });
           }
 
-          // Get most ordered items for recommendation
+          // Get most ordered items for recommendation (from completed orders only)
           const itemCounts: { [key: string]: number } = {};
-          orders.forEach((order: any) => {
+          completedOrders.forEach((order: any) => {
             order.items.forEach((item: any) => {
               const key = item.name;
               itemCounts[key] = (itemCounts[key] || 0) + item.quantity;
@@ -247,7 +286,7 @@ const DashboardPage = () => {
 
           setOrderAnalytics({
             monthlySpending: Math.round(monthlySpending),
-            totalOrders: orders.length,
+            totalOrders: completedOrders.length,
             averageOrderValue: Math.round(averageOrderValue),
             customerSince: new Date(earliestOrder.orderDate).toLocaleDateString(
               "en-US",
@@ -1080,7 +1119,9 @@ const DashboardPage = () => {
                               className="flex-1 border-accent text-accent hover:bg-accent/20 hover:text-accent text-xs"
                               disabled={!product.inStock}
                               onClick={() =>
-                                setLocation(`/product/${product.slug || product.id}`)
+                                setLocation(
+                                  `/product/${product.slug || product.id}`
+                                )
                               }
                             >
                               <Package className="w-3 h-3 mr-1" />

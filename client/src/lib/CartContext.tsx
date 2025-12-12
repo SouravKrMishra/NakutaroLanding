@@ -12,7 +12,8 @@ import { buildApiUrl } from "./api.ts";
 interface CartItem {
   id: string | number; // Changed to string to support variant-based IDs
   productId?: string | number; // Original product ID for reference
-  slug?: string;
+  slug?: string | null;
+  productSlug?: string | null;
   name: string;
   price: string;
   image: string;
@@ -194,7 +195,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       const customEvent = event as CustomEvent;
       const { userId, timestamp } = customEvent.detail;
       if (isAuthenticated && user && user.id === userId) {
-        console.log("Login event detected, refreshing cart...");
         // Call refreshCart function directly
         if (isAuthenticated && user) {
           try {
@@ -208,12 +208,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             const cartItems = response.data.cart.items || [];
             const transformedItems = cartItems.map((item: any) => ({
               id: String(item.productId),
+              productId: String(item.productId),
+              slug: item.slug || null,
+              productSlug: item.slug || null,
               name: item.name,
               price: item.price,
               image: item.image,
               category: item.category,
               quantity: item.quantity,
               inStock: item.inStock,
+              variants:
+                item.variants instanceof Map
+                  ? Object.fromEntries(item.variants)
+                  : item.variants || {},
               lastModified: item.lastModified || Date.now(),
             }));
 
@@ -222,14 +229,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               `cart_${user.id}`,
               JSON.stringify(transformedItems)
             );
-            console.log(
-              "Cart refreshed from login event:",
-              transformedItems.length,
-              "items"
-            );
-          } catch (error) {
-            console.error("Failed to refresh cart from login event:", error);
-          }
+          } catch (error) {}
         }
       }
     };
@@ -246,7 +246,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isAuthenticated && user && !authLoading) {
       const newSessionId = `${user.id}_${Date.now()}`;
       setLoginSessionId(newSessionId);
-      console.log("New login session detected, will refresh cart");
     } else if (!isAuthenticated) {
       setLoginSessionId("");
     }
@@ -272,7 +271,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!authLoading) {
         if (isAuthenticated && user) {
           try {
-            console.log("Loading cart from database for user:", user.id);
             const token = localStorage.getItem("authToken");
             const response = await axios.get(buildApiUrl("/api/cart"), {
               headers: {
@@ -284,6 +282,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             // Transform items from backend format (productId) to frontend format (id)
             const transformedItems = cartItems.map((item: any) => ({
               id: String(item.productId), // Ensure ID is string
+              productId: String(item.productId),
+              slug: item.slug || null,
+              productSlug: item.slug || null,
               name: item.name,
               price: item.price,
               image: item.image,
@@ -302,32 +303,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               `cart_${user.id}`,
               JSON.stringify(transformedItems)
             );
-            console.log(
-              "Cart loaded from database:",
-              transformedItems.length,
-              "items"
-            );
             setIsCartLoaded(true);
-            console.log(
-              "Cart loaded from database: Set isCartLoaded to true, items:",
-              transformedItems.length
-            );
           } catch (error) {
-            console.error("Failed to load cart from database:", error);
             // Fallback to localStorage if database fails
             const savedCart = localStorage.getItem(`cart_${user.id}`);
             if (savedCart) {
               try {
                 const items = JSON.parse(savedCart);
                 dispatch({ type: "LOAD_CART", payload: items });
-                console.log(
-                  "Cart loaded from localStorage fallback:",
-                  items.length,
-                  "items"
-                );
                 setIsCartLoaded(true);
               } catch (localError) {
-                console.error("Failed to parse localStorage cart:", localError);
                 dispatch({ type: "CLEAR_CART" });
                 setIsCartLoaded(true);
               }
@@ -361,7 +346,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           const token = localStorage.getItem("authToken");
           // Transform items to match backend schema (id -> productId)
           const transformedItems = state.items.map((item) => ({
-            productId: String(item.id), // Ensure ID is string
+            productId: String(item.productId || item.id), // Ensure ID is string
+            slug: item.slug || item.productSlug || null,
             name: item.name,
             price: item.price,
             image: item.image,
@@ -390,9 +376,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } else if (isAuthenticated && user && state.items.length === 0) {
         // Don't clear cart in database on initial load - only clear when user explicitly clears
         // The clearCart function handles explicit clearing
-        console.log(
-          "Cart sync: Cart is empty, skipping database clear to avoid page load issues"
-        );
       }
     };
 
@@ -426,7 +409,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       await axios.post(
         buildApiUrl("/api/cart"),
         {
-          productId: String(item.id), // Ensure ID is string
+          productId: String(item.productId || item.id), // Ensure ID is string
+          slug: item.slug || item.productSlug || null,
           name: item.name,
           price: item.price,
           image: item.image,
@@ -541,6 +525,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       // Transform items from backend format (productId) to frontend format (id)
       const transformedItems = cartItems.map((item: any) => ({
         id: String(item.productId), // Ensure ID is string
+        productId: String(item.productId),
+        slug: item.slug || null,
+        productSlug: item.slug || null,
         name: item.name,
         price: item.price,
         image: item.image,
@@ -556,7 +543,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       // Update localStorage with fresh data
       localStorage.setItem(`cart_${user.id}`, JSON.stringify(transformedItems));
     } catch (error) {
-      console.error("Failed to refresh cart:", error);
+      // Failed to refresh cart
     }
   };
 

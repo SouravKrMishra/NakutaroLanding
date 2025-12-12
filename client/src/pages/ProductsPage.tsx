@@ -415,6 +415,9 @@ const ProductsPage = () => {
     try {
       await addToCart({
         id: product.id,
+        productId: product.id,
+        productSlug: product.slug,
+        slug: product.slug,
         name: product.name,
         price: product.price,
         image: product.image,
@@ -493,6 +496,9 @@ const ProductsPage = () => {
 
       await addToCart({
         id: variantId,
+        productId: product.id,
+        productSlug: product.slug,
+        slug: product.slug,
         name: product.name,
         price: product.price,
         image: product.image,
@@ -908,10 +914,10 @@ const ProductsPage = () => {
                             e.preventDefault();
                             handleWishlistToggle(product);
                           }}
-                          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 ${
+                          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${
                             isInWishlist(product.id)
-                              ? "bg-red-500 text-white"
-                              : "bg-black/50 text-white hover:bg-red-500"
+                              ? "opacity-100 bg-red-500 text-white"
+                              : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
                           }`}
                         >
                           <Heart
@@ -1230,10 +1236,10 @@ const ProductsPage = () => {
                                     e.preventDefault();
                                     handleWishlistToggle(product);
                                   }}
-                                  className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 ${
+                                  className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${
                                     isInWishlist(product.id)
-                                      ? "bg-red-500 text-white"
-                                      : "bg-black/50 text-white hover:bg-red-500"
+                                      ? "opacity-100 bg-red-500 text-white"
+                                      : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
                                   }`}
                                 >
                                   <Heart
@@ -1247,7 +1253,7 @@ const ProductsPage = () => {
                                 {/* Color Palette */}
                                 {product.colors &&
                                   product.colors.length > 1 && (
-                                    <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                    <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300 z-10">
                                       {product.colors
                                         .slice(0, 4)
                                         .map((color: string, idx: number) => (
@@ -1475,10 +1481,10 @@ const ProductsPage = () => {
                                 e.preventDefault();
                                 handleWishlistToggle(product);
                               }}
-                              className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+                              className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 ${
                                 isInWishlist(product.id)
-                                  ? "bg-red-500 text-white"
-                                  : "bg-black/50 text-white hover:bg-red-500"
+                                  ? "opacity-100 bg-red-500 text-white"
+                                  : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
                               }`}
                             >
                               <Heart
@@ -1489,7 +1495,7 @@ const ProductsPage = () => {
                             </button>
                             {/* Color Palette */}
                             {product.colors && product.colors.length > 1 && (
-                              <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300">
                                 {product.colors
                                   .slice(0, 4)
                                   .map((color: string, idx: number) => (

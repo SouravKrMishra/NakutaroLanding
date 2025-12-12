@@ -453,7 +453,12 @@ const CartPage = () => {
                           <div className="flex-1">
                             <h3 className="font-medium text-white hover:text-accent transition-colors cursor-pointer">
                               <Link
-                                href={`/product/${item.productId || item.id}`}
+                                href={`/product/${
+                                  item.productSlug ||
+                                  item.slug ||
+                                  item.productId ||
+                                  item.id
+                                }`}
                               >
                                 {item.name}
                               </Link>
