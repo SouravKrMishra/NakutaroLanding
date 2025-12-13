@@ -78,7 +78,7 @@ const updatePaymentStatus = async (
         }
       } else if (status === "FAILED") {
         order.paymentStatus = "FAILED";
-        order.status = "PENDING_PAYMENT";
+        order.status = "PAYMENT_FAILED";
       }
 
       await order.save();
@@ -353,9 +353,29 @@ export const phonepeCallback = async (req: Request, res: Response) => {
     console.log("Decoded Callback Payload:", payload);
 
     const merchantTransactionId = payload.data.merchantTransactionId;
-    const state =
-      payload.data.state ||
-      (payload.code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED");
+    
+    // Map PhonePe states to our internal format
+    let state = "PENDING";
+    if (payload.data.state) {
+      const phonepeState = payload.data.state.toUpperCase();
+      if (
+        phonepeState === "PAYMENT_SUCCESS" ||
+        phonepeState === "COMPLETED" ||
+        phonepeState === "SUCCESS"
+      ) {
+        state = "COMPLETED";
+      } else if (
+        phonepeState === "PAYMENT_ERROR" ||
+        phonepeState === "PAYMENT_FAILURE" ||
+        phonepeState === "FAILED" ||
+        phonepeState === "PAYMENT_FAILED"
+      ) {
+        state = "FAILED";
+      }
+    } else if (payload.code) {
+      // Fallback to code if state is not present
+      state = payload.code === "PAYMENT_SUCCESS" ? "COMPLETED" : "FAILED";
+    }
 
     await updatePaymentStatus(
       merchantTransactionId,

@@ -168,6 +168,16 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
 });
 
 // Generate order number
@@ -193,5 +203,6 @@ orderSchema.pre("save", async function (next) {
 // Index for efficient queries
 orderSchema.index({ userId: 1, orderDate: -1 });
 orderSchema.index({ status: 1 });
+orderSchema.index({ isDeleted: 1 });
 
 export const Order = mongoose.model("Order", orderSchema);
