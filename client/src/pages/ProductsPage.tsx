@@ -559,6 +559,19 @@ const ProductsPage = () => {
     return product.image;
   };
 
+  // Preload all color images for a product
+  const preloadProductColorImages = (product: Product) => {
+    if (!product.colors || product.colors.length === 0) return;
+
+    product.colors.forEach((color: string) => {
+      const imageUrl = getImageForColor(product, color);
+      if (imageUrl) {
+        const img = new Image();
+        img.src = imageUrl;
+      }
+    });
+  };
+
   const debouncedPriceRange = useDebounce(committedPriceRange, 1000);
   const debouncedRatings = useDebounce(ratings, 1000);
 
@@ -902,6 +915,7 @@ const ProductsPage = () => {
                         <img
                           src={getProductImage(product)}
                           alt={product.name}
+                          loading="lazy"
                           className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
                         />
                         {product.isNew && (
@@ -928,7 +942,12 @@ const ProductsPage = () => {
                         </button>
                         {/* Color Palette */}
                         {product.colors && product.colors.length > 1 && (
-                          <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10 z-10">
+                          <div
+                            className="absolute bottom-2 right-2 flex gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1.5 border border-white/10 z-10"
+                            onMouseEnter={() =>
+                              preloadProductColorImages(product)
+                            }
+                          >
                             {product.colors
                               .slice(0, 4)
                               .map((color: string, idx: number) => (
@@ -1224,6 +1243,7 @@ const ProductsPage = () => {
                                 <img
                                   src={getProductImage(product)}
                                   alt={product.name}
+                                  loading="lazy"
                                   className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
                                 />
                                 {product.isNew && (
@@ -1253,7 +1273,12 @@ const ProductsPage = () => {
                                 {/* Color Palette */}
                                 {product.colors &&
                                   product.colors.length > 1 && (
-                                    <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300 z-10">
+                                    <div
+                                      className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300 z-10"
+                                      onMouseEnter={() =>
+                                        preloadProductColorImages(product)
+                                      }
+                                    >
                                       {product.colors
                                         .slice(0, 4)
                                         .map((color: string, idx: number) => (
@@ -1469,6 +1494,7 @@ const ProductsPage = () => {
                             <img
                               src={getProductImage(product)}
                               alt={product.name}
+                              loading="lazy"
                               className="w-full h-full object-contain group-hover:scale-110 transition-all duration-500"
                             />
                             {product.isNew && (
@@ -1495,7 +1521,12 @@ const ProductsPage = () => {
                             </button>
                             {/* Color Palette */}
                             {product.colors && product.colors.length > 1 && (
-                              <div className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300">
+                              <div
+                                className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300"
+                                onMouseEnter={() =>
+                                  preloadProductColorImages(product)
+                                }
+                              >
                                 {product.colors
                                   .slice(0, 4)
                                   .map((color: string, idx: number) => (

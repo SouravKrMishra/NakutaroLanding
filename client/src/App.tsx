@@ -28,6 +28,7 @@ import OrderSuccessPage from "@/pages/OrderSuccessPage.tsx";
 import OrdersPage from "@/pages/OrdersPage.tsx";
 import TermsOfServicePage from "@/pages/TermsOfServicePage.tsx";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage.tsx";
+import ShippingPolicyPage from "@/pages/ShippingPolicyPage.tsx";
 
 // Shared components
 import Header from "./components/Header.js";
@@ -83,6 +84,10 @@ function App() {
                       <Route
                         path="/privacy-policy"
                         component={PrivacyPolicyPage}
+                      />
+                      <Route
+                        path="/shipping-policy"
+                        component={ShippingPolicyPage}
                       />
                       <Route path="/login" component={LoginPage} />
                       <Route path="/register" component={RegisterPage} />

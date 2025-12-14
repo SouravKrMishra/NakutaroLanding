@@ -20,14 +20,18 @@ const Footer = () => {
     { href: "/products#faq", label: "FAQs" },
   ];
 
-  const serviceLinks = [
-    { href: "/products", label: "Action Figures" },
-    { href: "/products", label: "Anime Apparel" },
-    { href: "/products", label: "Manga & Books" },
-    { href: "/products", label: "Collectibles" },
-    { href: "/products", label: "Accessories" },
-    { href: "/products", label: "Special Editions" },
+  const serviceCategories = [
+    "Action Figures",
+    "Hoodies",
+    "T-Shirts",
+    "Accessories",
+    "Wigs",
   ];
+
+  const serviceLinks = serviceCategories.map((label) => ({
+    label,
+    href: `/products?categories=${encodeURIComponent(label)}`,
+  }));
 
   const socialLinks = [
     { icon: <Twitter className="h-5 w-5" />, href: "#", target: "_blank" },
@@ -144,7 +148,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-5">Services</h4>
+            <h4 className="text-white font-semibold mb-5">Categories</h4>
             <ul className="space-y-3">
               {serviceLinks.map((link, index) => (
                 <li key={index}>
@@ -250,6 +254,12 @@ const Footer = () => {
                 className="text-sm mr-4 hover:text-accent transition duration-300"
               >
                 Terms of Service
+              </Link>
+              <Link
+                href="/shipping-policy"
+                className="text-sm mr-4 hover:text-accent transition duration-300"
+              >
+                Shipping Policy
               </Link>
               <a
                 href="#"

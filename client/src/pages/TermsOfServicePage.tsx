@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, cloneElement } from "react";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import {
@@ -394,10 +394,11 @@ const TermsOfServicePage = () => {
                   style={{
                     backgroundColor: "var(--theme-color-hex)",
                     opacity: 0.8,
-                    color: "#fff",
                   }}
                 >
-                  {section.icon}
+                  {cloneElement(section.icon, {
+                    className: "w-6 h-6 text-white stroke-white",
+                  })}
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white flex-1">
                   {section.title}

@@ -60,15 +60,17 @@ const Header = () => {
             >
               Home
             </Link>
-            {/* External Products link */}
-            <a
-              href="https://shop.animeindia.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition duration-200 text-gray-300 hover:text-white font-medium"
+            <Link
+              key="nav-products"
+              href="/products"
+              className={`transition duration-200 ${
+                location.startsWith("/products")
+                  ? "text-white font-medium"
+                  : "text-gray-300 hover:text-white"
+              }`}
             >
               Products
-            </a>
+            </Link>
             <Link
               key="nav-events"
               href="/events"
@@ -117,7 +119,7 @@ const Header = () => {
                 <BarChart3 className="w-4 h-4" />
                 <span>Dashboard</span>
               </Link>
-            ) : location === "/business" || location === "/products" ? (
+            ) : location === "/business" || location.startsWith("/products") ? (
               <div className="flex items-center space-x-2">
                 <Link
                   href={`/login?from=${location}`}
@@ -194,16 +196,18 @@ const Header = () => {
               >
                 Home
               </Link>
-              {/* External Products link */}
-              <a
-                href="https://shop.animeindia.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition duration-200 text-gray-300 hover:text-white font-medium text-center"
+              <Link
+                key="nav-products"
+                href="/products"
+                className={`transition duration-200 ${
+                  location.startsWith("/products")
+                    ? "text-white font-medium"
+                    : "text-gray-300 hover:text-white"
+                }`}
                 onClick={closeMenu}
               >
                 Products
-              </a>
+              </Link>
               <Link
                 key="nav-events"
                 href="/events"
@@ -237,7 +241,8 @@ const Header = () => {
                   <BarChart3 className="w-4 h-4" />
                   <span>Dashboard</span>
                 </Link>
-              ) : location === "/business" || location === "/products" ? (
+              ) : location === "/business" ||
+                location.startsWith("/products") ? (
                 <div className="flex flex-col space-y-2">
                   <Link
                     href={`/login?from=${location}`}

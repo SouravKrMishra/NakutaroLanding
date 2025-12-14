@@ -172,7 +172,6 @@ const orderSchema = new mongoose.Schema({
   isDeleted: {
     type: Boolean,
     default: false,
-    index: true,
   },
   deletedAt: {
     type: Date,
