@@ -723,6 +723,18 @@ const RegisterPage = () => {
                   Sign in here
                 </Button>
               </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Shopping as an individual?{" "}
+                <Button
+                  variant="link"
+                  className="text-accent hover:text-accent/80 p-0 h-auto"
+                  onClick={() =>
+                    setLocation(`/register/individual?from=${getPreviousPage()}`)
+                  }
+                >
+                  Create a customer account
+                </Button>
+              </p>
             </div>
           </CardContent>
         </Card>

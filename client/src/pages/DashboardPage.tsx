@@ -30,6 +30,7 @@ import {
   ShoppingCart,
   Star,
   ArrowRight,
+  User,
 } from "lucide-react";
 
 const DashboardPage = () => {
@@ -40,6 +41,34 @@ const DashboardPage = () => {
     removeFromWishlist,
     loading: wishlistLoading,
   } = useWishlist();
+  // Get userType - check both user.userType and fallback to checking if it's not business
+  const userType = (user?.userType || "").toLowerCase();
+  // If userType is explicitly "individual", use that. Otherwise, if userType is missing or empty,
+  // check if user has business fields - if not, treat as individual
+  const isIndividual =
+    userType === "individual" ||
+    (!userType && user && !user.companyName && !user.businessType);
+
+  // Debug logging - check user data
+  React.useEffect(() => {
+    if (user) {
+      console.log("Dashboard Debug:", {
+        user,
+        userType: user.userType,
+        userTypeLower: userType,
+        isIndividual,
+        hasUser: !!user,
+        allUserKeys: Object.keys(user),
+      });
+    }
+  }, [user, userType, isIndividual]);
+
+  const analyticsTitle = isIndividual
+    ? "Shopping Insights"
+    : "Inventory Analytics";
+  const analyticsDescription = isIndividual
+    ? "Monitor your personal spend and shopping patterns"
+    : "Track your anime figure inventory and performance";
 
   // State for recommendations
   const [productRecommendations, setProductRecommendations] = React.useState<
@@ -62,7 +91,7 @@ const DashboardPage = () => {
     totalOrders: 0,
     averageOrderValue: 0,
     customerSince: null,
-    loyaltyTier: "Bronze",
+    loyaltyTier: isIndividual ? "" : "Bronze",
     nextOrderDue: null,
     recommendedItems: "",
     monthlyChange: 0,
@@ -113,6 +142,12 @@ const DashboardPage = () => {
   React.useEffect(() => {
     const fetchOrdersAndAnalytics = async () => {
       if (!user) return;
+
+      // Determine user type for this effect
+      const currentUserType = (user?.userType || "").toLowerCase();
+      const isIndividualUser =
+        currentUserType === "individual" ||
+        (!currentUserType && !user.companyName && !user.businessType);
 
       setOrdersLoading(true);
       setAnalyticsLoading(true);
@@ -241,12 +276,14 @@ const DashboardPage = () => {
               (currentDate.getMonth() - firstOrderDate.getMonth())
           );
 
-          // Determine loyalty tier based on total spent
+          // Determine loyalty tier based on total spent (only for business users)
           let loyaltyTier = "Bronze";
-          if (totalSpent >= 1000000) loyaltyTier = "Diamond";
-          else if (totalSpent >= 500000) loyaltyTier = "Platinum";
-          else if (totalSpent >= 200000) loyaltyTier = "Gold";
-          else if (totalSpent >= 50000) loyaltyTier = "Silver";
+          if (!isIndividualUser) {
+            if (totalSpent >= 1000000) loyaltyTier = "Diamond";
+            else if (totalSpent >= 500000) loyaltyTier = "Platinum";
+            else if (totalSpent >= 200000) loyaltyTier = "Gold";
+            else if (totalSpent >= 50000) loyaltyTier = "Silver";
+          }
 
           // Calculate next order due (based on average order frequency)
           const orderDates = completedOrders
@@ -305,7 +342,7 @@ const DashboardPage = () => {
             totalOrders: 0,
             averageOrderValue: 0,
             customerSince: "New Customer",
-            loyaltyTier: "Bronze",
+            loyaltyTier: isIndividualUser ? "" : "Bronze",
             nextOrderDue: null,
             recommendedItems: "Start shopping to get recommendations",
             monthlyChange: 0,
@@ -317,12 +354,17 @@ const DashboardPage = () => {
         setAnalyticsError("Failed to load analytics");
         // Fallback to empty arrays
         setRecentOrders([]);
+        // Determine user type for error fallback
+        const errorUserType = (user?.userType || "").toLowerCase();
+        const isIndividualError =
+          errorUserType === "individual" ||
+          (!errorUserType && !user.companyName && !user.businessType);
         setOrderAnalytics({
           monthlySpending: 0,
           totalOrders: 0,
           averageOrderValue: 0,
           customerSince: "Unknown",
-          loyaltyTier: "Bronze",
+          loyaltyTier: isIndividualError ? "" : "Bronze",
           nextOrderDue: null,
           recommendedItems: "Unable to load recommendations",
           monthlyChange: 0,
@@ -381,40 +423,101 @@ const DashboardPage = () => {
     }
   };
 
-  const stats = [
-    {
-      title: "Total Orders",
-      value: orderAnalytics.totalOrders.toString(),
-      change: orderAnalytics.totalOrders > 0 ? "+12%" : "0%",
-      icon: <Package className="w-6 h-6" />,
-      color: "text-accent",
-    },
-    {
-      title: "Monthly Spending",
-      value: `₹${orderAnalytics.monthlySpending.toLocaleString()}`,
-      change:
-        orderAnalytics.monthlyChange >= 0
-          ? `+${orderAnalytics.monthlyChange}%`
-          : `${orderAnalytics.monthlyChange}%`,
-      icon: <DollarSign className="w-6 h-6" />,
-      color:
-        orderAnalytics.monthlyChange >= 0 ? "text-green-400" : "text-red-400",
-    },
-    {
-      title: "Average Order Value",
-      value: `₹${orderAnalytics.averageOrderValue.toLocaleString()}`,
-      change: orderAnalytics.averageOrderValue > 0 ? "+5%" : "0%",
-      icon: <DollarSign className="w-6 h-6" />,
-      color: "text-purple-400",
-    },
-    {
-      title: "Loyalty Tier",
-      value: orderAnalytics.loyaltyTier,
-      change: "Current",
-      icon: <TrendingUp className="w-6 h-6" />,
-      color: "text-orange-400",
-    },
-  ];
+  const stats = isIndividual
+    ? [
+        {
+          title: "Orders",
+          value: orderAnalytics.totalOrders.toString(),
+          change: orderAnalytics.totalOrders > 0 ? "+12%" : "0%",
+          icon: <ShoppingCart className="w-6 h-6" />,
+          color: "text-accent",
+        },
+        {
+          title: "Monthly Spending",
+          value: `₹${orderAnalytics.monthlySpending.toLocaleString()}`,
+          change:
+            orderAnalytics.monthlyChange >= 0
+              ? `+${orderAnalytics.monthlyChange}%`
+              : `${orderAnalytics.monthlyChange}%`,
+          icon: <DollarSign className="w-6 h-6" />,
+          color:
+            orderAnalytics.monthlyChange >= 0
+              ? "text-green-400"
+              : "text-red-400",
+        },
+        {
+          title: "Wishlist Items",
+          value: `${wishlistItems?.length || 0}`,
+          change:
+            wishlistItems && wishlistItems.length > 0 ? "Active" : "Empty",
+          icon: <Heart className="w-6 h-6" />,
+          color: "text-pink-400",
+        },
+        {
+          title: "Average Order Value",
+          value: `₹${orderAnalytics.averageOrderValue.toLocaleString()}`,
+          change: orderAnalytics.averageOrderValue > 0 ? "+5%" : "0%",
+          icon: <DollarSign className="w-6 h-6" />,
+          color: "text-purple-400",
+        },
+      ]
+    : [
+        {
+          title: "Total Orders",
+          value: orderAnalytics.totalOrders.toString(),
+          change: orderAnalytics.totalOrders > 0 ? "+12%" : "0%",
+          icon: <Package className="w-6 h-6" />,
+          color: "text-accent",
+        },
+        {
+          title: "Monthly Spending",
+          value: `₹${orderAnalytics.monthlySpending.toLocaleString()}`,
+          change:
+            orderAnalytics.monthlyChange >= 0
+              ? `+${orderAnalytics.monthlyChange}%`
+              : `${orderAnalytics.monthlyChange}%`,
+          icon: <DollarSign className="w-6 h-6" />,
+          color:
+            orderAnalytics.monthlyChange >= 0
+              ? "text-green-400"
+              : "text-red-400",
+        },
+        {
+          title: "Average Order Value",
+          value: `₹${orderAnalytics.averageOrderValue.toLocaleString()}`,
+          change: orderAnalytics.averageOrderValue > 0 ? "+5%" : "0%",
+          icon: <DollarSign className="w-6 h-6" />,
+          color: "text-purple-400",
+        },
+        {
+          title: "Loyalty Tier",
+          value: orderAnalytics.loyaltyTier,
+          change: "Current",
+          icon: <TrendingUp className="w-6 h-6" />,
+          color: "text-orange-400",
+        },
+      ];
+
+  const headerTitle = isIndividual ? "Your Dashboard" : "Business Dashboard";
+  const headerSubtitle = isIndividual
+    ? `Welcome back, ${user?.name || "guest"}`
+    : `Welcome back, ${user?.name || "guest"}${
+        user?.companyName ? ` from ${user.companyName}` : ""
+      }`;
+  const backLabel = isIndividual ? "Back to Home" : "Back to Business";
+  const backTarget = isIndividual ? "/" : "/business";
+
+  // Safety check - if no user, show loading or redirect
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#181818] flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#181818] text-white pt-28">
@@ -425,19 +528,15 @@ const DashboardPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLocation("/business")}
+              onClick={() => setLocation(backTarget)}
               className="text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Business
+              {backLabel}
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-accent">
-                Business Dashboard
-              </h1>
-              <p className="text-gray-400">
-                Welcome back, {user?.name} from {user?.companyName}
-              </p>
+              <h1 className="text-2xl font-bold text-accent">{headerTitle}</h1>
+              <p className="text-gray-400">{headerSubtitle}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -463,75 +562,118 @@ const DashboardPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="bg-[#1a1a1a] border-[#333]">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-400 text-sm">{stat.title}</p>
-                    <p className="text-2xl font-bold mt-1 text-white">
-                      {stat.value}
-                    </p>
-                    <p
-                      className={`text-sm mt-1 ${
-                        stat.title === "Monthly Spending"
-                          ? orderAnalytics.monthlyChange >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                          : "text-green-400"
-                      }`}
+        {/* Stats Grid - Only show for business users */}
+        {!isIndividual && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => (
+              <Card key={index} className="bg-[#1a1a1a] border-[#333]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">{stat.title}</p>
+                      <p className="text-2xl font-bold mt-1 text-white">
+                        {stat.value}
+                      </p>
+                      <p
+                        className={`text-sm mt-1 ${
+                          stat.title === "Monthly Spending"
+                            ? orderAnalytics.monthlyChange >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                            : "text-green-400"
+                        }`}
+                      >
+                        {stat.change}
+                      </p>
+                    </div>
+                    <div
+                      className={`p-3 bg-[#2a2a2a] rounded-lg ${stat.color}`}
                     >
-                      {stat.change}
+                      {stat.icon}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Account / Business Information */}
+          {isIndividual ? (
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <CardTitle className="flex items-center text-accent">
+                  <User className="w-5 h-5 mr-2" />
+                  Account Info
+                </CardTitle>
+                <CardDescription>Your account details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-400">Email</p>
+                    <p className="font-medium text-white">{user?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Phone</p>
+                    <p className="font-medium text-white">
+                      {user?.phoneNumber || "Not provided"}
                     </p>
                   </div>
-                  <div className={`p-3 bg-[#2a2a2a] rounded-lg ${stat.color}`}>
-                    {stat.icon}
+                  <div>
+                    <p className="text-sm text-gray-400">Location</p>
+                    <p className="font-medium text-white">
+                      {(user?.city || "City") +
+                        (user?.state ? `, ${user.state}` : "")}
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Business Information */}
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <CardTitle className="flex items-center text-accent">
-                <Building2 className="w-5 h-5 mr-2" />
-                Business Info
-              </CardTitle>
-              <CardDescription>Your company details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-400">Company</p>
-                  <p className="font-medium text-white">{user?.companyName}</p>
+          ) : (
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <CardTitle className="flex items-center text-accent">
+                  <Building2 className="w-5 h-5 mr-2" />
+                  Business Info
+                </CardTitle>
+                <CardDescription>Your company details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-400">Company</p>
+                    <p className="font-medium text-white">
+                      {user?.companyName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Industry</p>
+                    <p className="font-medium text-white">{user?.industry}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Business Type</p>
+                    <p className="font-medium text-white">
+                      {user?.businessType}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Company Size</p>
+                    <p className="font-medium text-white">
+                      {user?.companySize}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Location</p>
+                    <p className="font-medium text-white">
+                      {user?.city}, {user?.state}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400">Industry</p>
-                  <p className="font-medium text-white">{user?.industry}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Business Type</p>
-                  <p className="font-medium text-white">{user?.businessType}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Company Size</p>
-                  <p className="font-medium text-white">{user?.companySize}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Location</p>
-                  <p className="font-medium text-white">
-                    {user?.city}, {user?.state}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Recent Orders */}
           <Card className="bg-[#1a1a1a] border-[#333]">
@@ -543,7 +685,9 @@ const DashboardPage = () => {
                     Recent Orders
                   </CardTitle>
                   <CardDescription>
-                    Latest business transactions
+                    {isIndividual
+                      ? "Your latest orders"
+                      : "Latest business transactions"}
                   </CardDescription>
                 </div>
                 <Button
@@ -635,7 +779,11 @@ const DashboardPage = () => {
           <Card className="bg-[#1a1a1a] border-[#333]">
             <CardHeader>
               <CardTitle className="text-accent">Quick Actions</CardTitle>
-              <CardDescription>Manage your business operations</CardDescription>
+              <CardDescription>
+                {isIndividual
+                  ? "Manage your shopping and account"
+                  : "Manage your business operations"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -643,8 +791,12 @@ const DashboardPage = () => {
                   className="w-full justify-start bg-accent hover:bg-accent/80 text-white"
                   onClick={() => setLocation("/products")}
                 >
-                  <Package className="w-4 h-4 mr-2" />
-                  View Product Catalog
+                  {isIndividual ? (
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Package className="w-4 h-4 mr-2" />
+                  )}
+                  {isIndividual ? "Continue Shopping" : "View Product Catalog"}
                 </Button>
                 <Button
                   variant="outline"
@@ -670,481 +822,514 @@ const DashboardPage = () => {
           </Card>
         </div>
 
-        {/* Inventory Analytics */}
-        <div className="mt-8">
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <CardTitle className="flex items-center text-accent">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Inventory Analytics
-              </CardTitle>
-              <CardDescription>
-                Track your anime figure inventory and performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analyticsLoading ? (
-                <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading analytics...</p>
-                </div>
-              ) : analyticsError ? (
-                <div className="text-center py-8">
-                  <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">Unable to load analytics</p>
-                  <p className="text-sm text-gray-500">{analyticsError}</p>
-                  <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
-                    onClick={() => window.location.reload()}
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-[#2a2a2a] p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-400">
-                        Pending Orders
-                      </h4>
-                      <span className="text-yellow-400 text-sm font-bold">
-                        {
-                          recentOrders.filter(
-                            (order) =>
-                              order.status === "Processing" ||
-                              order.status === "Pending"
-                          ).length
-                        }
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">Awaiting delivery</p>
+        {/* Analytics snapshot - Only show for business users */}
+        {!isIndividual && (
+          <div className="mt-8">
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <CardTitle className="flex items-center text-accent">
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  {analyticsTitle}
+                </CardTitle>
+                <CardDescription>{analyticsDescription}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading analytics...</p>
                   </div>
-
-                  <div className="bg-[#2a2a2a] p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-400">
-                        Total Spent
-                      </h4>
-                      <span className="text-green-400 text-sm font-bold">
-                        ₹
-                        {(orderAnalytics.monthlySpending * 12).toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      This year (projected)
+                ) : analyticsError ? (
+                  <div className="text-center py-8">
+                    <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">
+                      Unable to load analytics
                     </p>
-                  </div>
-
-                  <div className="bg-[#2a2a2a] p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-400">
-                        Total Orders
-                      </h4>
-                      <span className="text-accent text-sm font-bold">
-                        {orderAnalytics.totalOrders}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">Lifetime orders</p>
-                  </div>
-
-                  <div className="bg-[#2a2a2a] p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-400">
-                        Avg Order Value
-                      </h4>
-                      <span className="text-green-400 text-sm font-bold">
-                        ₹{orderAnalytics.averageOrderValue.toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">Per order</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Order History & Analytics */}
-        <div className="mt-8">
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <CardTitle className="flex items-center text-accent">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Order History & Analytics
-              </CardTitle>
-              <CardDescription>
-                Your purchasing patterns and trends
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analyticsLoading ? (
-                <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading analytics...</p>
-                </div>
-              ) : analyticsError ? (
-                <div className="text-center py-8">
-                  <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">Unable to load analytics</p>
-                  <p className="text-sm text-gray-500">{analyticsError}</p>
-                  <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
-                    onClick={() => window.location.reload()}
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-3 bg-[#2a2a2a] rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-white">
-                        Monthly Spending
-                      </h4>
-                      <span className="text-green-400 text-sm font-bold">
-                        ₹{orderAnalytics.monthlySpending.toLocaleString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400">Average per month</p>
-                    <p
-                      className={`text-xs ${
-                        orderAnalytics.monthlyChange >= 0
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
+                    <p className="text-sm text-gray-500">{analyticsError}</p>
+                    <Button
+                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      onClick={() => window.location.reload()}
                     >
-                      {orderAnalytics.monthlyChange >= 0 ? "+" : ""}
-                      {orderAnalytics.monthlyChange}% vs last month
-                    </p>
+                      Try Again
+                    </Button>
                   </div>
-                  <div className="p-3 bg-[#2a2a2a] rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-white">Loyalty Tier</h4>
-                      <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-transparent">
-                        {orderAnalytics.loyaltyTier} Member
-                      </Badge>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-[#2a2a2a] p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-400">
+                          {isIndividual
+                            ? "Pending Deliveries"
+                            : "Pending Orders"}
+                        </h4>
+                        <span className="text-yellow-400 text-sm font-bold">
+                          {
+                            recentOrders.filter(
+                              (order) =>
+                                order.status === "Processing" ||
+                                order.status === "Pending"
+                            ).length
+                          }
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {isIndividual
+                          ? "Awaiting delivery"
+                          : "Awaiting fulfilment"}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-400">
-                      Premium customer benefits
-                    </p>
-                    <p className="text-xs text-accent">
-                      Extra 5% discount on bulk orders
-                    </p>
-                  </div>
-                  <div className="p-3 bg-[#2a2a2a] rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-white">Next Order Due</h4>
-                      <span className="text-accent text-sm font-bold">
-                        {orderAnalytics.nextOrderDue || "N/A"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400">
-                      Based on your pattern
-                    </p>
-                    <p className="text-xs text-accent">
-                      Recommended: {orderAnalytics.recommendedItems}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-[#2a2a2a] rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-white">Customer Since</h4>
-                      <span className="text-white text-sm font-bold">
-                        {orderAnalytics.customerSince || "Unknown"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400">
-                      {orderAnalytics.monthsSinceFirstOrder === 0
-                        ? "New customer"
-                        : orderAnalytics.monthsSinceFirstOrder === 1
-                        ? "1 month of partnership"
-                        : `${orderAnalytics.monthsSinceFirstOrder} months of partnership`}
-                    </p>
-                    <p className="text-xs text-accent">Reliable bulk buyer</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Wishlist Management */}
-        <div className="mt-8">
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center text-accent">
-                    <Heart className="w-5 h-5 mr-2" />
-                    Wishlist Management
-                  </CardTitle>
-                  <CardDescription>
-                    Track items you want to order later
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                  onClick={() => setLocation("/products")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Items
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {wishlistLoading ? (
-                <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading wishlist...</p>
-                </div>
-              ) : !wishlistItems || wishlistItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">Your wishlist is empty</p>
-                  <p className="text-sm text-gray-500">
-                    Browse our catalog and add items you'd like to order later
-                  </p>
+                    <div className="bg-[#2a2a2a] p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-400">
+                          {isIndividual ? "Projected Spend" : "Total Spent"}
+                        </h4>
+                        <span className="text-green-400 text-sm font-bold">
+                          ₹
+                          {(
+                            orderAnalytics.monthlySpending * 12
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {isIndividual
+                          ? "This year (projected)"
+                          : "Annual projection"}
+                      </p>
+                    </div>
+
+                    <div className="bg-[#2a2a2a] p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-400">
+                          Total Orders
+                        </h4>
+                        <span className="text-accent text-sm font-bold">
+                          {orderAnalytics.totalOrders}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">Lifetime orders</p>
+                    </div>
+
+                    <div className="bg-[#2a2a2a] p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-gray-400">
+                          Avg Order Value
+                        </h4>
+                        <span className="text-green-400 text-sm font-bold">
+                          ₹{orderAnalytics.averageOrderValue.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">Per order</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Order History & Analytics - Only show for business users */}
+        {!isIndividual && (
+          <div className="mt-8">
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <CardTitle className="flex items-center text-accent">
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  Order History & Analytics
+                </CardTitle>
+                <CardDescription>
+                  Your purchasing patterns and trends
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading analytics...</p>
+                  </div>
+                ) : analyticsError ? (
+                  <div className="text-center py-8">
+                    <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">
+                      Unable to load analytics
+                    </p>
+                    <p className="text-sm text-gray-500">{analyticsError}</p>
+                    <Button
+                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      onClick={() => window.location.reload()}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-[#2a2a2a] rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-white">
+                          Monthly Spending
+                        </h4>
+                        <span className="text-green-400 text-sm font-bold">
+                          ₹{orderAnalytics.monthlySpending.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">Average per month</p>
+                      <p
+                        className={`text-xs ${
+                          orderAnalytics.monthlyChange >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {orderAnalytics.monthlyChange >= 0 ? "+" : ""}
+                        {orderAnalytics.monthlyChange}% vs last month
+                      </p>
+                    </div>
+                    {!isIndividual && (
+                      <div className="p-3 bg-[#2a2a2a] rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-white">
+                            Loyalty Tier
+                          </h4>
+                          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-transparent">
+                            {orderAnalytics.loyaltyTier} Member
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Premium customer benefits
+                        </p>
+                        <p className="text-xs text-accent">
+                          Extra 5% discount on bulk orders
+                        </p>
+                      </div>
+                    )}
+                    <div className="p-3 bg-[#2a2a2a] rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-white">
+                          Next Order Due
+                        </h4>
+                        <span className="text-accent text-sm font-bold">
+                          {orderAnalytics.nextOrderDue || "N/A"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        Based on your pattern
+                      </p>
+                      <p className="text-xs text-accent">
+                        Recommended: {orderAnalytics.recommendedItems}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-[#2a2a2a] rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-white">
+                          Customer Since
+                        </h4>
+                        <span className="text-white text-sm font-bold">
+                          {orderAnalytics.customerSince || "Unknown"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        {orderAnalytics.monthsSinceFirstOrder === 0
+                          ? "New customer"
+                          : orderAnalytics.monthsSinceFirstOrder === 1
+                          ? "1 month of partnership"
+                          : `${orderAnalytics.monthsSinceFirstOrder} months of partnership`}
+                      </p>
+                      <p className="text-xs text-accent">
+                        {isIndividual
+                          ? "Keep shopping to grow your perks"
+                          : "Reliable bulk buyer"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Wishlist Management (individual only) */}
+        {isIndividual && (
+          <div className="mt-8">
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-accent">
+                      <Heart className="w-5 h-5 mr-2" />
+                      Wishlist Management
+                    </CardTitle>
+                    <CardDescription>
+                      Track items you want to order later
+                    </CardDescription>
+                  </div>
                   <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                    variant="outline"
+                    size="sm"
+                    className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
                     onClick={() => setLocation("/products")}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Browse Products
+                    Add Items
                   </Button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {(wishlistItems || []).map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
+              </CardHeader>
+              <CardContent>
+                {wishlistLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading wishlist...</p>
+                  </div>
+                ) : !wishlistItems || wishlistItems.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Heart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">Your wishlist is empty</p>
+                    <p className="text-sm text-gray-500">
+                      Browse our catalog and add items you'd like to order later
+                    </p>
+                    <Button
+                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      onClick={() => setLocation("/products")}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-white">
-                            {item.name}
-                          </h4>
-                          <div className="flex items-center space-x-2">
-                            <Badge
-                              variant="outline"
-                              className={`hover:bg-transparent ${
-                                item.inStock
-                                  ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                  : "bg-red-500/20 text-red-400 border-red-500/30"
-                              }`}
-                            >
-                              {item.inStock ? "In Stock" : "Out of Stock"}
-                            </Badge>
-                            <span
-                              className={`text-sm font-medium ${getPriorityColor(
-                                item.priority
-                              )}`}
-                            >
-                              {item.priority} Priority
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-6 text-sm text-gray-400">
-                          <span>Series: {item.series}</span>
-                          <span>Price: {item.price}</span>
-                          <span>Quantity: {item.quantity}</span>
-                          <span>Added: {item.addedDate}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
-                          onClick={() => handleMoveToCart(item)}
-                          disabled={!item.inStock}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-1" />
-                          Order Now
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                          onClick={async () => {
-                            try {
-                              await removeFromWishlist(item.id);
-                            } catch (error) {}
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Product Recommendations */}
-        <div className="mt-8">
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center text-accent">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Recommended for You
-                  </CardTitle>
-                  <CardDescription>
-                    Personalized recommendations based on your purchase history
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                  onClick={() => setLocation("/products")}
-                >
-                  View All Products
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {recommendationsLoading ? (
-                <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading recommendations...</p>
-                </div>
-              ) : recommendationsError ? (
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">
-                    Unable to load recommendations
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {recommendationsError}
-                  </p>
-                  <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
-                    onClick={() => window.location.reload()}
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              ) : productRecommendations.length === 0 ? (
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">
-                    No recommendations available
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Start shopping to get personalized recommendations
-                  </p>
-                  <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
-                    onClick={() => setLocation("/products")}
-                  >
-                    Browse Products
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {productRecommendations.map((product) => (
-                    <div
-                      key={product.id}
-                      className="bg-[#2a2a2a] rounded-lg p-4 border border-[#333] hover:border-accent/30 transition-all duration-300 group"
-                    >
-                      <div className="flex items-start space-x-4">
-                        <div className="relative">
-                          <div className="w-16 h-16 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444]">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              onError={(e) => {
-                                e.currentTarget.src =
-                                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23333'/%3E%3Ctext x='32' y='32' text-anchor='middle' dy='.3em' fill='%23666' font-size='8'%3EImage%3C/text%3E%3C/svg%3E";
-                              }}
-                            />
-                          </div>
-                          {!product.inStock && (
-                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded">
-                              Out
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium text-white text-sm leading-tight group-hover:text-accent transition-colors">
-                              {product.name}
+                      <Plus className="w-4 h-4 mr-2" />
+                      Browse Products
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {(wishlistItems || []).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-white">
+                              {item.name}
                             </h4>
-                            <span className="font-bold text-accent text-sm ml-2">
-                              {product.price}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center mb-2">
-                            <div className="flex items-center">
-                              <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 mr-1" />
-                              <span className="text-xs text-gray-400">
-                                {product.rating}
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-500 mx-1">
-                              •
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              {product.reviews} reviews
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-[#1a1a1a] border-[#444] text-gray-300 hover:bg-transparent"
+                                className={`hover:bg-transparent ${
+                                  item.inStock
+                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                    : "bg-red-500/20 text-red-400 border-red-500/30"
+                                }`}
                               >
-                                {product.category}
+                                {item.inStock ? "In Stock" : "Out of Stock"}
                               </Badge>
-                              <span className="text-xs text-accent font-medium">
-                                {product.reason}
+                              <span
+                                className={`text-sm font-medium ${getPriorityColor(
+                                  item.priority
+                                )}`}
+                              >
+                                {item.priority} Priority
                               </span>
                             </div>
                           </div>
+                          <div className="flex items-center space-x-6 text-sm text-gray-400">
+                            <span>Series: {item.series}</span>
+                            <span>Price: {item.price}</span>
+                            <span>Quantity: {item.quantity}</span>
+                            <span>Added: {item.addedDate}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                            onClick={() => handleMoveToCart(item)}
+                            disabled={!item.inStock}
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-1" />
+                            Order Now
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                            onClick={async () => {
+                              try {
+                                await removeFromWishlist(item.id);
+                              } catch (error) {}
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-                          <div className="flex items-center space-x-2 mt-3">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 border-accent text-accent hover:bg-accent/20 hover:text-accent text-xs"
-                              disabled={!product.inStock}
-                              onClick={() =>
-                                setLocation(
-                                  `/product/${product.slug || product.id}`
-                                )
-                              }
-                            >
-                              <Package className="w-3 h-3 mr-1" />
-                              View Details
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
-                              disabled={!product.inStock}
-                            >
-                              <ShoppingCart className="w-3 h-3" />
-                            </Button>
+        {/* Product Recommendations (individual only) */}
+        {isIndividual && (
+          <div className="mt-8">
+            <Card className="bg-[#1a1a1a] border-[#333]">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center text-accent">
+                      <TrendingUp className="w-5 h-5 mr-2" />
+                      Recommended for You
+                    </CardTitle>
+                    <CardDescription>
+                      Personalized recommendations based on your purchase
+                      history
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                    onClick={() => setLocation("/products")}
+                  >
+                    View All Products
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {recommendationsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading recommendations...</p>
+                  </div>
+                ) : recommendationsError ? (
+                  <div className="text-center py-8">
+                    <TrendingUp className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">
+                      Unable to load recommendations
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {recommendationsError}
+                    </p>
+                    <Button
+                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      onClick={() => window.location.reload()}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : productRecommendations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <TrendingUp className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-2">
+                      No recommendations available
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Start shopping to get personalized recommendations
+                    </p>
+                    <Button
+                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      onClick={() => setLocation("/products")}
+                    >
+                      Browse Products
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {productRecommendations.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-[#2a2a2a] rounded-lg p-4 border border-[#333] hover:border-accent/30 transition-all duration-300 group"
+                      >
+                        <div className="flex items-start space-x-4">
+                          <div className="relative">
+                            <div className="w-16 h-16 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444]">
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23333'/%3E%3Ctext x='32' y='32' text-anchor='middle' dy='.3em' fill='%23666' font-size='8'%3EImage%3C/text%3E%3C/svg%3E";
+                                }}
+                              />
+                            </div>
+                            {!product.inStock && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded">
+                                Out
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-white text-sm leading-tight group-hover:text-accent transition-colors">
+                                {product.name}
+                              </h4>
+                              <span className="font-bold text-accent text-sm ml-2">
+                                {product.price}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center mb-2">
+                              <div className="flex items-center">
+                                <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 mr-1" />
+                                <span className="text-xs text-gray-400">
+                                  {product.rating}
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-500 mx-1">
+                                •
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {product.reviews} reviews
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-[#1a1a1a] border-[#444] text-gray-300 hover:bg-transparent"
+                                >
+                                  {product.category}
+                                </Badge>
+                                <span className="text-xs text-accent font-medium">
+                                  {product.reason}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2 mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 border-accent text-accent hover:bg-accent/20 hover:text-accent text-xs"
+                                disabled={!product.inStock}
+                                onClick={() =>
+                                  setLocation(
+                                    `/product/${product.slug || product.id}`
+                                  )
+                                }
+                              >
+                                <Package className="w-3 h-3 mr-1" />
+                                View Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                                disabled={!product.inStock}
+                              >
+                                <ShoppingCart className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

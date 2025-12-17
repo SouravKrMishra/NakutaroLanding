@@ -1078,51 +1078,36 @@ const ProductsPage = () => {
                 </div>
               </div>
 
-              {/* Horizontal Filter Bar */}
-              <div className="w-full bg-gradient-to-r from-[#1A1A1A] to-[#0D0D0D] rounded-xl p-6 border border-[#2D2D2D] mb-8 shadow-lg">
-                {/* Filter Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-accent/10 rounded-lg">
-                      <Filter className="h-5 w-5 text-accent" />
+              {/* Compact Horizontal Filter Bar */}
+              <div className="w-full bg-gradient-to-r from-[#1A1A1A] to-[#0D0D0D] rounded-lg p-4 border border-[#2D2D2D] mb-6 shadow-lg">
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                  {/* Filter Icon & Title */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="p-1.5 bg-accent/10 rounded-lg">
+                      <Filter className="h-4 w-4 text-accent" />
                     </div>
-                    <h3 className="text-lg font-bold text-white">
-                      Filter Products
-                    </h3>
+                    <span className="text-sm font-semibold text-white hidden sm:inline">
+                      Filters:
+                    </span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="text-white bg-accent/10 border-accent hover:bg-accent hover:text-white transition-all duration-300"
-                  >
-                    Clear All
-                  </Button>
-                </div>
 
-                {/* Filter Content */}
-                <div className="space-y-6">
-                  {/* Categories Section */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-accent" />
-                      Categories
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
+                  {/* Categories - Horizontal Scrollable */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap gap-2 items-center">
                       {categories
                         .filter((category) => category.count > 0)
                         .map((category) => (
                           <button
                             key={category.name}
                             onClick={() => handleCategoryClick(category.name)}
-                            className={`px-4 py-2 rounded-full border-2 transition-all duration-300 text-sm font-medium ${
+                            className={`px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm font-medium whitespace-nowrap ${
                               activeCategory.includes(category.name)
-                                ? "bg-accent text-white border-accent shadow-lg shadow-accent/25"
+                                ? "bg-accent text-white border-accent shadow-md"
                                 : "bg-[#181818] text-gray-300 border-[#2D2D2D] hover:bg-accent/10 hover:text-accent hover:border-accent/50"
                             }`}
                           >
                             {category.name}
-                            <span className="ml-2 px-2 py-0.5 bg-white/10 rounded-full text-xs">
+                            <span className="ml-1.5 px-1.5 py-0.5 bg-white/10 rounded-full text-xs">
                               {category.count}
                             </span>
                           </button>
@@ -1130,43 +1115,35 @@ const ProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* Availability Filter */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                      <CheckSquare className="h-4 w-4 text-accent" />
-                      Availability
-                    </h4>
-                    <label className="flex items-center cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={includeOutOfStock}
-                        onChange={() => {
-                          setIncludeOutOfStock((prev) => !prev);
-                          setCurrentPage(1);
-                        }}
-                        className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
-                      />
-                      <span className="ml-3 text-sm text-gray-300 group-hover:text-accent">
-                        Include Out of Stock
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Price and Rating Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Price Range */}
-                    <div className="bg-[#181818] rounded-lg p-4 border border-[#2D2D2D]">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-accent" />
-                        Price Range
-                      </h4>
+                  {/* Price Range Dropdown */}
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-9 shrink-0"
+                      >
+                        <Tag className="h-3.5 w-3.5 text-accent" />
+                        <span className="hidden sm:inline">Price:</span>
+                        <span>
+                          ₹{committedPriceRange[0].toLocaleString()} - ₹
+                          {committedPriceRange[1].toLocaleString()}
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="bg-[#1E1E1E] border-[#2D2D2D] p-4 w-80"
+                      align="end"
+                    >
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-400">
-                            ₹{priceRange[0].toLocaleString()}
+                          <span className="text-sm text-gray-300 font-medium">
+                            Price Range
                           </span>
-                          <span className="text-sm text-gray-400">
-                            ₹{priceRange[1].toLocaleString()}
+                          <span className="text-xs text-gray-400">
+                            ₹{priceRange[0].toLocaleString()} - ₹
+                            {priceRange[1].toLocaleString()}
                           </span>
                         </div>
                         <Slider
@@ -1180,15 +1157,36 @@ const ProductsPage = () => {
                           className="w-full"
                         />
                       </div>
-                    </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                    {/* Rating Filter */}
-                    <div className="bg-[#181818] rounded-lg p-4 border border-[#2D2D2D]">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                        <Star className="h-4 w-4 text-accent" />
-                        Rating Filter
-                      </h4>
+                  {/* Rating Filter Dropdown */}
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-9 shrink-0"
+                      >
+                        <Star className="h-3.5 w-3.5 text-accent" />
+                        <span className="hidden sm:inline">Rating:</span>
+                        <span>
+                          {Object.entries(ratings)
+                            .filter(([_, isActive]) => isActive)
+                            .map(([rating, _]) => `${rating}+`)
+                            .join(", ") || "Any"}
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="bg-[#1E1E1E] border-[#2D2D2D] p-3 w-56"
+                      align="end"
+                    >
                       <div className="space-y-2">
+                        <div className="text-xs font-semibold text-gray-300 mb-2">
+                          Minimum Rating
+                        </div>
                         {[4, 3, 2, 1].map((rating) => (
                           <label
                             key={rating}
@@ -1207,19 +1205,47 @@ const ProductsPage = () => {
                                   .map((_, i) => (
                                     <Star
                                       key={i}
-                                      className="h-4 w-4 text-yellow-400 fill-yellow-400"
+                                      className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400"
                                     />
                                   ))}
                               </div>
-                              <span className="ml-2 text-sm text-gray-400 group-hover:text-accent">
+                              <span className="ml-2 text-xs text-gray-400 group-hover:text-accent">
                                 & up
                               </span>
                             </div>
                           </label>
                         ))}
                       </div>
-                    </div>
-                  </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Availability Checkbox */}
+                  <label className="flex items-center cursor-pointer group shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={includeOutOfStock}
+                      onChange={() => {
+                        setIncludeOutOfStock((prev) => !prev);
+                        setCurrentPage(1);
+                      }}
+                      className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
+                    />
+                    <span className="ml-2 text-xs sm:text-sm text-gray-300 group-hover:text-accent whitespace-nowrap">
+                      <CheckSquare className="h-3.5 w-3.5 inline mr-1.5 text-accent" />
+                      <span className="hidden sm:inline">Out of Stock</span>
+                    </span>
+                  </label>
+
+                  {/* Clear Filters Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="text-white bg-accent/10 border-accent hover:bg-accent hover:text-white transition-all duration-300 text-xs sm:text-sm h-9 shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="hidden sm:inline">Clear</span>
+                  </Button>
                 </div>
               </div>
             </div>

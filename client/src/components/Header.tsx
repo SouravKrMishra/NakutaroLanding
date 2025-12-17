@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Menu,
@@ -15,9 +15,46 @@ import { useCart } from "@/lib/CartContext.tsx";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [location] = useLocation();
   const { isAuthenticated } = useAuth();
   const { itemCount } = useCart();
+  const isBusinessPage = location === "/business";
+  const isHomePage = location === "/";
+  const loginHref = isBusinessPage
+    ? `/login?from=${location}`
+    : `/login/individual?from=${location}`;
+
+  // Handle scroll detection for hero section on home page
+  useEffect(() => {
+    if (!isHomePage) {
+      setIsScrolledPastHero(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      const header = document.getElementById("navbar");
+      const nextSection = document.getElementById("about"); // AboutSection is the next section after hero
+      
+      if (header && nextSection) {
+        const headerHeight = header.offsetHeight;
+        const nextSectionTop = nextSection.getBoundingClientRect().top;
+        
+        // Check if the header's bottom has passed the top of the next section
+        // Header bottom position in viewport = headerHeight (since header is fixed at top)
+        setIsScrolledPastHero(headerHeight >= nextSectionTop);
+      }
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isHomePage]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -33,9 +70,38 @@ const Header = () => {
     { id: "nav-contact", href: "/contact", label: "Contact Us" },
   ];
 
+  // Handle scroll effect for non-home pages
+  useEffect(() => {
+    if (isHomePage) {
+      return; // Home page uses isScrolledPastHero instead
+    }
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    handleScroll(); // Check initial position
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isHomePage]);
+
+  // Determine header background based on page and scroll position
+  const getHeaderBackground = () => {
+    if (!isHomePage) {
+      // On other pages: add background when scrolled
+      return isScrolled ? "bg-[#121212] backdrop-blur-sm shadow-lg" : "";
+    }
+    // On home page: black when in hero section, normal background when scrolled past
+    return isScrolledPastHero
+      ? "bg-[#121212] backdrop-blur-sm shadow-lg"
+      : "bg-black/95 backdrop-blur-sm";
+  };
+
   return (
     <header
-      className="fixed w-full z-50 transition-all duration-300"
+      className={`fixed w-full z-50 transition-all duration-300 ${getHeaderBackground()}`}
       id="navbar"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,30 +185,23 @@ const Header = () => {
                 <BarChart3 className="w-4 h-4" />
                 <span>Dashboard</span>
               </Link>
-            ) : location === "/business" || location.startsWith("/products") ? (
+            ) : (
               <div className="flex items-center space-x-2">
                 <Link
-                  href={`/login?from=${location}`}
+                  href={loginHref}
                   className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Login</span>
+                  <span>{isBusinessPage ? "Business Login" : "Login"}</span>
                 </Link>
                 <Link
-                  href={`/register?from=${location}`}
+                  href="/business"
                   className="border border-accent text-white hover:bg-accent hover:text-white px-4 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
                 >
                   <Building2 className="w-4 h-4" />
-                  <span>Register</span>
+                  <span>For Business</span>
                 </Link>
               </div>
-            ) : (
-              <Link
-                href="/business"
-                className="bg-accent hover:bg-accent/80 text-white px-6 py-2 rounded-md transition duration-300 inline-flex items-center space-x-2"
-              >
-                <span>For Business</span>
-              </Link>
             )}
           </div>
 
@@ -241,34 +300,25 @@ const Header = () => {
                   <BarChart3 className="w-4 h-4" />
                   <span>Dashboard</span>
                 </Link>
-              ) : location === "/business" ||
-                location.startsWith("/products") ? (
+              ) : (
                 <div className="flex flex-col space-y-2">
                   <Link
-                    href={`/login?from=${location}`}
+                    href={loginHref}
                     className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                     onClick={closeMenu}
                   >
                     <LogIn className="w-4 h-4" />
-                    <span>Login</span>
+                    <span>{isBusinessPage ? "Business Login" : "Login"}</span>
                   </Link>
                   <Link
-                    href={`/register?from=${location}`}
+                    href="/business"
                     className="border border-accent text-white hover:bg-accent hover:text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
                     onClick={closeMenu}
                   >
                     <Building2 className="w-4 h-4" />
-                    <span>Register</span>
+                    <span>For Business</span>
                   </Link>
                 </div>
-              ) : (
-                <Link
-                  href="/business"
-                  className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-md inline-flex items-center justify-center space-x-2 transition duration-300 text-center"
-                  onClick={closeMenu}
-                >
-                  <span>For Business</span>
-                </Link>
               )}
             </nav>
           </motion.div>

@@ -1,94 +1,25 @@
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
-import homeImage from "@assets/home.jpg";
+import bgImage from "@assets/bg.png";
 
 const HeroSection = () => {
   return (
     <section
       id="home"
       className="relative min-h-[90vh] md:min-h-screen flex items-center pt-16 md:pt-20 hero-gradient overflow-hidden"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 opacity-20">
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
-
-        {/* Anime-inspired animated elements */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[80px]"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        <motion.div
-          className="absolute bottom-1/3 right-1/4 w-60 h-60 bg-accent rounded-full filter blur-[100px]"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.15, 0.25, 0.15],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-
-        {/* Floating anime icons */}
-        <motion.div
-          className="absolute -top-10 -left-10 w-16 h-16 text-accent/20"
-          animate={{
-            x: [0, window.innerWidth + 20],
-            y: [0, window.innerHeight + 20],
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z"
-              opacity="0.4"
-            ></path>
-            <path d="M10.14,13.79a1,1,0,0,0,1.72,0l2.41-4a1,1,0,0,0-1.72-1L10.85,12Z"></path>
-          </svg>
-        </motion.div>
-
-        <motion.div
-          className="absolute -bottom-10 -right-10 w-14 h-14 text-accent/15"
-          animate={{
-            x: [window.innerWidth, -20],
-            y: [window.innerHeight, -20],
-            rotate: [0, -360],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M21,7H3A1,1,0,0,0,2,8V16a1,1,0,0,0,1,1H21a1,1,0,0,0,1-1V8A1,1,0,0,0,21,7ZM11,14.71a.79.79,0,0,1-.71.29.83.83,0,0,1-.7-.29L7.33,12H9.21l1.05,1.29L14.79,9H10a1,1,0,0,1,0-2h5a1,1,0,0,1,.92.62,1,1,0,0,1-.21,1.09Z"></path>
-          </svg>
-        </motion.div>
-      </div>
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+          className="grid grid-cols-1 gap-12 items-center"
         >
           <motion.div
             variants={fadeIn("right", "tween", 0.2, 1)}
@@ -185,83 +116,11 @@ const HeroSection = () => {
               </a>
             </div>
           </motion.div>
-
-          <motion.div
-            variants={fadeIn("left", "tween", 0.4, 1)}
-            className="hidden lg:block relative"
-          >
-            {/* Image container with animated border */}
-            <div className="relative group">
-              {/* Animated glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-accent/40 to-accent/20 rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-
-              {/* Image with hexagonal clip-path mask */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent rounded-lg"></div>
-                <div className="relative overflow-hidden rounded-lg p-1 bg-[#131313] border border-accent/30">
-                  {/* Main image */}
-                  <img
-                    src={homeImage}
-                    alt="Anime illustration"
-                    loading="eager"
-                    decoding="async"
-                    className="w-full h-auto object-cover rounded transform group-hover:scale-105 transition-transform duration-700 z-10 will-change-transform"
-                  />
-
-                  {/* Overlay texture */}
-                  <div className="absolute inset-0 bg-grid-pattern opacity-10 mix-blend-overlay"></div>
-
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-bl-full"></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-accent/5 rounded-tr-full"></div>
-                </div>
-              </div>
-
-              {/* Animated corner decorations */}
-              <motion.div
-                className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-accent/70"
-                animate={{ rotate: [0, 90, 0], opacity: [0.7, 1, 0.7] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <motion.div
-                className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-accent/70"
-                animate={{ rotate: [0, -90, 0], opacity: [0.7, 1, 0.7] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-
-              {/* Floating badge */}
-              {/* <div className="absolute -right-3 top-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform rotate-3 animate-bounce-slow">
-                <span className="text-accent text-xs font-medium">
-                  Top Collection
-                </span>
-              </div> */}
-
-              {/* Floating badge */}
-              {/* <div className="absolute -left-3 bottom-1/4 bg-[#1A1A1A] px-3 py-1.5 rounded-full border border-accent/30 shadow-lg transform -rotate-3 animate-bounce-slow animation-delay-1000">
-                <span className="text-accent text-xs font-medium">
-                  Limited Edition
-                </span>
-              </div> */}
-            </div>
-          </motion.div>
         </motion.div>
       </div>
 
       {/* Decorative Elements */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#121212] to-transparent"></div>
-
-      {/* Anime-style decorative circles */}
-      <div className="absolute top-10 right-10 w-4 h-4 border-2 border-accent/30 rounded-full"></div>
-      <div className="absolute bottom-20 left-20 w-6 h-6 border-2 border-accent/20 rounded-full"></div>
-      <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-accent/20 rounded-full"></div>
+      <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-[#121212] via-[#121212]/50 to-transparent"></div>
     </section>
   );
 };

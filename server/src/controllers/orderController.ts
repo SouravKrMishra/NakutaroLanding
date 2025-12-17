@@ -111,17 +111,8 @@ export const createOrder = async (
 
     await order.save();
 
-    // For COD orders, reduce stock and clear cart immediately
+    // For COD orders, clear cart immediately (stock is reduced when order is processed)
     if (paymentMethod === "cod") {
-      // Reduce stock for COD orders
-      try {
-        await reduceStockForOrder(order._id);
-      } catch (error) {
-        console.error("Failed to reduce stock for COD order:", error);
-        // Don't fail the order if stock reduction fails
-      }
-
-      // Clear cart for COD orders
       try {
         const cart = await Cart.findOne({ userId });
         if (cart) {
@@ -214,7 +205,8 @@ export const getOrders = async (
       return next(createError("User not authenticated", 401));
     }
 
-    const orders = await Order.find({ userId })
+    // Exclude soft-deleted orders from customer history
+    const orders = await Order.find({ userId, isDeleted: { $ne: true } })
       .sort({ orderDate: -1 })
       .select("-__v")
       .lean();
@@ -282,7 +274,11 @@ export const getOrderById = async (
     }
 
     const { orderId } = req.params;
-    const order = await Order.findOne({ _id: orderId, userId })
+    const order = await Order.findOne({
+      _id: orderId,
+      userId,
+      isDeleted: { $ne: true },
+    })
       .select("-__v")
       .lean();
 
@@ -342,6 +338,7 @@ export const updateOrderStatus = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userType = req.user?.userType;
     if (!userId) {
       return next(createError("User not authenticated", 401));
     }
@@ -349,19 +346,47 @@ export const updateOrderStatus = async (
     const { orderId } = req.params;
     const { status, trackingNumber, notes } = req.body;
 
-    const order = await Order.findOne({ _id: orderId, userId });
+    const isAdmin = (userType || "").toLowerCase() === "admin";
+    const orderQuery = isAdmin
+      ? { _id: orderId, isDeleted: { $ne: true } }
+      : { _id: orderId, userId, isDeleted: { $ne: true } };
+
+    const order = await Order.findOne(orderQuery);
 
     if (!order) {
       return next(createError("Order not found", 404));
     }
 
     // Update fields
+    const previousStatus = order.status;
     const statusChanged = status && status !== order.status;
     if (status) order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     if (notes) order.notes = notes;
 
+    // Determine whether to reduce stock for COD when moving to processing
+    const shouldReduceStockForCOD =
+      order.paymentMethod === "cod" &&
+      statusChanged &&
+      status?.toLowerCase() === "processing" &&
+      previousStatus?.toLowerCase() !== "processing";
+
     await order.save();
+
+    if (shouldReduceStockForCOD) {
+      try {
+        await reduceStockForOrder(order._id);
+        console.log(
+          `[COD Stock Reduction] Stock reduced when order ${order._id} moved to processing`
+        );
+      } catch (error: any) {
+        console.error(
+          `[COD Stock Reduction] Failed to reduce stock for COD order ${order._id}:`,
+          error
+        );
+        // Do not block status updates if stock reduction fails
+      }
+    }
 
     // Notifications removed
 
@@ -534,19 +559,25 @@ export const getOrderForSuccessPage = async (
       order = await Order.findOne({
         _id: orderId,
         userId: userId,
+        isDeleted: { $ne: true },
       });
 
       if (order) {
         // Check if order meets validation criteria
+        // For COD orders, allow "pending" status and "PENDING" payment status
+        const isCODOrder = order.paymentMethod === "cod";
         const validStatuses = [
           "PAID",
           "CONFIRMED",
           "processing",
           "shipped",
           "delivered",
+          ...(isCODOrder ? ["pending"] : []),
         ];
         const hasValidStatus = validStatuses.includes(order.status);
-        const hasValidPaymentStatus = order.paymentStatus === "COMPLETED";
+        const hasValidPaymentStatus =
+          order.paymentStatus === "COMPLETED" ||
+          (isCODOrder && order.paymentStatus === "PENDING");
 
         if (!hasValidStatus || !hasValidPaymentStatus) {
           order = null; // Reset order if it doesn't meet criteria
@@ -568,6 +599,7 @@ export const getOrderForSuccessPage = async (
             $in: ["PAID", "CONFIRMED", "processing", "shipped", "delivered"],
           },
           paymentStatus: "COMPLETED",
+          isDeleted: { $ne: true },
         });
       }
     }

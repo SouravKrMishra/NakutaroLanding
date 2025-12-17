@@ -29,6 +29,8 @@ import OrdersPage from "@/pages/OrdersPage.tsx";
 import TermsOfServicePage from "@/pages/TermsOfServicePage.tsx";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage.tsx";
 import ShippingPolicyPage from "@/pages/ShippingPolicyPage.tsx";
+import IndividualLoginPage from "@/pages/IndividualLoginPage.tsx";
+import IndividualRegisterPage from "@/pages/IndividualRegisterPage.tsx";
 
 // Shared components
 import Header from "./components/Header.js";
@@ -37,24 +39,8 @@ import ScrollToTop from "@/components/ui/scroll-to-top.js";
 import ProtectedRoute from "@/components/ProtectedRoute.tsx";
 
 function App() {
-  // Add scroll effect for navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      const navbar = document.getElementById("navbar");
-      if (navbar) {
-        if (window.scrollY > 10) {
-          navbar.classList.add("bg-[#121212]", "shadow-lg");
-        } else {
-          navbar.classList.remove("bg-[#121212]", "shadow-lg");
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  // Note: Header component now manages its own scroll effects
+  // This scroll handler is removed to avoid conflicts with Header's internal state management
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -91,6 +77,14 @@ function App() {
                       />
                       <Route path="/login" component={LoginPage} />
                       <Route path="/register" component={RegisterPage} />
+                      <Route
+                        path="/login/individual"
+                        component={IndividualLoginPage}
+                      />
+                      <Route
+                        path="/register/individual"
+                        component={IndividualRegisterPage}
+                      />
                       <Route
                         path="/dashboard"
                         component={() => (

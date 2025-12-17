@@ -11,6 +11,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  userType?: "business" | "individual";
   companyName?: string;
   phoneNumber?: string;
   businessType?: string;
@@ -29,7 +30,8 @@ interface AuthContextType {
   login: (
     email: string,
     password: string,
-    recaptchaToken?: string
+    recaptchaToken?: string,
+    userType?: "business" | "individual"
   ) => Promise<{ success: boolean; error?: string }>;
   setUserData: (userData: User, token: string) => void;
   logout: () => Promise<void>;
@@ -84,7 +86,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    recaptchaToken?: string
+    recaptchaToken?: string,
+    userType: "business" | "individual" = "business"
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const body: any = { email, password };
@@ -92,8 +95,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         body.recaptchaToken = recaptchaToken;
       }
 
+      const loginPath =
+        userType === "individual" ? "/api/auth/signin/individual" : "/api/auth/signin";
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || ""}/api/auth/signin`,
+        `${import.meta.env.VITE_API_BASE_URL || ""}${loginPath}`,
         {
           method: "POST",
           headers: {

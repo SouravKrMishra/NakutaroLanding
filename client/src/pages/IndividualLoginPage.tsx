@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/AuthContext.tsx";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
-const LoginPage = () => {
+const IndividualLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,23 +25,20 @@ const LoginPage = () => {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const { executeRecaptcha } = useGoogleReCaptcha();
 
-  // Scroll to top when component mounts
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
-  // Redirect to dashboard if user is already authenticated
   React.useEffect(() => {
     if (!authLoading && isAuthenticated) {
       setLocation("/dashboard");
     }
   }, [isAuthenticated, authLoading, setLocation]);
 
-  // Get the previous page from URL params or default to business page
   const getPreviousPage = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get("from");
-    return from || "/business";
+    return from || "/";
   };
 
   const handleBackClick = () => {
@@ -55,19 +52,15 @@ const LoginPage = () => {
 
     try {
       let recaptchaToken = "";
-
-      // Execute reCAPTCHA if available
       if (executeRecaptcha) {
-        recaptchaToken = await executeRecaptcha("login");
+        recaptchaToken = await executeRecaptcha("login_individual");
       }
 
-      const result = await login(email, password, recaptchaToken);
+      const result = await login(email, password, recaptchaToken, "individual");
       if (result.success) {
         setLocation("/dashboard");
       } else {
-        setError(
-          result.error || "Invalid email or password. Please try again."
-        );
+        setError(result.error || "Invalid email or password. Please try again.");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -76,7 +69,6 @@ const LoginPage = () => {
     }
   };
 
-  // Show loading state while checking authentication
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#181818] flex items-center justify-center px-4 pt-20">
@@ -91,7 +83,6 @@ const LoginPage = () => {
     );
   }
 
-  // Don't render the form if user is authenticated (will redirect)
   if (isAuthenticated) {
     return null;
   }
@@ -111,10 +102,10 @@ const LoginPage = () => {
               Back
             </Button>
             <CardTitle className="text-2xl font-bold text-white">
-              Business Login
+              Customer Login
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Access your business dashboard
+              Sign in to track your orders and wishlist
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -186,22 +177,22 @@ const LoginPage = () => {
                   variant="link"
                   className="text-accent hover:text-accent/80 p-0 h-auto"
                   onClick={() =>
-                    setLocation(`/register?from=${getPreviousPage()}`)
+                    setLocation(`/register/individual?from=${getPreviousPage()}`)
                   }
                 >
-                  Register for business access
+                  Create a customer account
                 </Button>
               </p>
               <p className="text-xs text-gray-500 mt-2">
-                Shopping as an individual?{" "}
+                Are you a business?{" "}
                 <Button
                   variant="link"
                   className="text-accent hover:text-accent/80 p-0 h-auto"
                   onClick={() =>
-                    setLocation(`/login/individual?from=${getPreviousPage()}`)
+                    setLocation(`/login?from=${getPreviousPage()}`)
                   }
                 >
-                  Go to customer login
+                  Go to business login
                 </Button>
               </p>
             </div>
@@ -212,4 +203,5 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default IndividualLoginPage;
+

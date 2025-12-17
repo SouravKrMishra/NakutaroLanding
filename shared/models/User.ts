@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 
+type UserType = "business" | "individual";
+
 const userSchema = new mongoose.Schema({
+  userType: {
+    type: String,
+    enum: ["business", "individual"],
+    default: "business",
+    index: true,
+  },
   email: {
     type: String,
     required: true,
@@ -14,26 +22,41 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // Business Information
+  // Business Information (optional for individual users)
   companyName: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   phoneNumber: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   businessType: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   industry: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   companySize: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   website: {
     type: String,
@@ -46,19 +69,31 @@ const userSchema = new mongoose.Schema({
   // Address Information
   address: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   city: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   state: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   pincode: {
     type: String,
-    required: true,
+    required: function () {
+      return (this as any).userType === "business";
+    },
+    default: "",
   },
   // Account Status
   isVerified: {

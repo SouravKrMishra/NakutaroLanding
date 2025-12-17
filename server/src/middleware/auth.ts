@@ -20,6 +20,7 @@ export const authenticateToken = (
       id: decoded.userId, // Use userId instead of id
       email: decoded.email,
       name: decoded.name,
+      userType: decoded.userType,
     };
     next();
   } catch (error: any) {
@@ -57,6 +58,7 @@ export const optionalAuth = (
       id: decoded.userId,
       email: decoded.email,
       name: decoded.name,
+      userType: decoded.userType,
     };
   } catch (error) {
     // Token is invalid but we don't fail the request

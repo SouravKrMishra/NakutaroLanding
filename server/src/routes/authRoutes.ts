@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   signup,
   signin,
+  signupIndividual,
+  signinIndividual,
   verify,
   logout,
   getUserProfile,
@@ -35,6 +37,27 @@ router.post(
   signup
 );
 
+// Individual Signup route
+router.post(
+  "/signup/individual",
+  [
+    body("email").isEmail().withMessage("Invalid email address"),
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+    body("name").notEmpty().withMessage("Name is required"),
+    body("phoneNumber")
+      .optional({ values: "falsy" })
+      .custom((value) => {
+        if (!value || value === "") return true; // Allow empty string
+        return /^[6-9]\d{9}$/.test(value.replace(/\D/g, "")); // Validate Indian mobile format
+      })
+      .withMessage("Invalid phone number"),
+  ],
+  handleValidationErrors,
+  signupIndividual
+);
+
 // Signin route
 router.post(
   "/signin",
@@ -44,6 +67,17 @@ router.post(
   ],
   handleValidationErrors,
   signin
+);
+
+// Individual Signin route
+router.post(
+  "/signin/individual",
+  [
+    body("email").isEmail().withMessage("Invalid email address"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ],
+  handleValidationErrors,
+  signinIndividual
 );
 
 // Verify route

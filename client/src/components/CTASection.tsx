@@ -4,7 +4,7 @@ import { ShoppingBag, Calendar, Users, Mail } from "lucide-react";
 
 const CTASection = () => {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section id="cta" className="py-20 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
