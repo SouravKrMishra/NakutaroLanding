@@ -1,18 +1,103 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import bgImage from "@assets/bg.png";
 
 const HeroSection = () => {
+  const [backgroundPosition, setBackgroundPosition] = useState("center");
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    // Preload the background image immediately with higher priority
+    const img = new Image();
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    // Set crossOrigin to avoid CORS issues if any
+    img.crossOrigin = "anonymous";
+    img.src = bgImage;
+
+    // Force decode the image
+    if (img.decode) {
+      img
+        .decode()
+        .then(() => {
+          setImageLoaded(true);
+        })
+        .catch(() => {
+          // If decode fails, check if image is already loaded before setting handlers
+          if (img.complete && img.naturalHeight !== 0) {
+            // Image is already loaded (cached), set loaded state immediately
+            setImageLoaded(true);
+          } else if (img.complete && img.naturalHeight === 0) {
+            // Image failed to load, show section after a short delay
+            timeoutId = setTimeout(() => setImageLoaded(true), 100);
+          } else {
+            // Image is still loading, set up handlers
+            img.onload = () => {
+              setImageLoaded(true);
+            };
+            img.onerror = () => {
+              // Even if image fails to load, show the section after a short delay
+              timeoutId = setTimeout(() => setImageLoaded(true), 100);
+            };
+          }
+        });
+    } else {
+      // Fallback for browsers that don't support decode()
+      if (img.complete && img.naturalHeight !== 0) {
+        setImageLoaded(true);
+      } else {
+        img.onload = () => {
+          setImageLoaded(true);
+        };
+        img.onerror = () => {
+          // Even if image fails to load, show the section after a short delay
+          timeoutId = setTimeout(() => setImageLoaded(true), 100);
+        };
+      }
+    }
+
+    const updateBackgroundPosition = () => {
+      setBackgroundPosition(window.innerWidth < 768 ? "80% center" : "center");
+    };
+
+    // Set initial position
+    updateBackgroundPosition();
+
+    // Update on resize
+    window.addEventListener("resize", updateBackgroundPosition);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("resize", updateBackgroundPosition);
+      // Clear timeout if component unmounts before timeout completes
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  const sectionStyle = imageLoaded
+    ? {
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: backgroundPosition,
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "#121212", // Fallback color
+      }
+    : {
+        backgroundColor: "#121212",
+        backgroundImage: "none !important",
+      };
+
   return (
     <section
       id="home"
-      className="relative min-h-[90vh] md:min-h-screen flex items-center pt-16 md:pt-20 hero-gradient overflow-hidden"
-      style={{
-        backgroundImage: `url(${bgImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      className={`relative min-h-[90vh] md:min-h-screen flex items-center pt-16 md:pt-20 overflow-hidden ${
+        imageLoaded ? "hero-gradient" : ""
+      }`}
+      style={sectionStyle}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
@@ -25,17 +110,6 @@ const HeroSection = () => {
             variants={fadeIn("right", "tween", 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.6, ease: "backOut" }}
-              className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6 text-sm"
-            >
-              <span className="text-accent font-medium">
-                Premium Anime Collections
-              </span>
-            </motion.div>
-
             <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
               <div className="inline-block">
                 <span className="text-accent">ANIME INDIA</span>
@@ -61,10 +135,8 @@ const HeroSection = () => {
               </span>
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4 mt-2">
-              <a
-                href="https://shop.animeindia.org"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/products"
                 className="group relative inline-flex items-center justify-center w-full sm:w-auto overflow-hidden rounded-lg bg-gradient-to-r from-accent to-accent/80 px-8 py-3 text-lg font-bold text-white transition-all duration-300 ease-out hover:scale-105"
               >
                 <span className="absolute inset-0 bg-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
@@ -87,7 +159,7 @@ const HeroSection = () => {
                   </svg>
                   Shop Now
                 </span>
-              </a>
+              </Link>
 
               <a
                 href="#services"

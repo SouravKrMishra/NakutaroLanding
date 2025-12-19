@@ -1,6 +1,7 @@
 import axios from "axios";
 import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
+import ProductsBanner from "@/components/ProductsBanner.tsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import React, { useEffect, useState, useRef } from "react";
@@ -884,6 +885,9 @@ const ProductsPage = () => {
     <div className="products-page pt-28 pb-16 overflow-hidden">
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Promotional Banner Carousel */}
+        <ProductsBanner />
+
         {/* Featured Products */}
         <div className="mb-16">
           <div className="flex justify-between items-center mb-8">
@@ -1046,32 +1050,31 @@ const ProductsPage = () => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mb-6 border-b border-[#2D2D2D] py-4">
-                <div>
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 bg-transparent border-[#444] hover:bg-[#2D2D2D] hover:border-accent/50"
+              <div className="flex flex-wrap items-center gap-3 mb-6 border-b border-[#2D2D2D] py-4">
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 bg-transparent border-[#444] hover:bg-[#2D2D2D] hover:border-accent/50 text-xs sm:text-sm h-8"
+                    >
+                      Sort By: {sortBy}
+                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[#1E1E1E] border-[#2D2D2D]">
+                    {sortOptions.map((option) => (
+                      <DropdownMenuItem
+                        key={option}
+                        onSelect={() => setSortBy(option)}
+                        className="text-gray-300 hover:!bg-[#2D2D2D] hover:!text-white"
                       >
-                        Sort By: {sortBy}
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-[#1E1E1E] border-[#2D2D2D]">
-                      {sortOptions.map((option) => (
-                        <DropdownMenuItem
-                          key={option}
-                          onSelect={() => setSortBy(option)}
-                          className="text-gray-300 hover:!bg-[#2D2D2D] hover:!text-white"
-                        >
-                          {option}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div className="text-sm text-gray-400">
+                        {option}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div className="text-xs sm:text-sm text-gray-400">
                   {totalProducts > 0
                     ? `Showing ${firstProductNum}–${lastProductNum} of ${totalProducts} products`
                     : "Showing 0–0 of 0 products"}
@@ -1079,173 +1082,204 @@ const ProductsPage = () => {
               </div>
 
               {/* Compact Horizontal Filter Bar */}
-              <div className="w-full bg-gradient-to-r from-[#1A1A1A] to-[#0D0D0D] rounded-lg p-4 border border-[#2D2D2D] mb-6 shadow-lg">
-                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                  {/* Filter Icon & Title */}
-                  <div className="flex items-center gap-2 shrink-0">
+              <div className="w-full bg-gradient-to-r from-[#1A1A1A] to-[#0D0D0D] rounded-lg p-3 sm:p-4 border border-[#2D2D2D] mb-6 shadow-lg">
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  {/* Filter Icon & Title - Mobile */}
+                  <div className="flex items-center gap-2 sm:hidden">
                     <div className="p-1.5 bg-accent/10 rounded-lg">
                       <Filter className="h-4 w-4 text-accent" />
                     </div>
-                    <span className="text-sm font-semibold text-white hidden sm:inline">
-                      Filters:
+                    <span className="text-sm font-semibold text-white">
+                      Filters
                     </span>
                   </div>
 
                   {/* Categories - Horizontal Scrollable */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      {categories
-                        .filter((category) => category.count > 0)
-                        .map((category) => (
-                          <button
-                            key={category.name}
-                            onClick={() => handleCategoryClick(category.name)}
-                            className={`px-3 py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm font-medium whitespace-nowrap ${
-                              activeCategory.includes(category.name)
-                                ? "bg-accent text-white border-accent shadow-md"
-                                : "bg-[#181818] text-gray-300 border-[#2D2D2D] hover:bg-accent/10 hover:text-accent hover:border-accent/50"
-                            }`}
-                          >
-                            {category.name}
-                            <span className="ml-1.5 px-1.5 py-0.5 bg-white/10 rounded-full text-xs">
-                              {category.count}
-                            </span>
-                          </button>
-                        ))}
+                  <div className="w-full">
+                    <div className="flex items-center gap-2 mb-2 sm:mb-0 sm:hidden">
+                      <span className="text-xs font-medium text-gray-400">
+                        Categories:
+                      </span>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-2 mb-2 sm:mb-0">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="p-1.5 bg-accent/10 rounded-lg">
+                          <Filter className="h-4 w-4 text-accent" />
+                        </div>
+                        <span className="text-sm font-semibold text-white">
+                          Filters:
+                        </span>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-hide">
+                      <div className="flex gap-2 items-center min-w-max sm:flex-wrap sm:min-w-0">
+                        {categories
+                          .filter((category) => category.count > 0)
+                          .map((category) => (
+                            <button
+                              key={category.name}
+                              onClick={() => handleCategoryClick(category.name)}
+                              className={`px-3 py-2 sm:py-1.5 rounded-full border transition-all duration-300 text-xs sm:text-sm font-medium whitespace-nowrap touch-manipulation ${
+                                activeCategory.includes(category.name)
+                                  ? "bg-accent text-white border-accent shadow-md"
+                                  : "bg-[#181818] text-gray-300 border-[#2D2D2D] hover:bg-accent/10 hover:text-accent hover:border-accent/50 active:bg-accent/20"
+                              }`}
+                            >
+                              {category.name}
+                              <span className="ml-1.5 px-1.5 py-0.5 bg-white/10 rounded-full text-xs">
+                                {category.count}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Price Range Dropdown */}
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-9 shrink-0"
-                      >
-                        <Tag className="h-3.5 w-3.5 text-accent" />
-                        <span className="hidden sm:inline">Price:</span>
-                        <span>
-                          ₹{committedPriceRange[0].toLocaleString()} - ₹
-                          {committedPriceRange[1].toLocaleString()}
-                        </span>
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="bg-[#1E1E1E] border-[#2D2D2D] p-4 w-80"
-                      align="end"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-300 font-medium">
-                            Price Range
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ₹{priceRange[0].toLocaleString()} - ₹
-                            {priceRange[1].toLocaleString()}
-                          </span>
-                        </div>
-                        <Slider
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                          onValueCommit={setCommittedPriceRange}
-                          min={0}
-                          max={10000}
-                          step={500}
-                          minStepsBetweenThumbs={1}
-                          className="w-full"
-                        />
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* Rating Filter Dropdown */}
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-9 shrink-0"
-                      >
-                        <Star className="h-3.5 w-3.5 text-accent" />
-                        <span className="hidden sm:inline">Rating:</span>
-                        <span>
-                          {Object.entries(ratings)
-                            .filter(([_, isActive]) => isActive)
-                            .map(([rating, _]) => `${rating}+`)
-                            .join(", ") || "Any"}
-                        </span>
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="bg-[#1E1E1E] border-[#2D2D2D] p-3 w-56"
-                      align="end"
-                    >
-                      <div className="space-y-2">
-                        <div className="text-xs font-semibold text-gray-300 mb-2">
-                          Minimum Rating
-                        </div>
-                        {[4, 3, 2, 1].map((rating) => (
-                          <label
-                            key={rating}
-                            className="flex items-center cursor-pointer group"
+                  {/* Filter Controls Row */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+                    {/* Price Range and Rating - Same Line */}
+                    <div className="flex flex-row gap-2 sm:gap-3 flex-1">
+                      {/* Price Range Dropdown */}
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-between sm:justify-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-10 sm:h-9 flex-1 sm:flex-initial shrink-0 touch-manipulation"
                           >
-                            <input
-                              type="checkbox"
-                              checked={ratings[rating]}
-                              onChange={() => handleRatingChange(rating)}
-                              className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
-                            />
-                            <div className="flex items-center ml-3 group-hover:text-accent transition-colors duration-200">
-                              <div className="flex">
-                                {Array(rating)
-                                  .fill(0)
-                                  .map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400"
-                                    />
-                                  ))}
-                              </div>
-                              <span className="ml-2 text-xs text-gray-400 group-hover:text-accent">
-                                & up
+                            <div className="flex items-center gap-2">
+                              <Tag className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-accent" />
+                              <span className="hidden sm:inline">Price:</span>
+                              <span className="text-xs sm:text-sm truncate">
+                                ₹{committedPriceRange[0].toLocaleString()} - ₹
+                                {committedPriceRange[1].toLocaleString()}
                               </span>
                             </div>
-                          </label>
-                        ))}
+                            <ChevronDown className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="bg-[#1E1E1E] border-[#2D2D2D] p-4 w-[calc(100vw-2rem)] sm:w-80 max-w-sm"
+                          align="start"
+                          side="bottom"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-300 font-medium">
+                                Price Range
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                ₹{priceRange[0].toLocaleString()} - ₹
+                                {priceRange[1].toLocaleString()}
+                              </span>
+                            </div>
+                            <Slider
+                              value={priceRange}
+                              onValueChange={setPriceRange}
+                              onValueCommit={setCommittedPriceRange}
+                              min={0}
+                              max={10000}
+                              step={500}
+                              minStepsBetweenThumbs={1}
+                              className="w-full"
+                            />
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {/* Rating Filter Dropdown */}
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center justify-between sm:justify-center gap-2 bg-[#181818] border-[#2D2D2D] hover:bg-[#2D2D2D] hover:border-accent/50 text-gray-300 hover:text-white text-xs sm:text-sm h-10 sm:h-9 flex-1 sm:flex-initial shrink-0 touch-manipulation"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Star className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-accent" />
+                              <span className="hidden sm:inline">Rating:</span>
+                              <span className="text-xs sm:text-sm truncate">
+                                {Object.entries(ratings)
+                                  .filter(([_, isActive]) => isActive)
+                                  .map(([rating, _]) => `${rating}+`)
+                                  .join(", ") || "Any"}
+                              </span>
+                            </div>
+                            <ChevronDown className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="bg-[#1E1E1E] border-[#2D2D2D] p-3 w-[calc(100vw-2rem)] sm:w-56 max-w-xs"
+                          align="start"
+                          side="bottom"
+                        >
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-300 mb-2">
+                              Minimum Rating
+                            </div>
+                            {[4, 3, 2, 1].map((rating) => (
+                              <label
+                                key={rating}
+                                className="flex items-center cursor-pointer group touch-manipulation py-1"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={ratings[rating]}
+                                  onChange={() => handleRatingChange(rating)}
+                                  className="w-5 h-5 sm:w-4 sm:h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
+                                />
+                                <div className="flex items-center ml-3 group-hover:text-accent transition-colors duration-200">
+                                  <div className="flex">
+                                    {Array(rating)
+                                      .fill(0)
+                                      .map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-yellow-400 fill-yellow-400"
+                                        />
+                                      ))}
+                                  </div>
+                                  <span className="ml-2 text-xs text-gray-400 group-hover:text-accent">
+                                    & up
+                                  </span>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Availability Checkbox */}
+                    <label className="flex items-center cursor-pointer group shrink-0 h-10 sm:h-9 px-3 sm:px-0 rounded-lg border border-[#2D2D2D] sm:border-0 bg-[#181818] sm:bg-transparent touch-manipulation justify-between sm:justify-start">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={includeOutOfStock}
+                          onChange={() => {
+                            setIncludeOutOfStock((prev) => !prev);
+                            setCurrentPage(1);
+                          }}
+                          className="w-5 h-5 sm:w-4 sm:h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
+                        />
+                        <span className="ml-2 text-xs sm:text-sm text-gray-300 group-hover:text-accent">
+                          <CheckSquare className="h-4 w-4 sm:h-3.5 sm:w-3.5 inline mr-1.5 text-accent" />
+                          <span>Out of Stock</span>
+                        </span>
                       </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    </label>
 
-                  {/* Availability Checkbox */}
-                  <label className="flex items-center cursor-pointer group shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={includeOutOfStock}
-                      onChange={() => {
-                        setIncludeOutOfStock((prev) => !prev);
-                        setCurrentPage(1);
-                      }}
-                      className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
-                    />
-                    <span className="ml-2 text-xs sm:text-sm text-gray-300 group-hover:text-accent whitespace-nowrap">
-                      <CheckSquare className="h-3.5 w-3.5 inline mr-1.5 text-accent" />
-                      <span className="hidden sm:inline">Out of Stock</span>
-                    </span>
-                  </label>
-
-                  {/* Clear Filters Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="text-white bg-accent/10 border-accent hover:bg-accent hover:text-white transition-all duration-300 text-xs sm:text-sm h-9 shrink-0"
-                  >
-                    <X className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="hidden sm:inline">Clear</span>
-                  </Button>
+                    {/* Clear Filters Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-white bg-accent/10 border-accent hover:bg-accent hover:text-white transition-all duration-300 text-xs sm:text-sm h-10 sm:h-9 w-full sm:w-auto shrink-0 touch-manipulation"
+                    >
+                      <X className="h-4 w-4 sm:h-3.5 sm:w-3.5 mr-1.5" />
+                      <span>Clear</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

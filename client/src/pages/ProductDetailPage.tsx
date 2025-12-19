@@ -473,9 +473,206 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="pt-28 pb-16 flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-400">Loading product details...</p>
+      <div className="product-detail-page pt-20 sm:pt-28 pb-12 sm:pb-16">
+        {/* Breadcrumb Skeleton */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 text-xs sm:text-sm">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-3 w-3 rounded-full" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-3 w-3 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-start">
+            {/* Left Section - Images */}
+            <div className="lg:sticky lg:top-28 self-start">
+              {/* Image Gallery Skeleton */}
+              <div className="mb-4 sm:mb-0">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  {/* Thumbnail Skeleton - Hidden on mobile */}
+                  <div className="hidden sm:flex flex-col gap-2 sm:gap-3 flex-shrink-0">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="w-16 sm:w-20 h-16 sm:h-20 rounded-md"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Main Image Skeleton */}
+                  <Skeleton className="w-full sm:flex-1 h-[350px] sm:h-96 md:h-[450px] lg:h-[500px] rounded-lg" />
+                </div>
+
+                {/* Mobile Thumbnails Skeleton */}
+                <div className="sm:hidden mt-3">
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="w-20 h-20 rounded-md flex-shrink-0"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Color Swatches Skeleton */}
+              <div className="mt-4 sm:mt-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <Skeleton className="h-4 sm:h-5 w-16" />
+                  <Skeleton className="h-5 w-20 rounded" />
+                </div>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      className="w-[60px] h-[60px] rounded-lg"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Section - Product Info */}
+            <div className="space-y-5 pb-6">
+              {/* Product Header Skeleton */}
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="h-8 sm:h-10 lg:h-12 w-3/4 mb-3" />
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Skeleton key={i} className="h-4 w-4 rounded" />
+                      ))}
+                      <Skeleton className="h-4 w-12 ml-2" />
+                      <Skeleton className="h-4 w-16 ml-2" />
+                    </div>
+                    <Skeleton className="h-4 w-1 rounded-full hidden sm:block" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-10 sm:h-12 w-32 mb-6" />
+                </div>
+              </div>
+
+              {/* Size Selection Skeleton */}
+              <div className="space-y-5 pb-5 border-b border-[#2D2D2D]">
+                <div>
+                  <Skeleton className="h-5 w-24 mb-3" />
+                  <div className="flex flex-wrap gap-2.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-16 rounded-lg" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quantity Skeleton */}
+                <div>
+                  <Skeleton className="h-5 w-20 mb-3" />
+                  <div className="flex items-center w-fit border-2 border-[#2D2D2D] rounded-lg overflow-hidden bg-[#1E1E1E]">
+                    <Skeleton className="w-11 h-11" />
+                    <Skeleton className="w-14 h-11" />
+                    <Skeleton className="w-11 h-11" />
+                  </div>
+                </div>
+
+                {/* Action Buttons Skeleton */}
+                <div className="flex flex-row gap-3 pt-2">
+                  <Skeleton className="flex-1 h-12 rounded-lg" />
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                </div>
+              </div>
+
+              {/* Delivery Section Skeleton */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5 space-y-4">
+                <div>
+                  <Skeleton className="h-5 w-48 mb-3" />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <Skeleton className="flex-1 h-11 rounded" />
+                    <Skeleton className="w-full sm:w-auto h-11 rounded" />
+                  </div>
+                </div>
+                <Skeleton className="h-12 w-full rounded-lg" />
+              </div>
+
+              {/* Key Highlights Skeleton */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5">
+                <Skeleton className="h-6 w-32 mb-5" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg border border-[#2D2D2D] bg-[#121212] px-4 py-3.5"
+                    >
+                      <Skeleton className="h-3 w-20 mb-2" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description Accordion Skeleton */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#2D2D2D]">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-6 w-6 rounded-lg" />
+                    <div className="flex-1">
+                      <Skeleton className="h-5 w-40 mb-1" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                </div>
+                <div className="px-5 pb-5 pt-4">
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </div>
+
+              {/* Specifications Skeleton */}
+              <div className="rounded-xl border border-[#2D2D2D] bg-gradient-to-br from-[#1E1E1E] to-[#1A1A1A] p-5">
+                <Skeleton className="h-6 w-32 mb-5" />
+                <div className="space-y-3.5">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col sm:flex-row border-b border-[#2D2D2D] pb-3.5 gap-2 sm:gap-4"
+                    >
+                      <Skeleton className="h-4 w-24 sm:w-1/3" />
+                      <Skeleton className="h-4 w-full sm:w-2/3" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Related Products Skeleton */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-8 sm:mt-16 mb-12 sm:mb-16">
+          <div className="mb-6 sm:mb-8">
+            <Skeleton className="h-8 sm:h-10 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D]"
+              >
+                <Skeleton className="w-full aspect-square" />
+                <div className="p-4">
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
