@@ -110,9 +110,10 @@ const HeroSection = () => {
             variants={fadeIn("right", "tween", 0.2, 1)}
             className="text-center lg:text-left"
           >
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-3 md:mb-4 relative">
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-7xl font-bold leading-tight mb-3 md:mb-4 relative">
               <div className="inline-block">
-                <span className="text-accent">ANIME INDIA</span>
+                <span className="text-accent">ANIME </span>
+                <span className="text-white">INDIA</span>
               </div>
             </h1>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-4 sm:mb-6 text-white">

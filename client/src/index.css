@@ -296,6 +296,13 @@ h3 span,
   color: hsl(var(--accent-primary)) !important;
 }
 
+/* Override for white text in headers */
+h1 span.text-white,
+h2 span.text-white,
+h3 span.text-white {
+  color: #ffffff !important;
+}
+
 /* Add color to any element with inline style using red */
 *[style*="color: red"],
 *[style*="color:#ff"],
