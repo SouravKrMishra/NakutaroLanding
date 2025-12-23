@@ -87,14 +87,28 @@ class ProductService {
       }
     }
 
-    // Combine all $and conditions
-    if (andConditions.length > 0) {
-      query.$and = andConditions;
-    }
-
     // Rating filter
     if (filters.min_rating) {
       query["ratings.average"] = { $gte: filters.min_rating };
+    }
+
+    // Search filter - search in name, description, and tags
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = filters.search.trim();
+      const searchRegex = new RegExp(searchTerm, "i"); // Case-insensitive search
+      andConditions.push({
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex },
+          { tags: { $in: [searchRegex] } },
+          { slug: searchRegex },
+        ],
+      });
+    }
+
+    // Combine all $and conditions
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     // Build sort

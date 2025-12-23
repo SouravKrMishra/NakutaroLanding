@@ -22,9 +22,11 @@ import {
   CheckSquare,
   Heart,
   Folder,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -255,6 +257,7 @@ const parseUrlParams = (search: string) => {
     page: params.get("page") ? Number(params.get("page")) : 1,
     includeOutOfStock: params.get("includeOutOfStock") === "true",
     view: (params.get("view") as "grid" | "list") || "grid",
+    searchQuery: params.get("search") || "",
   };
 };
 
@@ -267,6 +270,7 @@ const buildUrlParams = (filters: {
   page: number;
   includeOutOfStock: boolean;
   view: "grid" | "list";
+  searchQuery: string;
 }) => {
   const params = new URLSearchParams();
 
@@ -293,6 +297,9 @@ const buildUrlParams = (filters: {
   }
   if (filters.view !== "grid") {
     params.set("view", filters.view);
+  }
+  if (filters.searchQuery.trim()) {
+    params.set("search", filters.searchQuery.trim());
   }
 
   return params.toString();
@@ -325,6 +332,8 @@ const ProductsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [includeOutOfStock, setIncludeOutOfStock] = useState(true); // Default true for print-on-demand
+  const [searchQuery, setSearchQuery] = useState<string>(""); // Input value
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string>(""); // Actual search term sent to API
   const [selectedAttributes, setSelectedAttributes] = useState<{
     [productId: string]: { [attributeName: string]: string };
   }>({});
@@ -337,6 +346,10 @@ const ProductsPage = () => {
   const pageSize = 12;
   const isUpdatingFromUrl = useRef(false);
   const hasInitialized = useRef(false);
+  const urlInitCompleteRef = useRef(false);
+  const [urlInitComplete, setUrlInitComplete] = useState(false);
+  const lastFetchParamsRef = useRef<string>("");
+  const lastFetchTimeRef = useRef<number>(0);
 
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -380,7 +393,18 @@ const ProductsPage = () => {
     if (!isAuthenticated) {
       toast({
         title: "Login Required",
-        description: "Please log in to add items to your cart.",
+        description: (
+          <span>
+            Please{" "}
+            <button
+              onClick={() => setLocation("/login/individual")}
+              className="underline underline-offset-2 hover:text-white hover:bg-white/20 hover:px-1.5 hover:py-0.5 hover:rounded transition-all duration-200 cursor-pointer font-medium"
+            >
+              log in
+            </button>{" "}
+            to add items to your cart.
+          </span>
+        ),
         variant: "destructive",
       });
       return;
@@ -460,7 +484,18 @@ const ProductsPage = () => {
     if (!isAuthenticated) {
       toast({
         title: "Login Required",
-        description: "Please log in to add items to your cart.",
+        description: (
+          <span>
+            Please{" "}
+            <button
+              onClick={() => setLocation("/login/individual")}
+              className="underline underline-offset-2 hover:text-white hover:bg-white/20 hover:px-1.5 hover:py-0.5 hover:rounded transition-all duration-200 cursor-pointer font-medium"
+            >
+              log in
+            </button>{" "}
+            to add items to your cart.
+          </span>
+        ),
         variant: "destructive",
       });
       return;
@@ -593,6 +628,7 @@ const ProductsPage = () => {
       page: currentPage,
       includeOutOfStock,
       view,
+      searchQuery: activeSearchQuery,
     });
 
     const newUrl = urlParams ? `?${urlParams}` : "";
@@ -602,6 +638,9 @@ const ProductsPage = () => {
   // Initialize state from URL parameters
   useEffect(() => {
     isUpdatingFromUrl.current = true;
+    hasInitialized.current = false; // Reset to prevent fetches during URL initialization
+    urlInitCompleteRef.current = false; // Reset ref
+    setUrlInitComplete(false); // Reset to trigger fetch after initialization
     const urlParams = parseUrlParams(search);
 
     // Set ratings from URL first
@@ -627,12 +666,16 @@ const ProductsPage = () => {
     setIncludeOutOfStock(urlParams.includeOutOfStock);
     setView(urlParams.view);
     setRatings(newRatings);
+    setSearchQuery(urlParams.searchQuery);
+    setActiveSearchQuery(urlParams.searchQuery);
 
-    // Reset the flag after a short delay to allow state updates to complete
+    // Reset the flag after a delay to allow state updates and debounced values to settle
+    // Use a longer delay to ensure debounced values have time to stabilize
     setTimeout(() => {
       isUpdatingFromUrl.current = false;
-      hasInitialized.current = false; // Reset initialization flag
-    }, 100);
+      setUrlInitComplete(true); // Trigger fetch effect by updating state
+      // Don't reset hasInitialized here - let the first successful fetch set it to true
+    }, 1200); // Wait longer than debounce delay (1000ms) to ensure debounced values have settled
   }, [search]);
 
   useEffect(() => {
@@ -700,9 +743,43 @@ const ProductsPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       // Prevent duplicate calls during URL initialization
-      if (isUpdatingFromUrl.current && !hasInitialized.current) {
+      // Block ALL fetches while updating from URL, regardless of hasInitialized state
+      if (isUpdatingFromUrl.current) {
         return;
       }
+
+      // If URL initialization just completed, we need to fetch
+      // But we also need to prevent duplicate fetches from debounced values changing at the same time
+      // Use a ref to track if we've already handled the post-init fetch
+      if (urlInitComplete && !urlInitCompleteRef.current) {
+        urlInitCompleteRef.current = true;
+      }
+
+      // Request deduplication: Skip if same params were fetched recently (within 2000ms)
+      const fetchParams = JSON.stringify({
+        page: currentPage,
+        sortBy,
+        category: activeCategory.join(","),
+        min_price: debouncedPriceRange[0],
+        max_price: debouncedPriceRange[1],
+        ratings: Object.entries(debouncedRatings)
+          .filter(([_, isActive]) => isActive)
+          .map(([rating]) => rating),
+        includeOutOfStock,
+        search: activeSearchQuery.trim(),
+      });
+      const now = Date.now();
+      const timeSinceLastFetch = now - lastFetchTimeRef.current;
+      const paramsMatch = lastFetchParamsRef.current === fetchParams;
+      const isDuplicate = paramsMatch && timeSinceLastFetch < 2000;
+
+      if (isDuplicate) {
+        return;
+      }
+
+      // Update refs IMMEDIATELY before making the call to prevent race conditions
+      lastFetchParamsRef.current = fetchParams;
+      lastFetchTimeRef.current = now;
 
       setLoading(true);
       setError(null);
@@ -741,6 +818,7 @@ const ProductsPage = () => {
                 .map(([rating, _]) => parseInt(rating))
                 .sort((a, b) => b - a)[0] || undefined,
             stock_status: includeOutOfStock ? "any" : "instock",
+            search: activeSearchQuery.trim() || undefined,
             ...sortParams,
           },
         });
@@ -801,6 +879,8 @@ const ProductsPage = () => {
     debouncedPriceRange,
     debouncedRatings,
     includeOutOfStock,
+    activeSearchQuery,
+    urlInitComplete, // Include to trigger fetch after URL init completes
   ]);
 
   const handleCategoryClick = (categoryName: string) => {
@@ -830,6 +910,7 @@ const ProductsPage = () => {
     currentPage,
     includeOutOfStock,
     view,
+    activeSearchQuery,
   ]);
 
   const clearFilters = () => {
@@ -842,7 +923,8 @@ const ProductsPage = () => {
       committedPriceRange[1] === 10000 &&
       Object.values(ratings).every((rating) => !rating) &&
       sortBy === "Relevance" &&
-      !includeOutOfStock;
+      !includeOutOfStock &&
+      activeSearchQuery.trim() === "";
 
     // Only update state if not already in default state
     if (!isDefaultState) {
@@ -854,6 +936,8 @@ const ProductsPage = () => {
       setCurrentPage(1);
       setIncludeOutOfStock(false);
       setView("grid");
+      setSearchQuery("");
+      setActiveSearchQuery("");
     }
   };
 
@@ -1103,7 +1187,8 @@ const ProductsPage = () => {
                     {activeCategory.length > 0 ||
                     committedPriceRange[0] !== 0 ||
                     committedPriceRange[1] !== 10000 ||
-                    Object.values(ratings).some((r) => r) ? (
+                    Object.values(ratings).some((r) => r) ||
+                    activeSearchQuery.trim() !== "" ? (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1117,7 +1202,32 @@ const ProductsPage = () => {
                   </div>
 
                   {/* Filter Controls - Compact Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {/* Search Bar */}
+                    <div className="relative sm:col-span-2 lg:col-span-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            // Batch state updates to prevent double fetch
+                            // Only update currentPage if it's not already 1
+                            const newSearchQuery = e.currentTarget.value;
+                            if (currentPage !== 1) {
+                              setCurrentPage(1);
+                            }
+                            setActiveSearchQuery(newSearchQuery);
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        className="pl-10 h-10 bg-[#181818]/80 border-[#2D2D2D] text-gray-300 placeholder:text-gray-500 focus:border-accent/50 focus:ring-accent/20 text-sm"
+                      />
+                    </div>
                     {/* Category Dropdown */}
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
@@ -1278,7 +1388,7 @@ const ProductsPage = () => {
                     </DropdownMenu>
 
                     {/* Availability Checkbox */}
-                    <label className="flex items-center cursor-pointer group h-10 px-4 rounded-lg border border-[#2D2D2D] bg-[#181818]/80 hover:bg-[#2D2D2D] hover:border-accent/50 transition-all duration-200">
+                    <label className="flex items-center cursor-pointer group h-10 px-3 rounded-lg border border-[#2D2D2D] bg-[#181818]/80 hover:bg-[#2D2D2D] hover:border-accent/50 transition-all duration-200 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={includeOutOfStock}
@@ -1286,11 +1396,11 @@ const ProductsPage = () => {
                           setIncludeOutOfStock((prev) => !prev);
                           setCurrentPage(1);
                         }}
-                        className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800"
+                        className="w-4 h-4 rounded border-gray-600 text-accent focus:ring-accent focus:ring-opacity-25 bg-gray-800 shrink-0"
                       />
-                      <span className="ml-3 text-sm text-gray-300 group-hover:text-white">
-                        <CheckSquare className="h-4 w-4 inline mr-2 text-accent" />
-                        Include Out of Stock
+                      <span className="ml-2 text-xs sm:text-sm text-gray-300 group-hover:text-white">
+                        <CheckSquare className="h-3.5 w-3.5 inline mr-1.5 text-accent" />
+                        Out of Stock
                       </span>
                     </label>
                   </div>

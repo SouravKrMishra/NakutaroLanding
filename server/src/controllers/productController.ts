@@ -115,6 +115,7 @@ export const getProducts = async (
       max_price: Number(req.query.max_price),
       min_rating: Number(req.query.min_rating),
       stock_status: req.query.stock_status as string,
+      search: req.query.search as string,
     };
 
     const result = await productService.getProducts(filters);

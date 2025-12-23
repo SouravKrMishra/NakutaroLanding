@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations.ts";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import {
   Star,
   ShoppingCart,
@@ -125,6 +125,7 @@ const getAllowedSizesForProduct = (
 
 const ProductDetailPage = () => {
   const [, params] = useRoute("/product/:id");
+  const [, setLocation] = useLocation();
   const productId = params?.id;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1413,7 +1414,18 @@ const ProductDetailPage = () => {
     if (!isAuthenticated) {
       toast({
         title: "Login Required",
-        description: "Please log in to add items to your cart.",
+        description: (
+          <span>
+            Please{" "}
+            <button
+              onClick={() => setLocation("/login/individual")}
+              className="underline underline-offset-2 hover:text-white hover:bg-white/20 hover:px-1.5 hover:py-0.5 hover:rounded transition-all duration-200 cursor-pointer font-medium"
+            >
+              log in
+            </button>{" "}
+            to add items to your cart.
+          </span>
+        ),
         variant: "destructive",
       });
       return;

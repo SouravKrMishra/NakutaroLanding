@@ -18,12 +18,15 @@ import { useState } from "react";
 // Import product images
 import actionFigures1 from "@assets/actionfigures.jpg";
 import kakashi from "@assets/kakashi.JPG";
-import tshirtBack from "@assets/tshirt-back.jpg";
-import tshirtFront from "@assets/tshirt-front.jpg";
+// import tshirtBack from "@assets/tshirt-back.jpg";
+// import tshirtFront from "@assets/tshirt-front.jpg";
 import hoodieBack from "@assets/hoodie-back.jpg";
 import hoodieFront from "@assets/hoodie-front.jpg";
 import beserk from "@assets/beserk.jpg";
 import vagabond from "@assets/vagabond.jpg";
+
+import tshirtBack from "@assets/front.png";
+import tshirtFront from "@assets/back.png";
 
 interface ProductsSectionProps {
   showFullCatalog?: boolean;
