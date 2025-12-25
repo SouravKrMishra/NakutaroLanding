@@ -1,7 +1,42 @@
-import express from "express";
-import { createServer } from "http";
+// Load environment variables FIRST, before any other imports
+import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env file from project root (one level up from server directory)
+const envPath = path.resolve(__dirname, "..", ".env");
+import { existsSync } from "fs";
+
+// Check if .env file exists
+if (!existsSync(envPath)) {
+  console.warn("⚠️  Warning: .env file not found at:", envPath);
+}
+
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.warn("⚠️  Warning: Could not load .env file:", result.error.message);
+  console.log("Looking for .env at:", envPath);
+} else {
+  console.log("✅ Environment variables loaded from:", envPath);
+  // Check critical environment variables
+  const criticalVars = ["RECAPTCHA_SECRET_KEY", "RECAPTCHA_SITE_KEY", "JWT_SECRET"];
+  console.log("🔑 Critical environment variables check:");
+  criticalVars.forEach((varName) => {
+    const value = process.env[varName];
+    if (varName.includes("SECRET") || varName.includes("KEY")) {
+      console.log(`  ${varName}: ${value ? "✓ Set (hidden)" : "✗ Missing"}`);
+    } else {
+      console.log(`  ${varName}: ${value ? `✓ Set (${value})` : "✗ Missing"}`);
+    }
+  });
+}
+
+import express from "express";
+import { createServer } from "http";
 import { config } from "./src/config/index.js";
 import { logger } from "./src/middleware/logger.js";
 import { errorHandler } from "./src/middleware/errorHandler.js";
@@ -13,9 +48,6 @@ import cors from "cors";
 import { SchedulerService } from "./src/services/schedulerService.js";
 // Import types to ensure global declarations are loaded
 import "./src/types/index.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 

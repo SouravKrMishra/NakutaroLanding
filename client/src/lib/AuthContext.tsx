@@ -88,7 +88,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     password: string,
     recaptchaToken?: string,
     userType: "business" | "individual" = "business"
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    requiresVerification?: boolean;
+    email?: string;
+  }> => {
     try {
       const body: any = { email, password };
       if (recaptchaToken) {
@@ -96,7 +101,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const loginPath =
-        userType === "individual" ? "/api/auth/signin/individual" : "/api/auth/signin";
+        userType === "individual"
+          ? "/api/auth/signin/individual"
+          : "/api/auth/signin";
 
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || ""}${loginPath}`,
@@ -124,8 +131,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         return { success: true };
       } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.message || "Login failed" };
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // If response is not JSON, use status text
+          return {
+            success: false,
+            error: response.statusText || "Login failed",
+            requiresVerification: false,
+          };
+        }
+
+        // Handle different error formats from validation middleware and controllers
+        let errorMessage = "Login failed";
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        } else if (
+          errorData.error?.details &&
+          Array.isArray(errorData.error.details)
+        ) {
+          errorMessage = errorData.error.details
+            .map((err: any) => err.msg || err.message || JSON.stringify(err))
+            .join(", ");
+        } else if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors
+            .map((err: any) =>
+              typeof err === "string" ? err : err.msg || err.message
+            )
+            .join(", ");
+        }
+
+        // Check for requiresVerification flag (for unverified accounts)
+        // Only rely on explicit flag from server, not status code
+        const requiresVerification =
+          errorData.requiresVerification === true ||
+          errorData.requiresVerification === "true";
+
+        return {
+          success: false,
+          error: errorMessage,
+          requiresVerification,
+          email: errorData.email, // Include email if provided for OTP verification
+        };
       }
     } catch (error) {
       console.error("Login error:", error);

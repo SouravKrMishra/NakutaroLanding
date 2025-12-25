@@ -15,7 +15,17 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret as string) as any;
+    // Read JWT_SECRET directly from process.env as fallback
+    const jwtSecret = process.env.JWT_SECRET?.trim() || config.jwt.secret;
+
+    if (!jwtSecret) {
+      return res.status(500).json({
+        message:
+          "JWT_SECRET is not configured. Please set JWT_SECRET in your .env file.",
+      });
+    }
+
+    const decoded = jwt.verify(token, jwtSecret) as any;
     req.user = {
       id: decoded.userId, // Use userId instead of id
       email: decoded.email,
@@ -53,17 +63,22 @@ export const optionalAuth = (
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret as string) as any;
-    req.user = {
-      id: decoded.userId,
-      email: decoded.email,
-      name: decoded.name,
-      userType: decoded.userType,
-    };
+    // Read JWT_SECRET directly from process.env as fallback
+    const jwtSecret = process.env.JWT_SECRET?.trim() || config.jwt.secret;
+
+    if (jwtSecret) {
+      const decoded = jwt.verify(token, jwtSecret) as any;
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+        name: decoded.name,
+        userType: decoded.userType,
+      };
+    }
   } catch (error) {
     // Token is invalid but we don't fail the request
     // Just continue without user
   }
-  
+
   next();
 };

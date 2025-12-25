@@ -7,6 +7,8 @@ import {
   verify,
   logout,
   getUserProfile,
+  verifyOTP,
+  resendOTP,
 } from "../controllers/authController.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { body } from "express-validator";
@@ -88,5 +90,28 @@ router.post("/logout", logout);
 
 // Get user profile route
 router.get("/user/profile", authenticateToken, getUserProfile);
+
+// OTP Verification route
+router.post(
+  "/verify-otp",
+  [
+    body("email").isEmail().withMessage("Invalid email address"),
+    body("otp")
+      .isLength({ min: 6, max: 6 })
+      .withMessage("OTP must be 6 digits")
+      .isNumeric()
+      .withMessage("OTP must contain only numbers"),
+  ],
+  handleValidationErrors,
+  verifyOTP
+);
+
+// Resend OTP route
+router.post(
+  "/resend-otp",
+  [body("email").isEmail().withMessage("Invalid email address")],
+  handleValidationErrors,
+  resendOTP
+);
 
 export default router;

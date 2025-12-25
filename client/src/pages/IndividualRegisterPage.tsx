@@ -116,10 +116,13 @@ const IndividualRegisterPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSuccess("Registration successful! Redirecting to your dashboard...");
-        setUserData(data.user, data.token);
+        const successMessage = data.message || "Registration successful! Please check your email for OTP verification.";
+        setSuccess(successMessage);
+
+        // Redirect to OTP verification page
         setTimeout(() => {
-          setLocation("/dashboard");
+          const fromParam = new URLSearchParams(window.location.search).get("from") || "/";
+          setLocation(`/verify-otp?email=${encodeURIComponent(data.email || formData.email)}&from=${encodeURIComponent(fromParam)}`);
         }, 1200);
       } else {
         const errorData = await response.json();

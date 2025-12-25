@@ -26,12 +26,30 @@ export const verifyRecaptcha = async (
       };
     }
 
+    // Get secret key directly from process.env (more reliable than config object)
+    const secretKey =
+      process.env.RECAPTCHA_SECRET_KEY?.trim() ||
+      config.recaptcha.secretKey?.trim();
+
     // Validate secret key is configured
-    if (!config.recaptcha.secretKey) {
+    if (!secretKey || secretKey === "") {
       console.error("reCAPTCHA secret key is not configured");
+      console.error(
+        "RECAPTCHA_SECRET_KEY from process.env:",
+        process.env.RECAPTCHA_SECRET_KEY
+          ? `Set (length: ${process.env.RECAPTCHA_SECRET_KEY.length})`
+          : "Missing"
+      );
+      console.error(
+        "config.recaptcha.secretKey:",
+        config.recaptcha.secretKey
+          ? `Set (length: ${config.recaptcha.secretKey.length})`
+          : "Missing"
+      );
       return {
         success: false,
-        message: "reCAPTCHA is not properly configured on the server.",
+        message:
+          "reCAPTCHA is not properly configured on the server. Please check RECAPTCHA_SECRET_KEY in your .env file.",
       };
     }
 
@@ -40,7 +58,7 @@ export const verifyRecaptcha = async (
       null,
       {
         params: {
-          secret: config.recaptcha.secretKey,
+          secret: secretKey,
           response: token,
         },
       }

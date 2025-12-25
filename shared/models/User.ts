@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   userType: {
     type: String,
     enum: ["business", "individual"],
-    default: "business",
+    required: true, // Must be explicitly set during registration
     index: true,
   },
   email: {
@@ -102,7 +102,7 @@ const userSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: true,
+    default: false, // Account is inactive until email is verified
   },
   // Admin privileges
   power: {
@@ -119,20 +119,8 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-// Update the updatedAt field before saving
-userSchema.pre("save", function (next) {
-  this.updatedAt = new Date();
-  next();
+}, {
+  timestamps: true, // Automatically manage createdAt and updatedAt
 });
 
 export const User = mongoose.model("User", userSchema);

@@ -60,7 +60,13 @@ const IndividualLoginPage = () => {
       if (result.success) {
         setLocation("/dashboard");
       } else {
-        setError(result.error || "Invalid email or password. Please try again.");
+        // Check if error indicates verification is required
+        if (result.requiresVerification) {
+          const verifyEmail = (result as any).email || email;
+          setLocation(`/verify-otp?email=${encodeURIComponent(verifyEmail)}&from=${encodeURIComponent("/login/individual")}`);
+        } else {
+          setError(result.error || "Invalid email or password. Please try again.");
+        }
       }
     } catch (err) {
       setError("An error occurred. Please try again.");

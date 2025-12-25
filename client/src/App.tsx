@@ -31,6 +31,7 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage.tsx";
 import ShippingPolicyPage from "@/pages/ShippingPolicyPage.tsx";
 import IndividualLoginPage from "@/pages/IndividualLoginPage.tsx";
 import IndividualRegisterPage from "@/pages/IndividualRegisterPage.tsx";
+import VerifyOTPPage from "@/pages/VerifyOTPPage.tsx";
 
 // Shared components
 import Header from "./components/Header.js";
@@ -85,6 +86,7 @@ function App() {
                         path="/register/individual"
                         component={IndividualRegisterPage}
                       />
+                      <Route path="/verify-otp" component={VerifyOTPPage} />
                       <Route
                         path="/dashboard"
                         component={() => (

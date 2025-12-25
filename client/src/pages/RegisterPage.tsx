@@ -218,14 +218,13 @@ const RegisterPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSuccess("Registration successful! Logging you in...");
+        const successMessage = data.message || "Registration successful! Please check your email for OTP verification.";
+        setSuccess(successMessage);
 
-        // Set user data in AuthContext to automatically log in
-        setUserData(data.user, data.token);
-
-        // Redirect to dashboard after successful registration
+        // Redirect to OTP verification page
         setTimeout(() => {
-          setLocation("/dashboard");
+          const fromParam = new URLSearchParams(window.location.search).get("from") || "/business";
+          setLocation(`/verify-otp?email=${encodeURIComponent(data.email || formData.email)}&from=${encodeURIComponent(fromParam)}`);
         }, 1500);
       } else {
         const errorData = await response.json();
