@@ -69,6 +69,7 @@ type ProductImage = {
   url?: string;
   color?: string | null;
   colour?: string | null;
+  isPrimary?: boolean;
   isPrimaryForColor?: boolean;
 };
 
@@ -94,28 +95,37 @@ type Product = {
 const getDefaultColorPrimaryImage = (item: any): string => {
   if (!item.images || item.images.length === 0) return "";
 
-  // Try to find the primary image for the default color
-  if (item.defaultColor) {
-    const primaryForDefaultColor = item.images.find(
-      (img: any) =>
-        img.color === item.defaultColor && img.isPrimaryForColor === true
-    );
-    if (primaryForDefaultColor)
-      return primaryForDefaultColor.src || primaryForDefaultColor.url || "";
+  // For products with colors (clothing items), use color-based primary image
+  if (item.defaultColor || (item.colors && item.colors.length > 0)) {
+    // Try to find the primary image for the default color
+    if (item.defaultColor) {
+      const primaryForDefaultColor = item.images.find(
+        (img: any) =>
+          img.color === item.defaultColor && img.isPrimaryForColor === true
+      );
+      if (primaryForDefaultColor)
+        return primaryForDefaultColor.src || primaryForDefaultColor.url || "";
 
-    // If no primary image for default color, get the first image of that color
-    const firstOfDefaultColor = item.images.find(
-      (img: any) => img.color === item.defaultColor
-    );
-    if (firstOfDefaultColor)
-      return firstOfDefaultColor.src || firstOfDefaultColor.url || "";
+      // If no primary image for default color, get the first image of that color
+      const firstOfDefaultColor = item.images.find(
+        (img: any) => img.color === item.defaultColor
+      );
+      if (firstOfDefaultColor)
+        return firstOfDefaultColor.src || firstOfDefaultColor.url || "";
+    }
   }
 
-  // Fallback to any primary image
-  const anyPrimary = item.images.find(
+  // Fallback to any primary image for color (check regardless of whether colors exist)
+  // This preserves the original fallback behavior for edge cases
+  const anyPrimaryForColor = item.images.find(
     (img: any) => img.isPrimaryForColor === true
   );
-  if (anyPrimary) return anyPrimary.src || anyPrimary.url || "";
+  if (anyPrimaryForColor)
+    return anyPrimaryForColor.src || anyPrimaryForColor.url || "";
+
+  // For non-clothing products (no colors), use isPrimary flag
+  const primaryImage = item.images.find((img: any) => img.isPrimary === true);
+  if (primaryImage) return primaryImage.src || primaryImage.url || "";
 
   // Final fallback to first image
   return item.images[0]?.src || item.images[0]?.url || "";

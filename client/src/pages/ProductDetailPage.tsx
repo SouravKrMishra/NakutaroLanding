@@ -63,7 +63,7 @@ type Product = {
   attributes?: { name: string; options: string[] }[];
   sizes?: string[];
   colors?: string[];
-  images?: { src: string; color?: string | null }[];
+  images?: { src: string; color?: string | null; isPrimary?: boolean; isPrimaryForColor?: boolean }[];
   variations?: any[]; // WooCommerce variations
   stock_status?: string;
   deliveryInfo?: string;
@@ -415,10 +415,20 @@ const ProductDetailPage = () => {
           }
         }
       } else {
+        // For non-clothing products (no colors), find the primary image
         setSelectedColor(null);
         setSelectedVariants({});
-        setCurrentImageIndex(0);
-        setActiveImage(0);
+        if (product.images && product.images.length > 0) {
+          const primaryImageIndex = product.images.findIndex(
+            (img: any) => img.isPrimary === true
+          );
+          const initialIndex = primaryImageIndex !== -1 ? primaryImageIndex : 0;
+          setCurrentImageIndex(initialIndex);
+          setActiveImage(initialIndex);
+        } else {
+          setCurrentImageIndex(0);
+          setActiveImage(0);
+        }
       }
     }
   }, [product]);
