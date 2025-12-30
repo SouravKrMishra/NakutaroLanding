@@ -93,7 +93,8 @@ export const getProductById = async (
   next: NextFunction
 ) => {
   try {
-    const product = await productService.getProductById(req.params.id);
+    const userType = req.user?.userType === "business" ? "business" : "individual";
+    const product = await productService.getProductById(req.params.id, userType);
     res.json(product);
   } catch (error) {
     next(createError("Failed to fetch product", 500));
@@ -106,6 +107,7 @@ export const getProducts = async (
   next: NextFunction
 ) => {
   try {
+    const userType = req.user?.userType === "business" ? "business" : "individual";
     const filters: ProductFilters = {
       page: Number(req.query.page) || 1,
       per_page: Number(req.query.per_page) || 12,
@@ -118,7 +120,7 @@ export const getProducts = async (
       search: req.query.search as string,
     };
 
-    const result = await productService.getProducts(filters);
+    const result = await productService.getProducts(filters, userType);
     res.json(result);
   } catch (error) {
     next(createError("Failed to fetch products", 500));
@@ -131,7 +133,8 @@ export const getFeaturedProducts = async (
   next: NextFunction
 ) => {
   try {
-    const products = await productService.getFeaturedProducts();
+    const userType = req.user?.userType === "business" ? "business" : "individual";
+    const products = await productService.getFeaturedProducts(userType);
     res.json(products);
   } catch (error) {
     next(createError("Failed to fetch featured products", 500));

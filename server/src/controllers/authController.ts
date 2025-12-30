@@ -262,6 +262,49 @@ export const signin = async (req: Request, res: Response) => {
 
     // Check if user account is verified and active (only after password is verified)
     if (!user.isVerified || !user.isActive) {
+      // Automatically send a new OTP email for unverified accounts
+      let emailSentSuccessfully = false;
+      try {
+        // Generate new OTP
+        const otpCode = generateOTP();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Delete any existing OTP for this email
+        await OTP.deleteMany({ email });
+
+        // Save new OTP
+        const otp = new OTP({
+          email,
+          otp: otpCode,
+          expiresAt,
+        });
+        await otp.save();
+
+        // Send OTP email
+        const emailSent = await sendOTPEmail(email, otpCode, user.name);
+        if (!emailSent) {
+          // Clean up the OTP record since email sending failed
+          await OTP.deleteOne({ _id: otp._id });
+          console.error("Failed to send OTP email during login for:", email);
+        } else {
+          emailSentSuccessfully = true;
+        }
+      } catch (otpError) {
+        // Log error but don't fail the request - user can use resend OTP button
+        console.error("Error sending OTP during login:", otpError);
+      }
+
+      // If email sending failed, inform the user
+      if (!emailSentSuccessfully) {
+        return res.status(503).json({
+          message:
+            "Your account is not verified. We attempted to send a verification code to your email, but the email service is currently unavailable. Please try again after some time or use the 'Resend OTP' option.",
+          requiresVerification: true,
+          email: user.email,
+          emailSendFailed: true,
+        });
+      }
+
       return res.status(403).json({
         message:
           "Please verify your email address to activate your account. Check your email for the OTP code.",
@@ -501,6 +544,49 @@ export const signinIndividual = async (req: Request, res: Response) => {
 
     // Check if user account is verified and active (only after password is verified)
     if (!user.isVerified || !user.isActive) {
+      // Automatically send a new OTP email for unverified accounts
+      let emailSentSuccessfully = false;
+      try {
+        // Generate new OTP
+        const otpCode = generateOTP();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Delete any existing OTP for this email
+        await OTP.deleteMany({ email });
+
+        // Save new OTP
+        const otp = new OTP({
+          email,
+          otp: otpCode,
+          expiresAt,
+        });
+        await otp.save();
+
+        // Send OTP email
+        const emailSent = await sendOTPEmail(email, otpCode, user.name);
+        if (!emailSent) {
+          // Clean up the OTP record since email sending failed
+          await OTP.deleteOne({ _id: otp._id });
+          console.error("Failed to send OTP email during login for:", email);
+        } else {
+          emailSentSuccessfully = true;
+        }
+      } catch (otpError) {
+        // Log error but don't fail the request - user can use resend OTP button
+        console.error("Error sending OTP during login:", otpError);
+      }
+
+      // If email sending failed, inform the user
+      if (!emailSentSuccessfully) {
+        return res.status(503).json({
+          message:
+            "Your account is not verified. We attempted to send a verification code to your email, but the email service is currently unavailable. Please try again after some time or use the 'Resend OTP' option.",
+          requiresVerification: true,
+          email: user.email,
+          emailSendFailed: true,
+        });
+      }
+
       return res.status(403).json({
         message:
           "Please verify your email address to activate your account. Check your email for the OTP code.",

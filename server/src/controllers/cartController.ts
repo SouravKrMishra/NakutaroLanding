@@ -4,6 +4,60 @@ import Product from "../../../shared/models/Product.js";
 import { createError } from "../middleware/errorHandler.js";
 import mongoose from "mongoose";
 
+type ShopperType = "business" | "individual";
+
+const getEffectiveUnitPrice = (product: any, userType: ShopperType): number => {
+  const isBusiness = userType === "business";
+  const regularPrice = isBusiness
+    ? product.businessRegularPrice ?? product.regularPrice ?? product.price ?? 0
+    : product.regularPrice ?? product.price ?? 0;
+
+  // Treat <=0 sale prices as "unset" to match transformProduct logic
+  const getValidSalePrice = (salePrice: any): number | undefined => {
+    if (typeof salePrice === "number" && salePrice > 0) return salePrice;
+    return undefined;
+  };
+
+  const salePrice = isBusiness
+    ? getValidSalePrice(product.businessSalePrice) ??
+      getValidSalePrice(product.salePrice)
+    : getValidSalePrice(product.salePrice);
+
+  const price = isBusiness
+    ? product.businessPrice ?? salePrice ?? product.price ?? regularPrice
+    : salePrice ?? product.price ?? regularPrice;
+  return Number(price) || 0;
+};
+
+const getPrimaryImageUrl = (product: any): string => {
+  const images = Array.isArray(product?.images) ? product.images : [];
+  if (images.length === 0) return "";
+
+  // Prefer defaultColor + primaryForColor if present
+  if (product.defaultColor) {
+    const primaryForDefaultColor = images.find(
+      (img: any) =>
+        img?.color === product.defaultColor && img?.isPrimaryForColor === true
+    );
+    if (primaryForDefaultColor?.url) return primaryForDefaultColor.url;
+
+    const firstOfDefaultColor = images.find(
+      (img: any) => img?.color === product.defaultColor
+    );
+    if (firstOfDefaultColor?.url) return firstOfDefaultColor.url;
+  }
+
+  const anyPrimaryForColor = images.find(
+    (img: any) => img?.isPrimaryForColor === true
+  );
+  if (anyPrimaryForColor?.url) return anyPrimaryForColor.url;
+
+  const anyPrimary = images.find((img: any) => img?.isPrimary === true);
+  if (anyPrimary?.url) return anyPrimary.url;
+
+  return images[0]?.url || "";
+};
+
 // Get user's cart
 export const getCart = async (
   req: Request,
@@ -102,6 +156,8 @@ export const addToCart = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userType: ShopperType =
+      req.user?.userType === "business" ? "business" : "individual";
     if (!userId) {
       return next(createError("User not authenticated", 401));
     }
@@ -110,7 +166,6 @@ export const addToCart = async (
       productId,
       slug,
       name,
-      price,
       image,
       category,
       quantity = 1,
@@ -118,8 +173,10 @@ export const addToCart = async (
       variants = {},
     } = req.body;
 
+    const productIdStr = String(productId || "");
+
     // Validate required fields
-    if (!productId || !name || !price || !image || !category) {
+    if (!productId) {
       return next(createError("Missing required fields", 400));
     }
 
@@ -133,6 +190,24 @@ export const addToCart = async (
       return next(createError("Product is not available", 400));
     }
 
+    // Server-authoritative pricing + product metadata
+    const effectivePrice = getEffectiveUnitPrice(product, userType);
+    const effectiveName = product.name || name;
+    const effectiveCategory = product.category || category;
+    const effectiveSlug = product.slug || slug || null;
+    const effectiveImage = getPrimaryImageUrl(product) || image;
+
+    // Validate required fields: allow price of 0 (free products), but reject invalid/missing data
+    // getEffectiveUnitPrice always returns a number >= 0, so we only need to check for negative values
+    if (
+      !effectiveName ||
+      !effectiveCategory ||
+      !effectiveImage ||
+      effectivePrice < 0
+    ) {
+      return next(createError("Product data unavailable for cart item", 400));
+    }
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -141,32 +216,32 @@ export const addToCart = async (
 
     // Check if item already exists in cart
     const existingItemIndex = cart.items.findIndex(
-      (item) => item.productId === productId
+      (item) => String(item.productId) === productIdStr
     );
 
     if (existingItemIndex !== -1) {
       // Update quantity of existing item
       cart.items[existingItemIndex].quantity += quantity;
-      // Update slug if provided
-      if (slug) {
-        cart.items[existingItemIndex].slug = slug;
-      }
-      // Also update variants if provided (in case they changed)
-      if (variants && Object.keys(variants).length > 0) {
-        cart.items[existingItemIndex].variants = new Map<string, string>(
-          Object.entries(variants).map(([k, v]) => [k, String(v)])
-        );
-        cart.items[existingItemIndex].markModified("variants");
-      }
+      // Refresh server-authoritative fields (in case pricing/image changed)
+      cart.items[existingItemIndex].price = String(effectivePrice);
+      cart.items[existingItemIndex].name = effectiveName;
+      cart.items[existingItemIndex].category = effectiveCategory;
+      cart.items[existingItemIndex].image = effectiveImage;
+      cart.items[existingItemIndex].slug = effectiveSlug;
+      // Always update variants from the request (even if empty) to avoid retaining stale variant data
+      cart.items[existingItemIndex].variants = new Map<string, string>(
+        Object.entries(variants || {}).map(([k, v]) => [k, String(v)])
+      );
+      cart.items[existingItemIndex].markModified("variants");
     } else {
       // Add new item - use Mongoose's create method for subdocuments
       const newItem = {
-        productId,
-        slug: slug || null,
-        name,
-        price,
-        image,
-        category,
+        productId: productIdStr,
+        slug: effectiveSlug,
+        name: effectiveName,
+        price: String(effectivePrice),
+        image: effectiveImage,
+        category: effectiveCategory,
         quantity,
         inStock,
         variants:

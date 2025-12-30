@@ -63,7 +63,12 @@ type Product = {
   attributes?: { name: string; options: string[] }[];
   sizes?: string[];
   colors?: string[];
-  images?: { src: string; color?: string | null; isPrimary?: boolean; isPrimaryForColor?: boolean }[];
+  images?: {
+    src: string;
+    color?: string | null;
+    isPrimary?: boolean;
+    isPrimaryForColor?: boolean;
+  }[];
   variations?: any[]; // WooCommerce variations
   stock_status?: string;
   deliveryInfo?: string;
@@ -171,9 +176,11 @@ const ProductDetailPage = () => {
     setLoading(true);
     setError(null);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await axios.get(
         buildApiUrl(`/api/products/${productId}`),
         {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           validateStatus: (status) => status >= 200 && status < 300,
         }
       );
@@ -287,7 +294,9 @@ const ProductDetailPage = () => {
 
     setRelatedLoading(true);
     try {
+      const token = localStorage.getItem("authToken");
       const response = await axios.get(buildApiUrl("/api/products"), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         params: {
           page: 1,
           per_page: 12, // Fetch more to have options after filtering
@@ -2028,7 +2037,7 @@ const ProductDetailPage = () => {
                       <span className="text-xl text-gray-500 line-through">
                         ₹{product.regularPrice}
                       </span>
-                      <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
+                      <span className="px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">
                         SALE
                       </span>
                     </>
@@ -2154,17 +2163,17 @@ const ProductDetailPage = () => {
                     className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200 touch-manipulation border-2 ${
                       isInWishlist(product.id)
                         ? "bg-red-500 border-red-500 text-white hover:bg-red-600"
-                        : "bg-[#1E1E1E] border-[#2D2D2D] text-gray-300 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+                        : "bg-[#2D2D2D] border-gray-500 hover:border-red-500 hover:bg-red-500/10 hover:text-red-500"
                     }`}
                     variant="outline"
                   >
                     <Heart
                       className={`h-5 w-5 ${
                         isInWishlist(product.id)
-                          ? "fill-current"
-                          : "stroke-current"
+                          ? "fill-current text-white"
+                          : "stroke-current text-white"
                       }`}
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                     />
                   </Button>
 

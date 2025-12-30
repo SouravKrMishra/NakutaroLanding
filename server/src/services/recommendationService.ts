@@ -291,7 +291,7 @@ class RecommendationService {
   async addPurchaseToHistory(
     userId: string,
     purchaseData: {
-      productId: number;
+      productId: string;
       productName: string;
       category: string;
       series: string;
@@ -305,7 +305,13 @@ class RecommendationService {
         userId,
         ...purchaseData,
       });
-    } catch (error) {}
+    } catch (error) {
+      // Don't fail the request, but do log so this never silently breaks again.
+      console.warn("[purchase-history] Failed to record purchase history", {
+        userId,
+        productId: purchaseData?.productId,
+      });
+    }
   }
 }
 

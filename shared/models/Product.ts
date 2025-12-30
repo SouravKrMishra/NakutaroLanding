@@ -31,6 +31,19 @@ const productSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    // Business (B2B) pricing - optional; if unset, we fall back to individual pricing
+    businessPrice: {
+      type: Number,
+      min: 0,
+    },
+    businessSalePrice: {
+      type: Number,
+      min: 0,
+    },
+    businessRegularPrice: {
+      type: Number,
+      min: 0,
+    },
     category: {
       type: String,
       required: true,
@@ -218,6 +231,56 @@ productSchema.pre("save", async function (next) {
 
     this.slug = slug;
   }
+
+  // Keep business pricing sane:
+  // - If businessRegularPrice is missing, default it to regularPrice
+  // - If businessSalePrice is missing, default it to salePrice (or undefined)
+  // - Keep businessPrice as "effective" business price (sale if present else regular)
+  // This preserves backward compatibility for existing products and allows partial updates.
+  const hasBusinessRegular =
+    typeof (this as any).businessRegularPrice === "number" &&
+    (this as any).businessRegularPrice >= 0;
+  if (!hasBusinessRegular && typeof (this as any).regularPrice === "number") {
+    (this as any).businessRegularPrice = (this as any).regularPrice;
+  }
+
+  // Treat 0 (or negative) sale prices as "unset" to match app validation expectations.
+  if (
+    typeof (this as any).businessSalePrice === "number" &&
+    (this as any).businessSalePrice <= 0
+  ) {
+    (this as any).businessSalePrice = undefined;
+  }
+
+  const hasBusinessSale =
+    typeof (this as any).businessSalePrice === "number" &&
+    (this as any).businessSalePrice > 0;
+  if (!hasBusinessSale) {
+    // If salePrice exists, mirror it; otherwise leave undefined
+    if (
+      typeof (this as any).salePrice === "number" &&
+      (this as any).salePrice > 0
+    ) {
+      (this as any).businessSalePrice = (this as any).salePrice;
+    } else {
+      (this as any).businessSalePrice = undefined;
+    }
+  }
+
+  // businessPrice mirrors existing "price" behavior (effective price)
+  const brp =
+    typeof (this as any).businessRegularPrice === "number"
+      ? (this as any).businessRegularPrice
+      : undefined;
+  const bsp =
+    typeof (this as any).businessSalePrice === "number"
+      ? (this as any).businessSalePrice
+      : undefined;
+  if (typeof brp === "number") {
+    (this as any).businessPrice =
+      typeof bsp === "number" && bsp > 0 ? bsp : brp;
+  }
+
   next();
 });
 

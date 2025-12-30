@@ -8,6 +8,42 @@ import { createError } from "../middleware/errorHandler.js";
 import { reduceStockForOrder } from "../services/stockService.js";
 import { isCODEnabled } from "../services/paymentSettingsService.js";
 
+type ShopperType = "business" | "individual";
+
+const getEffectiveUnitPrice = (product: any, userType: ShopperType): number => {
+  const isBusiness = userType === "business";
+  const regularPrice = isBusiness
+    ? product.businessRegularPrice ?? product.regularPrice ?? product.price ?? 0
+    : product.regularPrice ?? product.price ?? 0;
+
+  // Treat <=0 sale prices as "unset" to match transformProduct logic
+  const getValidSalePrice = (salePrice: any): number | undefined => {
+    if (typeof salePrice === "number" && salePrice > 0) return salePrice;
+    return undefined;
+  };
+
+  const salePrice = isBusiness
+    ? getValidSalePrice(product.businessSalePrice) ??
+      getValidSalePrice(product.salePrice)
+    : getValidSalePrice(product.salePrice);
+
+  const price = isBusiness
+    ? product.businessPrice ?? salePrice ?? product.price ?? regularPrice
+    : salePrice ?? product.price ?? regularPrice;
+  return Number(price) || 0;
+};
+
+const parsePriceToNumber = (value: any): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[^\d.]/g, "");
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  const parsed = parseFloat(String(value ?? "").replace(/[^\d.]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const createOrder = async (
   req: Request,
   res: Response,
@@ -15,6 +51,8 @@ export const createOrder = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userType: ShopperType =
+      req.user?.userType === "business" ? "business" : "individual";
     if (!userId) {
       return next(createError("User not authenticated", 401));
     }
@@ -31,7 +69,14 @@ export const createOrder = async (
     } = req.body;
 
     // Validate required fields
-    if (!items || !shippingInfo || !paymentMethod || !total) {
+    if (
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0 ||
+      !shippingInfo ||
+      !paymentMethod ||
+      !total
+    ) {
       return next(createError("Missing required fields", 400));
     }
 
@@ -67,9 +112,50 @@ export const createOrder = async (
       }
     }
 
+    // Server-authoritative pricing: recompute item prices + subtotal from DB
+    const safeItems: any[] = Array.isArray(items) ? items : [];
+    const productIds = safeItems
+      .map((it: any) => String(it?.productId || "").split("_")[0])
+      .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    const products = await Product.find({ _id: { $in: productIds } }).lean();
+    const productMap = new Map<string, any>(
+      products.map((p: any) => [p._id.toString(), p])
+    );
+
+    const normalizedItems = safeItems.map((it: any) => {
+      const rawId = String(it?.productId || "");
+      const baseId = rawId.split("_")[0];
+      const product = productMap.get(baseId);
+      if (!product || product.isDeleted) {
+        throw createError("One or more products are not available", 400);
+      }
+
+      const unitPrice = getEffectiveUnitPrice(product, userType);
+      const qty = Math.max(1, Number(it?.quantity || 1));
+
+      return {
+        ...it,
+        price: unitPrice,
+        quantity: qty,
+      };
+    });
+
+    const computedSubtotal = normalizedItems.reduce(
+      (sum: number, it: any) =>
+        sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
+
+    const computedShipping = Number(shippingCost) || 0;
+    const computedCouponDiscount = Math.max(0, Number(couponDiscount) || 0);
+
     // No COD fee - removed as requested
     const codFee = 0;
-    const finalTotal = total;
+    const finalTotal = Math.max(
+      0,
+      computedSubtotal + computedShipping + codFee - computedCouponDiscount
+    );
 
     // Determine initial status based on payment method
     const initialStatus =
@@ -95,14 +181,14 @@ export const createOrder = async (
     const order = new Order({
       userId,
       orderNumber,
-      items,
+      items: normalizedItems,
       shippingInfo,
       paymentMethod,
-      subtotal,
-      shippingCost,
+      subtotal: computedSubtotal,
+      shippingCost: computedShipping,
       codFee,
       couponCode: couponCode || null,
-      couponDiscount: couponDiscount || 0,
+      couponDiscount: computedCouponDiscount,
       total: finalTotal,
       status: initialStatus,
       paymentStatus: initialPaymentStatus,
@@ -151,23 +237,28 @@ export const createOrder = async (
     }
 
     // Add items to purchase history for recommendations
-    for (const item of items) {
+    for (const item of normalizedItems) {
       try {
         const { recommendationService } = await import(
           "../services/recommendationService.js"
         );
+        const unitPrice = parsePriceToNumber(item.price);
+        const qty = Math.max(1, Number(item.quantity) || 1);
         await recommendationService.addPurchaseToHistory(userId, {
-          productId: item.productId,
+          productId: String(item.productId),
           productName: item.name,
           category: item.category,
           series: item.category, // Using category as series for now
-          quantity: item.quantity,
-          price: parseFloat(item.price.replace(/[^\d.]/g, "")),
-          totalAmount:
-            parseFloat(item.price.replace(/[^\d.]/g, "")) * item.quantity,
+          quantity: qty,
+          price: unitPrice,
+          totalAmount: unitPrice * qty,
         });
       } catch (error) {
         // Don't fail the order if purchase history fails
+        console.warn("[purchase-history] Failed to record purchase item", {
+          userId,
+          productId: item?.productId,
+        });
       }
     }
 
@@ -182,15 +273,20 @@ export const createOrder = async (
       },
     });
   } catch (error: any) {
-    console.error("Error creating order:", error);
-    console.error("Error stack:", error.stack);
-    console.error("Request body:", JSON.stringify(req.body, null, 2));
-    next(
-      createError(
-        `Failed to create order: ${error.message || "Unknown error"}`,
-        500
-      )
-    );
+    // Preserve original status code if it's a client error (4xx), otherwise use 500
+    const statusCode =
+      error?.statusCode && error.statusCode >= 400 && error.statusCode < 500
+        ? error.statusCode
+        : 500;
+
+    if (statusCode >= 500) {
+      // Only log server errors, not client validation errors
+      console.error("Error creating order:", error);
+      console.error("Error stack:", error.stack);
+      console.error("Request body:", JSON.stringify(req.body, null, 2));
+    }
+
+    next(createError(error?.message || "Failed to create order", statusCode));
   }
 };
 
@@ -412,6 +508,8 @@ export const createOrderForPhonepe = async (
 ) => {
   try {
     const userId = req.user?.id;
+    const userType: ShopperType =
+      req.user?.userType === "business" ? "business" : "individual";
     if (!userId) {
       return next(createError("User not authenticated", 401));
     }
@@ -429,13 +527,61 @@ export const createOrderForPhonepe = async (
     } = req.body;
 
     // Validate required fields
-    if (!items || !shippingInfo || !total || !merchantTransactionId) {
+    if (
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0 ||
+      !shippingInfo ||
+      !total ||
+      !merchantTransactionId
+    ) {
       return next(createError("Missing required fields", 400));
     }
 
     // No processing fee - removed as requested
     const phonepeFee = 0;
-    const finalTotal = total; // Total already includes discount from frontend
+
+    // Server-authoritative pricing: recompute item prices + subtotal from DB
+    const safeItems: any[] = Array.isArray(items) ? items : [];
+    const productIds = safeItems
+      .map((it: any) => String(it?.productId || "").split("_")[0])
+      .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    const products = await Product.find({ _id: { $in: productIds } }).lean();
+    const productMap = new Map<string, any>(
+      products.map((p: any) => [p._id.toString(), p])
+    );
+
+    const normalizedItems = safeItems.map((it: any) => {
+      const rawId = String(it?.productId || "");
+      const baseId = rawId.split("_")[0];
+      const product = productMap.get(baseId);
+      if (!product || product.isDeleted) {
+        throw createError("One or more products are not available", 400);
+      }
+
+      const unitPrice = getEffectiveUnitPrice(product, userType);
+      const qty = Math.max(1, Number(it?.quantity || 1));
+
+      return {
+        ...it,
+        price: unitPrice,
+        quantity: qty,
+      };
+    });
+
+    const computedSubtotal = normalizedItems.reduce(
+      (sum: number, it: any) =>
+        sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+      0
+    );
+    const computedShipping = Number(shippingCost) || 0;
+    const computedCouponDiscount = Math.max(0, Number(couponDiscount) || 0);
+
+    const finalTotal = Math.max(
+      0,
+      computedSubtotal + computedShipping + phonepeFee - computedCouponDiscount
+    );
 
     // Generate order number
     const date = new Date();
@@ -455,14 +601,14 @@ export const createOrderForPhonepe = async (
     const order = new Order({
       userId,
       orderNumber,
-      items,
+      items: normalizedItems,
       shippingInfo,
       paymentMethod: "PHONEPE",
-      subtotal,
-      shippingCost,
+      subtotal: computedSubtotal,
+      shippingCost: computedShipping,
       phonepeFee,
       couponCode: couponCode || null,
-      couponDiscount: couponDiscount || 0,
+      couponDiscount: computedCouponDiscount,
       total: finalTotal,
       status: testMode ? "CONFIRMED" : "PENDING_PAYMENT",
       paymentStatus: testMode ? "COMPLETED" : "PENDING",
@@ -497,23 +643,28 @@ export const createOrderForPhonepe = async (
     }
 
     // Add items to purchase history for recommendations (including test orders)
-    for (const item of items) {
+    for (const item of normalizedItems) {
       try {
         const { recommendationService } = await import(
           "../services/recommendationService.js"
         );
+        const unitPrice = parsePriceToNumber(item.price);
+        const qty = Math.max(1, Number(item.quantity) || 1);
         await recommendationService.addPurchaseToHistory(userId, {
-          productId: item.productId,
+          productId: String(item.productId),
           productName: item.name,
           category: item.category,
           series: item.category, // Using category as series for now
-          quantity: item.quantity,
-          price: parseFloat(item.price.replace(/[^\d.]/g, "")),
-          totalAmount:
-            parseFloat(item.price.replace(/[^\d.]/g, "")) * item.quantity,
+          quantity: qty,
+          price: unitPrice,
+          totalAmount: unitPrice * qty,
         });
       } catch (error) {
         // Don't fail the order if purchase history fails
+        console.warn("[purchase-history] Failed to record purchase item", {
+          userId,
+          productId: item?.productId,
+        });
       }
     }
 
@@ -528,7 +679,24 @@ export const createOrderForPhonepe = async (
       },
     });
   } catch (error: any) {
-    next(createError("Failed to create order for PhonePe payment", 500));
+    // Preserve original status code if it's a client error (4xx), otherwise use 500
+    const statusCode =
+      error?.statusCode && error.statusCode >= 400 && error.statusCode < 500
+        ? error.statusCode
+        : 500;
+
+    if (statusCode >= 500) {
+      // Only log server errors, not client validation errors
+      console.error("Error creating order for PhonePe payment:", error);
+      console.error("Error stack:", error.stack);
+    }
+
+    next(
+      createError(
+        error?.message || "Failed to create order for PhonePe payment",
+        statusCode
+      )
+    );
   }
 };
 

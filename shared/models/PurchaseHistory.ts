@@ -7,7 +7,8 @@ const purchaseHistorySchema = new mongoose.Schema({
     required: true,
   },
   productId: {
-    type: Number,
+    // MongoDB Product _id (string). Kept as string for compatibility with current product IDs.
+    type: String,
     required: true,
   },
   productName: {

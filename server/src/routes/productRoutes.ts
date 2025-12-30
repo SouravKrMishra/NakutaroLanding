@@ -6,13 +6,14 @@ import {
   getProductById,
   getStockData,
 } from "../controllers/productController.js";
+import { optionalAuth } from "../middleware/auth.js";
 
 const router = Router();
 
 // Product routes
-router.get("/products", getProducts);
-router.get("/products/:id", getProductById);
-router.get("/featured-products", getFeaturedProducts);
+router.get("/products", optionalAuth, getProducts);
+router.get("/products/:id", optionalAuth, getProductById);
+router.get("/featured-products", optionalAuth, getFeaturedProducts);
 router.get("/categories", getCategories);
 router.get("/stock-data", getStockData);
 

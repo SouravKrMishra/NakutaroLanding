@@ -814,7 +814,9 @@ const ProductsPage = () => {
             break;
         }
 
+        const token = localStorage.getItem("authToken");
         const response = await axios.get(buildApiUrl("/api/products"), {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           params: {
             page: currentPage,
             per_page: pageSize,
