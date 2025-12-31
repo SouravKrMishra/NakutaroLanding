@@ -4,7 +4,7 @@ import { createError } from "../middleware/errorHandler.js";
 import { ProductFilters, CategoryFilters } from "../types/index.js";
 import Stock from "../../../shared/models/Stock.js";
 
-const STOCK_PRODUCT_TYPE_KEYS = ["tshirt", "hoodie"] as const;
+const STOCK_PRODUCT_TYPE_KEYS = ["tshirt", "hoodie", "sweatshirt"] as const;
 type StockProductType = (typeof STOCK_PRODUCT_TYPE_KEYS)[number];
 
 const STOCK_PRODUCT_TYPE_CONFIG: Record<
@@ -15,7 +15,7 @@ const STOCK_PRODUCT_TYPE_CONFIG: Record<
   }
 > = {
   tshirt: {
-    sizes: ["S", "M", "L", "XL", "XXL", "All Sizes"],
+    sizes: ["S", "M", "L", "XL", "XXL"],
     colors: [
       "Black",
       "White",
@@ -30,10 +30,17 @@ const STOCK_PRODUCT_TYPE_CONFIG: Record<
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black", "White"],
   },
+  sweatshirt: {
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Black", "White"],
+  },
 };
 
-const resolveProductType = (value?: string | null): StockProductType =>
-  value === "hoodie" ? "hoodie" : "tshirt";
+const resolveProductType = (value?: string | null): StockProductType => {
+  if (value === "hoodie") return "hoodie";
+  if (value === "sweatshirt") return "sweatshirt";
+  return "tshirt";
+};
 
 const buildLegacyStockEntry = () => ({
   quantity: 0,
@@ -93,8 +100,12 @@ export const getProductById = async (
   next: NextFunction
 ) => {
   try {
-    const userType = req.user?.userType === "business" ? "business" : "individual";
-    const product = await productService.getProductById(req.params.id, userType);
+    const userType =
+      req.user?.userType === "business" ? "business" : "individual";
+    const product = await productService.getProductById(
+      req.params.id,
+      userType
+    );
     res.json(product);
   } catch (error) {
     next(createError("Failed to fetch product", 500));
@@ -107,7 +118,8 @@ export const getProducts = async (
   next: NextFunction
 ) => {
   try {
-    const userType = req.user?.userType === "business" ? "business" : "individual";
+    const userType =
+      req.user?.userType === "business" ? "business" : "individual";
     const filters: ProductFilters = {
       page: Number(req.query.page) || 1,
       per_page: Number(req.query.per_page) || 12,
@@ -133,7 +145,8 @@ export const getFeaturedProducts = async (
   next: NextFunction
 ) => {
   try {
-    const userType = req.user?.userType === "business" ? "business" : "individual";
+    const userType =
+      req.user?.userType === "business" ? "business" : "individual";
     const products = await productService.getFeaturedProducts(userType);
     res.json(products);
   } catch (error) {
@@ -163,7 +176,10 @@ export const getStockData = async (
   next: NextFunction
 ) => {
   try {
-    const stocks = await Stock.find({});
+    // Filter out "All Sizes" entries - it's not a real size, just a frontend convenience
+    const stocks = await Stock.find({
+      size: { $ne: "All Sizes" },
+    });
     const responseData = buildStockResponseSkeleton();
 
     stocks.forEach((stock) => {

@@ -82,14 +82,16 @@ type Product = {
   minBusinessQuantity?: number;
 };
 
-const STOCK_SIZE_CONFIG: Record<"tshirt" | "hoodie", string[]> = {
-  tshirt: ["S", "M", "L", "XL", "XXL"],
-  hoodie: ["S", "M", "L", "XL", "XXL"],
-};
+const STOCK_SIZE_CONFIG: Record<"tshirt" | "hoodie" | "sweatshirt", string[]> =
+  {
+    tshirt: ["S", "M", "L", "XL", "XXL"],
+    hoodie: ["S", "M", "L", "XL", "XXL"],
+    sweatshirt: ["S", "M", "L", "XL", "XXL"],
+  };
 
 const resolveStockProductType = (
   product?: Product | null
-): "tshirt" | "hoodie" => {
+): "tshirt" | "hoodie" | "sweatshirt" => {
   if (!product) {
     return "tshirt";
   }
@@ -101,9 +103,13 @@ const resolveStockProductType = (
     .filter(Boolean)
     .map((name) => name?.toLowerCase() ?? "");
 
-  return candidateCategories.some((name) => name.includes("hoodie"))
-    ? "hoodie"
-    : "tshirt";
+  if (candidateCategories.some((name) => name.includes("hoodie"))) {
+    return "hoodie";
+  }
+  if (candidateCategories.some((name) => name.includes("sweatshirt"))) {
+    return "sweatshirt";
+  }
+  return "tshirt";
 };
 
 const getAllowedSizesForProduct = (
@@ -387,11 +393,7 @@ const ProductDetailPage = () => {
             if (selectedSize && selectedColor) {
               // Inline stock check logic (getAvailableStock is defined later)
               const key = `${selectedSize}-${selectedColor}`;
-              const productType = product.category
-                ?.toLowerCase()
-                .includes("hoodie")
-                ? "hoodie"
-                : "tshirt";
+              const productType = resolveStockProductType(product);
               const typeStock = stockData.types?.[productType]?.stock;
               if (typeStock && key in typeStock) {
                 availableStock = typeStock[key]?.quantity || 0;
@@ -1050,9 +1052,7 @@ const ProductDetailPage = () => {
         if (selectedSize && selectedColor) {
           // Inline stock check logic (getAvailableStock is defined later)
           const key = `${selectedSize}-${selectedColor}`;
-          const productType = product.category?.toLowerCase().includes("hoodie")
-            ? "hoodie"
-            : "tshirt";
+          const productType = resolveStockProductType(product);
           const typeStock = stockData.types?.[productType]?.stock;
           if (typeStock && key in typeStock) {
             return typeStock[key]?.quantity || 0;

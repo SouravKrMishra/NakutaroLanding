@@ -4,11 +4,18 @@ import { Order } from "../../../shared/models/Order.js";
 
 const resolveProductTypeFromCategory = (
   category?: string | null
-): "tshirt" | "hoodie" => {
+): "tshirt" | "hoodie" | "sweatshirt" => {
   if (!category) {
     return "tshirt";
   }
-  return category.toLowerCase().includes("hoodie") ? "hoodie" : "tshirt";
+  const lowerCategory = category.toLowerCase();
+  if (lowerCategory.includes("hoodie")) {
+    return "hoodie";
+  }
+  if (lowerCategory.includes("sweatshirt")) {
+    return "sweatshirt";
+  }
+  return "tshirt";
 };
 
 /**

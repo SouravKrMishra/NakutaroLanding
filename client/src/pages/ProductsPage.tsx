@@ -420,8 +420,10 @@ const ProductsPage = () => {
       return;
     }
 
-    // Check if this is a clothing item (T-Shirts or Hoodies) that requires size selection
-    const isClothingItem = ["T-Shirts", "Hoodies"].includes(product.category);
+    // Check if this is a clothing item (T-Shirts, Hoodies, or Sweatshirt) that requires size selection
+    const isClothingItem = ["T-Shirts", "Hoodies", "Sweatshirt"].includes(
+      product.category
+    );
 
     if (isClothingItem) {
       // Redirect to product detail page for size selection

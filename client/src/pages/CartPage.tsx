@@ -116,9 +116,11 @@ const CartPage = () => {
   }, [items]);
 
   // Helper function to resolve product type from category
-  const resolveStockProductType = (category: string): "tshirt" | "hoodie" => {
+  const resolveStockProductType = (category: string): "tshirt" | "hoodie" | "sweatshirt" => {
     const categoryLower = category?.toLowerCase() || "";
-    return categoryLower.includes("hoodie") ? "hoodie" : "tshirt";
+    if (categoryLower.includes("hoodie")) return "hoodie";
+    if (categoryLower.includes("sweatshirt")) return "sweatshirt";
+    return "tshirt";
   };
 
   // Helper function to get available stock for a size-color combination

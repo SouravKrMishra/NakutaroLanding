@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IStock extends Document {
-  productType: "tshirt" | "hoodie";
+  productType: "tshirt" | "hoodie" | "sweatshirt";
   size: string;
   color: string;
   quantity: number;
@@ -15,13 +15,13 @@ const StockSchema = new Schema<IStock>(
     productType: {
       type: String,
       required: true,
-      enum: ["tshirt", "hoodie"],
+      enum: ["tshirt", "hoodie", "sweatshirt"],
       default: "tshirt",
     },
     size: {
       type: String,
       required: true,
-      enum: ["S", "M", "L", "XL", "XXL", "All Sizes"],
+      enum: ["S", "M", "L", "XL", "XXL"],
     },
     color: {
       type: String,

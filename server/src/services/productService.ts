@@ -432,20 +432,32 @@ class ProductService {
 
     // Generate attributes for clothing items
     let attributes: any[] = [];
-    const isClothingItem = ["T-Shirts", "Hoodies"].includes(product.category);
+    const isClothingItem = ["T-Shirts", "Hoodies", "Sweatshirt"].includes(
+      product.category
+    );
 
     if (isClothingItem) {
-      // Define available sizes and colors
+      // Define available sizes and colors based on product category
+      // This matches STOCK_PRODUCT_TYPE_CONFIG in productController.ts
       const sizes = ["S", "M", "L", "XL", "XXL"];
-      const colors = [
-        "Black",
-        "White",
-        "Beige",
-        "Lavender",
-        "Pink",
-        "Lime Green",
-        "Dark Green",
-      ];
+      let colors: string[] = [];
+
+      if (product.category === "T-Shirts") {
+        colors = [
+          "Black",
+          "White",
+          "Beige",
+          "Lavender",
+          "Pink",
+          "Lime Green",
+          "Dark Green",
+        ];
+      } else if (
+        product.category === "Hoodies" ||
+        product.category === "Sweatshirt"
+      ) {
+        colors = ["Black", "White"];
+      }
 
       attributes = [
         {

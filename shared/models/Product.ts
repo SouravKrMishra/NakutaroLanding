@@ -56,6 +56,7 @@ const productSchema = new mongoose.Schema(
       enum: [
         "T-Shirts",
         "Hoodies",
+        "Sweatshirt",
         "Action Figures",
         "Wigs",
         "Accessories",
