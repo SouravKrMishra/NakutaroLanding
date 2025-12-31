@@ -32,6 +32,7 @@ export interface Product {
   attributes?: any[];
   specifications?: any;
   keyHighlights?: Array<{ title: string; value: string }>;
+  minBusinessQuantity?: number;
 }
 
 export interface ProductFilters {

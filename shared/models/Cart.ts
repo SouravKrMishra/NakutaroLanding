@@ -41,6 +41,17 @@ const cartItemSchema = new mongoose.Schema({
     of: String,
     default: {},
   },
+  // For business users: minimum quantity required for bulk buying
+  minBusinessQuantity: {
+    type: Number,
+    min: 1,
+    default: 1,
+  },
+  // Flag indicating if quantity is below minimum due to stock constraints
+  isBelowMinimum: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const cartSchema = new mongoose.Schema({

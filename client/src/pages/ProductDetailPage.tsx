@@ -79,6 +79,7 @@ type Product = {
   rating_count: number;
   categories: { name: string }[];
   stock_quantity: null | number;
+  minBusinessQuantity?: number;
 };
 
 const STOCK_SIZE_CONFIG: Record<"tshirt" | "hoodie", string[]> = {
@@ -168,8 +169,11 @@ const ProductDetailPage = () => {
   // Wishlist functionality
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCart, items } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
+
+  // Check if user is a business user
+  const isBusinessUser = user?.userType === "business";
 
   const fetchProduct = async () => {
     if (!productId) return;
@@ -220,6 +224,9 @@ const ProductDetailPage = () => {
         keyHighlights: Array.isArray(data.keyHighlights)
           ? data.keyHighlights
           : [],
+        // Map stock.quantity to stock_quantity for non-clothing items
+        stock_quantity:
+          data.stock?.quantity !== undefined ? data.stock.quantity : null,
       };
 
       setProduct(transformedProduct);
@@ -351,6 +358,82 @@ const ProductDetailPage = () => {
       setImageLoading(false);
       setColorImages({});
 
+      // For business users, set initial quantity to minimum buying quantity if applicable
+      // But cap it at available stock if stock is limited
+      if (
+        isBusinessUser &&
+        product.minBusinessQuantity &&
+        product.minBusinessQuantity > 1
+      ) {
+        let availableStock: number | null = null;
+
+        // Check available stock based on product type
+        if (product.attributes && product.attributes.length > 0) {
+          // Clothing items with variants - check stock for selected variant
+          const sizeAttr = product.attributes.find(
+            (attr) => attr.name.toLowerCase() === "size"
+          );
+          const colorAttr = product.attributes.find((attr) =>
+            attr.name.toLowerCase().includes("color")
+          );
+
+          if (sizeAttr && colorAttr && stockData) {
+            // Get first available size and color if not selected yet
+            const selectedSize =
+              selectedVariants[sizeAttr.name] || sizeAttr.options[0];
+            const selectedColor =
+              selectedVariants[colorAttr.name] || colorAttr.options[0];
+
+            if (selectedSize && selectedColor) {
+              // Inline stock check logic (getAvailableStock is defined later)
+              const key = `${selectedSize}-${selectedColor}`;
+              const productType = product.category
+                ?.toLowerCase()
+                .includes("hoodie")
+                ? "hoodie"
+                : "tshirt";
+              const typeStock = stockData.types?.[productType]?.stock;
+              if (typeStock && key in typeStock) {
+                availableStock = typeStock[key]?.quantity || 0;
+              } else if (stockData.stock && key in stockData.stock) {
+                availableStock = stockData.stock[key]?.quantity || 0;
+              } else {
+                availableStock = 0;
+              }
+            }
+          }
+        } else {
+          // Non-clothing items - use stock_quantity
+          availableStock = product.stock_quantity;
+        }
+
+        // Use minimum of MBQ and available stock (if stock is limited)
+        // If availableStock is null (unlimited stock), use MBQ
+        // If availableStock is a positive number less than MBQ, use availableStock
+        // If availableStock is 0, product is out of stock - still set to 0 (add to cart will be disabled)
+        let initialQuantity = product.minBusinessQuantity;
+
+        if (
+          availableStock !== null &&
+          typeof availableStock === "number" &&
+          availableStock >= 0
+        ) {
+          // Stock is limited - use the smaller of MBQ and available stock
+          // This handles: MBQ=4, stock=2 -> quantity=2
+          // Also handles: MBQ=4, stock=0 -> quantity=0 (out of stock)
+          initialQuantity = Math.min(
+            product.minBusinessQuantity,
+            availableStock
+          );
+        }
+        // If availableStock is null, it means unlimited stock (shared_stock)
+        // In that case, use MBQ
+
+        setQuantity(initialQuantity);
+      } else {
+        setQuantity(1);
+      }
+
       // Fetch related products from same category
       const category = product.categories?.[0]?.name || product.category;
       if (category) {
@@ -440,7 +523,78 @@ const ProductDetailPage = () => {
         }
       }
     }
-  }, [product]);
+  }, [product, isBusinessUser]);
+
+  // Update quantity when variants or stock data changes (for business users with MBQ)
+  useEffect(() => {
+    if (
+      product &&
+      isBusinessUser &&
+      product.minBusinessQuantity &&
+      product.minBusinessQuantity > 1
+    ) {
+      let availableStock: number | null = null;
+
+      // Check available stock based on product type
+      if (product.attributes && product.attributes.length > 0) {
+        // Clothing items with variants - check stock for selected variant
+        const sizeAttr = product.attributes.find(
+          (attr) => attr.name.toLowerCase() === "size"
+        );
+        const colorAttr = product.attributes.find((attr) =>
+          attr.name.toLowerCase().includes("color")
+        );
+
+        if (sizeAttr && colorAttr && stockData) {
+          const selectedSize = selectedVariants[sizeAttr.name];
+          const selectedColor = selectedVariants[colorAttr.name];
+
+          if (selectedSize && selectedColor) {
+            // Inline stock check logic (getAvailableStock is defined later)
+            const key = `${selectedSize}-${selectedColor}`;
+            const productType = product.category
+              ?.toLowerCase()
+              .includes("hoodie")
+              ? "hoodie"
+              : "tshirt";
+            const typeStock = stockData.types?.[productType]?.stock;
+            if (typeStock && key in typeStock) {
+              availableStock = typeStock[key]?.quantity || 0;
+            } else if (stockData.stock && key in stockData.stock) {
+              availableStock = stockData.stock[key]?.quantity || 0;
+            } else {
+              availableStock = 0;
+            }
+          }
+        }
+      } else {
+        // Non-clothing items - use stock_quantity
+        availableStock = product.stock_quantity;
+      }
+
+      // Update quantity if current quantity exceeds available stock or is below minimum
+      if (availableStock !== null) {
+        const minAllowed = Math.min(
+          product.minBusinessQuantity,
+          availableStock
+        );
+        setQuantity((prev) => {
+          // If current quantity is above available stock, cap it
+          if (prev > availableStock!) {
+            return availableStock!;
+          }
+          // If current quantity is below minimum (and stock allows), set to minimum
+          if (prev < minAllowed) {
+            return minAllowed;
+          }
+          return prev;
+        });
+      } else {
+        // No stock limit - ensure it's at least minimum
+        setQuantity((prev) => Math.max(prev, product.minBusinessQuantity || 1));
+      }
+    }
+  }, [selectedVariants, stockData, product, isBusinessUser]);
 
   // Keyboard support for image modal and prevent body scroll
   useEffect(() => {
@@ -818,8 +972,123 @@ const ProductDetailPage = () => {
     }, 600);
   };
 
-  const incrementQuantity = () => setQuantity((prev) => prev + 1);
-  const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
+  const incrementQuantity = () => {
+    const availableStock = getCurrentAvailableStock();
+
+    // If stock is limited, don't allow incrementing beyond available stock
+    if (availableStock !== null && typeof availableStock === "number") {
+      // Check if item is already in cart
+      let alreadyInCartQuantity = 0;
+
+      if (product?.attributes && product.attributes.length > 0) {
+        // For clothing items with variants, check by productId and variants
+        const existingCartItem = items.find((item) => {
+          // First check if productId matches
+          if (String(item.productId) !== String(product.id)) return false;
+
+          // Then check if variants match
+          const itemVariants = item.variants || {};
+          const selectedVariantsKeys = Object.keys(selectedVariants).sort();
+          const itemVariantsKeys = Object.keys(itemVariants).sort();
+
+          // Different number of variant keys means they don't match
+          if (selectedVariantsKeys.length !== itemVariantsKeys.length)
+            return false;
+
+          // Check if all variant keys and values match
+          for (const key of selectedVariantsKeys) {
+            if (!itemVariantsKeys.includes(key)) return false;
+            if (String(itemVariants[key]) !== String(selectedVariants[key]))
+              return false;
+          }
+
+          return true;
+        });
+        alreadyInCartQuantity = existingCartItem?.quantity || 0;
+      } else if (product?.id) {
+        // For non-clothing items, check by product ID
+        // Cart items for non-clothing items use productId as the ID
+        const existingCartItem = items.find(
+          (item) => String(item.productId) === String(product.id)
+        );
+        alreadyInCartQuantity = existingCartItem?.quantity || 0;
+      }
+
+      // Calculate maximum quantity that can be selected
+      // For business users with MBQ, if stock is less than MBQ, allow up to available stock
+      // Otherwise, allow up to available stock minus what's already in cart
+      const maxCanSelect = availableStock - alreadyInCartQuantity;
+
+      setQuantity((prev) => {
+        if (prev >= maxCanSelect) {
+          return prev; // Already at max
+        }
+        return prev + 1;
+      });
+    } else {
+      // Unlimited stock - allow incrementing
+      setQuantity((prev) => prev + 1);
+    }
+  };
+  // Helper function to get available stock for current selection
+  const getCurrentAvailableStock = (): number | null => {
+    if (!product) return null;
+
+    // For clothing items with variants
+    if (product.attributes && product.attributes.length > 0 && stockData) {
+      const sizeAttr = product.attributes.find(
+        (attr) => attr.name.toLowerCase() === "size"
+      );
+      const colorAttr = product.attributes.find((attr) =>
+        attr.name.toLowerCase().includes("color")
+      );
+
+      if (sizeAttr && colorAttr) {
+        const selectedSize = selectedVariants[sizeAttr.name];
+        const selectedColor = selectedVariants[colorAttr.name];
+
+        if (selectedSize && selectedColor) {
+          // Inline stock check logic (getAvailableStock is defined later)
+          const key = `${selectedSize}-${selectedColor}`;
+          const productType = product.category?.toLowerCase().includes("hoodie")
+            ? "hoodie"
+            : "tshirt";
+          const typeStock = stockData.types?.[productType]?.stock;
+          if (typeStock && key in typeStock) {
+            return typeStock[key]?.quantity || 0;
+          } else if (stockData.stock && key in stockData.stock) {
+            return stockData.stock[key]?.quantity || 0;
+          } else {
+            return 0;
+          }
+        }
+      }
+    }
+
+    // For non-clothing items
+    return product.stock_quantity;
+  };
+
+  const decrementQuantity = () => {
+    if (
+      isBusinessUser &&
+      product?.minBusinessQuantity &&
+      product.minBusinessQuantity > 1
+    ) {
+      // For business users, don't allow going below minimum quantity
+      // But if stock is limited and below minimum, allow going down to available stock
+      const availableStock = getCurrentAvailableStock();
+      const minAllowed =
+        availableStock !== null && availableStock < product.minBusinessQuantity
+          ? availableStock
+          : product.minBusinessQuantity;
+
+      setQuantity((prev) => Math.max(minAllowed, prev - 1));
+    } else {
+      // For individual users, minimum is 1
+      setQuantity((prev) => Math.max(1, prev - 1));
+    }
+  };
 
   const handleVariantChange = (attributeName: string, option: string) => {
     setSelectedVariants((prev) => ({
@@ -1489,14 +1758,29 @@ const ProductDetailPage = () => {
       if (selectedSize && selectedColor) {
         const availableStock = getAvailableStock(selectedSize, selectedColor);
 
-        // Check if item is already in cart
-        const variantString = Object.entries(selectedVariants)
-          .map(([key, value]) => `${key}:${value}`)
-          .join("|");
-        const cartItemId = `${product.id}_${variantString}`;
-        const existingCartItem = items.find(
-          (item) => String(item.id) === cartItemId
-        );
+        // Check if item is already in cart (match by productId and variants)
+        const existingCartItem = items.find((item) => {
+          // First check if productId matches
+          if (String(item.productId) !== String(product.id)) return false;
+
+          // Then check if variants match
+          const itemVariants = item.variants || {};
+          const selectedVariantsKeys = Object.keys(selectedVariants).sort();
+          const itemVariantsKeys = Object.keys(itemVariants).sort();
+
+          // Different number of variant keys means they don't match
+          if (selectedVariantsKeys.length !== itemVariantsKeys.length)
+            return false;
+
+          // Check if all variant keys and values match
+          for (const key of selectedVariantsKeys) {
+            if (!itemVariantsKeys.includes(key)) return false;
+            if (String(itemVariants[key]) !== String(selectedVariants[key]))
+              return false;
+          }
+
+          return true;
+        });
         const alreadyInCartQuantity = existingCartItem?.quantity || 0;
 
         const totalRequested = quantity + alreadyInCartQuantity;
@@ -1537,7 +1821,7 @@ const ProductDetailPage = () => {
         .join("|");
       const cartItemId = `${product.id}_${variantString}`;
 
-      await addToCart(
+      const result = await addToCart(
         {
           id: cartItemId,
           productId: product.id, // Keep original product ID for reference
@@ -1557,11 +1841,21 @@ const ProductDetailPage = () => {
         .map(([key, value]) => `${key}: ${value}`)
         .join(", ");
 
+      // Use actual quantity from server response (handles stock limitations and minimum quantity)
+      const actualQuantityAdded = result.actualQuantity;
+      const wasBelowMinimum = result.isBelowMinimum;
+
       toast({
         title: "Added to Cart 🛒",
-        description: `${quantity}x ${product.name}${
+        description: `${actualQuantityAdded}x ${product.name}${
           variantText ? ` (${variantText})` : ""
-        } has been added to your cart.`,
+        } has been added to your cart.${
+          actualQuantityAdded > quantity
+            ? ` (Minimum quantity: ${actualQuantityAdded})`
+            : wasBelowMinimum
+            ? ` (Only ${actualQuantityAdded} available in stock)`
+            : ""
+        }`,
         variant: "default",
       });
     } catch (error) {
@@ -2124,26 +2418,172 @@ const ProductDetailPage = () => {
                   </div>
                 ))}
 
+              {/* Bulk Buying Information for Business Users */}
+              {isBusinessUser &&
+                product.minBusinessQuantity &&
+                product.minBusinessQuantity > 1 && (
+                  <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Package className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-blue-300">
+                          Bulk Buying - Minimum {product.minBusinessQuantity}{" "}
+                          units
+                        </p>
+                        <p className="text-xs text-blue-400/80 mt-1">
+                          Business accounts must purchase at least{" "}
+                          {product.minBusinessQuantity} units of this product.
+                          {product.stock_quantity !== null &&
+                            product.stock_quantity <
+                              product.minBusinessQuantity && (
+                              <span className="block mt-1 text-yellow-400">
+                                Note: Currently only {product.stock_quantity}{" "}
+                                units available. You can purchase available
+                                stock now.
+                              </span>
+                            )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-3">
                   Quantity
+                  {isBusinessUser &&
+                    product.minBusinessQuantity &&
+                    product.minBusinessQuantity > 1 && (
+                      <span className="ml-2 text-xs text-blue-400 font-normal">
+                        (Min: {product.minBusinessQuantity} units)
+                      </span>
+                    )}
                 </label>
                 <div className="flex items-center w-fit border-2 border-[#2D2D2D] rounded-lg overflow-hidden bg-[#1E1E1E]">
-                  <button
-                    onClick={decrementQuantity}
-                    className="bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300 w-11 h-11 flex items-center justify-center transition-colors touch-manipulation"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
+                  {(() => {
+                    // For business users, check if at minimum quantity
+                    const minQuantity =
+                      isBusinessUser &&
+                      product.minBusinessQuantity &&
+                      product.minBusinessQuantity > 1
+                        ? product.minBusinessQuantity
+                        : 1;
+                    const isAtMinimum = Boolean(
+                      isBusinessUser &&
+                        product.minBusinessQuantity &&
+                        product.minBusinessQuantity > 1 &&
+                        quantity <= minQuantity
+                    );
+
+                    return (
+                      <button
+                        onClick={decrementQuantity}
+                        disabled={isAtMinimum}
+                        className={`w-11 h-11 flex items-center justify-center transition-colors touch-manipulation ${
+                          isAtMinimum
+                            ? "bg-[#2D2D2D] text-gray-500 cursor-not-allowed opacity-50"
+                            : "bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300"
+                        }`}
+                        title={
+                          isAtMinimum
+                            ? `Minimum quantity: ${minQuantity} units`
+                            : "Decrease quantity"
+                        }
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                    );
+                  })()}
                   <div className="w-14 h-11 flex items-center justify-center text-center bg-[#1E1E1E] text-base font-semibold text-white">
                     {quantity}
                   </div>
-                  <button
-                    onClick={incrementQuantity}
-                    className="bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300 w-11 h-11 flex items-center justify-center transition-colors touch-manipulation"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                  {(() => {
+                    // Check if increment button should be disabled
+                    const availableStock = getCurrentAvailableStock();
+                    let isAtMaxStock = false;
+                    let stockMessage = "Increase quantity";
+
+                    if (
+                      availableStock !== null &&
+                      typeof availableStock === "number"
+                    ) {
+                      // Check if item is already in cart
+                      let alreadyInCartQuantity = 0;
+
+                      if (
+                        product?.attributes &&
+                        product.attributes.length > 0
+                      ) {
+                        // For clothing items with variants, check by productId and variants
+                        const existingCartItem = items.find((item) => {
+                          // First check if productId matches
+                          if (String(item.productId) !== String(product.id))
+                            return false;
+
+                          // Then check if variants match
+                          const itemVariants = item.variants || {};
+                          const selectedVariantsKeys =
+                            Object.keys(selectedVariants).sort();
+                          const itemVariantsKeys =
+                            Object.keys(itemVariants).sort();
+
+                          // Different number of variant keys means they don't match
+                          if (
+                            selectedVariantsKeys.length !==
+                            itemVariantsKeys.length
+                          )
+                            return false;
+
+                          // Check if all variant keys and values match
+                          for (const key of selectedVariantsKeys) {
+                            if (!itemVariantsKeys.includes(key)) return false;
+                            if (
+                              String(itemVariants[key]) !==
+                              String(selectedVariants[key])
+                            )
+                              return false;
+                          }
+
+                          return true;
+                        });
+                        alreadyInCartQuantity = existingCartItem?.quantity || 0;
+                      } else if (product?.id) {
+                        // For non-clothing items, check by product ID
+                        // Cart items for non-clothing items use productId as the ID
+                        const existingCartItem = items.find(
+                          (item) =>
+                            String(item.productId) === String(product.id)
+                        );
+                        alreadyInCartQuantity = existingCartItem?.quantity || 0;
+                      }
+
+                      const maxCanSelect =
+                        availableStock - alreadyInCartQuantity;
+                      isAtMaxStock = quantity >= maxCanSelect;
+
+                      if (isAtMaxStock) {
+                        stockMessage =
+                          alreadyInCartQuantity > 0
+                            ? `Only ${availableStock} available (${alreadyInCartQuantity} in cart)`
+                            : `Only ${availableStock} available in stock`;
+                      }
+                    }
+
+                    return (
+                      <button
+                        onClick={incrementQuantity}
+                        disabled={isAtMaxStock}
+                        className={`w-11 h-11 flex items-center justify-center transition-colors touch-manipulation ${
+                          isAtMaxStock
+                            ? "bg-[#2D2D2D] text-gray-500 cursor-not-allowed opacity-50"
+                            : "bg-[#2D2D2D] hover:bg-[#3D3D3D] active:bg-[#4D4D4D] text-gray-300"
+                        }`}
+                        title={stockMessage}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 

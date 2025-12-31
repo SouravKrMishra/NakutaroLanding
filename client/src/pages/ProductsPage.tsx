@@ -341,7 +341,7 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [includeOutOfStock, setIncludeOutOfStock] = useState(true); // Default true for print-on-demand
+  const [includeOutOfStock, setIncludeOutOfStock] = useState(false); // Default false - hide out of stock items by default
   const [searchQuery, setSearchQuery] = useState<string>(""); // Input value
   const [activeSearchQuery, setActiveSearchQuery] = useState<string>(""); // Actual search term sent to API
   const [selectedAttributes, setSelectedAttributes] = useState<{
@@ -668,12 +668,14 @@ const ProductsPage = () => {
     });
 
     // Update all state variables at once to minimize re-renders
+    // Explicitly default includeOutOfStock to false if not in URL
+    const includeOutOfStockFromUrl = urlParams.includeOutOfStock;
     setActiveCategory(urlParams.categories);
     setPriceRange([urlParams.minPrice, urlParams.maxPrice]);
     setCommittedPriceRange([urlParams.minPrice, urlParams.maxPrice]);
     setSortBy(urlParams.sortBy);
     setCurrentPage(urlParams.page);
-    setIncludeOutOfStock(urlParams.includeOutOfStock);
+    setIncludeOutOfStock(includeOutOfStockFromUrl); // Will be false if not explicitly "true" in URL
     setView(urlParams.view);
     setRatings(newRatings);
     setSearchQuery(urlParams.searchQuery);
@@ -838,14 +840,38 @@ const ProductsPage = () => {
         const { products, totalProducts, totalPages } = response.data;
         const mappedProducts = products
           .filter((item: any) => {
-            // If not including out of stock, filter out products with empty price (out of stock)
+            // If not including out of stock, filter out products that are out of stock
             if (!includeOutOfStock) {
-              return (
+              // Check price (products with no price are typically out of stock)
+              const hasValidPrice =
                 item.price !== undefined &&
                 item.price !== null &&
                 item.price !== "" &&
-                item.price !== 0
-              );
+                item.price !== 0;
+
+              if (!hasValidPrice) {
+                return false;
+              }
+
+              // Check stock status
+              // If stock object exists, check its status
+              if (item.stock && item.stock.status) {
+                // Explicitly check if status is "out_of_stock"
+                if (item.stock.status === "out_of_stock") {
+                  return false;
+                }
+                // Allow "in_stock" and "low_stock"
+                if (
+                  item.stock.status === "in_stock" ||
+                  item.stock.status === "low_stock"
+                ) {
+                  return true;
+                }
+              }
+
+              // If no stock object or status, assume in stock (for shared_stock items like clothing)
+              // This handles clothing items that don't have individual stock tracking
+              return true;
             }
             // If including out of stock, allow all
             return true;
@@ -1120,15 +1146,23 @@ const ProductsPage = () => {
           <div className="lg:col-span-4">
             <div className="bg-[#1E1E1E] rounded-lg p-6 border border-[#2D2D2D] mb-8">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                {/* Mobile: First row with All Products and Showing count on same line */}
+                <div className="flex-1 flex flex-row items-center justify-between sm:flex-row sm:items-center sm:justify-start gap-2 sm:gap-4 w-full sm:w-auto">
                   <h2 className="text-xl font-bold">All Products</h2>
-                  <div className="text-xs sm:text-sm text-gray-400">
+                  {/* Mobile: Show count on right side */}
+                  <div className="text-xs text-gray-400 whitespace-nowrap sm:hidden">
+                    {totalProducts > 0
+                      ? `Showing ${firstProductNum}–${lastProductNum} of ${totalProducts}`
+                      : "0–0 of 0"}
+                  </div>
+                  {/* Desktop: Show count next to All Products (left side) */}
+                  <div className="hidden sm:block text-xs sm:text-sm text-gray-400">
                     {totalProducts > 0
                       ? `Showing ${firstProductNum}–${lastProductNum} of ${totalProducts} products`
                       : "Showing 0–0 of 0 products"}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-400">Sort:</span>
                     <DropdownMenu modal={false}>
@@ -1155,8 +1189,11 @@ const ProductsPage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+                  {/* View toggle - visible on both mobile and desktop */}
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">View:</span>
+                    <span className="text-sm text-gray-400 hidden sm:inline">
+                      View:
+                    </span>
                     <button
                       onClick={() => setView("grid")}
                       className={`p-1.5 rounded transition-colors ${
@@ -1214,9 +1251,9 @@ const ProductsPage = () => {
                   </div>
 
                   {/* Filter Controls - Compact Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                     {/* Search Bar */}
-                    <div className="relative sm:col-span-2 lg:col-span-1">
+                    <div className="relative col-span-2 sm:col-span-2 lg:col-span-1">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         type="text"

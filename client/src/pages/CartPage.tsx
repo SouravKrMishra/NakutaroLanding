@@ -33,11 +33,14 @@ import { buildApiUrl } from "@/lib/api.ts";
 
 const CartPage = () => {
   const [, setLocation] = useLocation();
-  const { items, total, itemCount, removeItem, updateQuantity, clearCart } =
+  const { items, total, itemCount, removeItem, updateQuantity, clearCart, refreshCart } =
     useCart();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  
+  // Check if user is a business user
+  const isBusinessUser = user?.userType === "business";
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("");
@@ -48,6 +51,9 @@ const CartPage = () => {
   // Stock data state
   const [stockData, setStockData] = useState<any>(null);
   const [stockLoading, setStockLoading] = useState(false);
+  
+  // Product stock cache for non-clothing items
+  const [productStockCache, setProductStockCache] = useState<Map<string, number>>(new Map());
 
   // Authentication is now handled by ProtectedRoute wrapper
 
@@ -82,6 +88,32 @@ const CartPage = () => {
   useEffect(() => {
     fetchStockData();
   }, [fetchStockData]);
+
+  // Fetch product stock for non-clothing items when cart items change
+  useEffect(() => {
+    const fetchStocksForNonClothingItems = async () => {
+      const nonClothingItems = items.filter(
+        (item) => !item.variants || Object.keys(item.variants).length === 0
+      );
+      
+      for (const item of nonClothingItems) {
+        if (item.productId && item.inStock) {
+          // Extract base product ID
+          const baseProductId = String(item.productId).split("_")[0];
+          
+          // Only fetch if not in cache
+          if (!productStockCache.has(baseProductId)) {
+            await fetchProductStock(baseProductId);
+          }
+        }
+      }
+    };
+
+    if (items.length > 0) {
+      fetchStocksForNonClothingItems();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   // Helper function to resolve product type from category
   const resolveStockProductType = (category: string): "tshirt" | "hoodie" => {
@@ -125,6 +157,57 @@ const CartPage = () => {
     return getAvailableStockWithData(item, stockData);
   };
 
+  // Fetch product stock for non-clothing items
+  const fetchProductStock = useCallback(async (productId: string): Promise<number | null> => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get(
+        buildApiUrl(`/api/products/${productId}`),
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          validateStatus: (status) => status >= 200 && status < 300,
+        }
+      );
+
+      const contentType = response.headers["content-type"] || "";
+      if (contentType.includes("application/json")) {
+        const product = response.data;
+        const stockQuantity = product.stock?.quantity;
+        
+        if (typeof stockQuantity === "number") {
+          // Cache the stock quantity
+          setProductStockCache((prev) => {
+            const newCache = new Map(prev);
+            newCache.set(productId, stockQuantity);
+            return newCache;
+          });
+          return stockQuantity;
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch product stock:", err);
+    }
+    
+    return null;
+  }, []);
+
+  // Get product stock for non-clothing items (with caching)
+  const getProductStock = useCallback((item: any): number | null => {
+    if (!item || !item.productId) return null;
+    
+    // Extract base product ID (handle variant-based IDs)
+    const baseProductId = String(item.productId).split("_")[0];
+    
+    // Check cache first
+    if (productStockCache.has(baseProductId)) {
+      return productStockCache.get(baseProductId) || null;
+    }
+    
+    // If not in cache, return null (stock will be fetched in useEffect)
+    // The button will be enabled, but server will validate
+    return null;
+  }, [productStockCache]);
+
   const handleQuantityChange = async (
     id: string | number,
     newQuantity: number
@@ -151,8 +234,9 @@ const CartPage = () => {
         return;
       }
 
-      // Check stock availability for clothing items
-      if (cartItem.variants) {
+      // Check stock availability
+      if (cartItem.variants && Object.keys(cartItem.variants).length > 0) {
+        // For clothing items with variants, check Stock collection
         const availableStock = getAvailableStock(cartItem);
 
         if (availableStock === 0) {
@@ -174,20 +258,66 @@ const CartPage = () => {
           // Set quantity to available stock instead of rejecting
           newQuantity = availableStock;
         }
+      } else {
+        // For non-clothing items (Action Figures, Wigs, etc.), check inStock flag
+        if (!cartItem.inStock) {
+          toast({
+            title: "Out of Stock",
+            description:
+              "This item is currently out of stock. Please remove it from your cart.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       await updateQuantity(id, newQuantity);
+      
+      // Refresh cart to get updated stock status from server
+      await refreshCart();
+      
       toast({
         title: "Quantity Updated",
         description: "Item quantity has been updated.",
         variant: "default",
       });
-    } catch (error) {
+    } catch (error: any) {
+      // Convert server error to user-friendly message
+      const getUserFriendlyError = (error: any): string => {
+        const serverMessage = error.response?.data?.message || error.message || "";
+        
+        // Map common server errors to user-friendly messages
+        if (serverMessage.includes("out of stock") || serverMessage.includes("Out of stock")) {
+          return "This item is currently out of stock.";
+        }
+        if (serverMessage.includes("Insufficient stock") || serverMessage.includes("insufficient")) {
+          const match = serverMessage.match(/(\d+)\s+available/);
+          if (match) {
+            return `Only ${match[1]} available in stock.`;
+          }
+          return "Not enough stock available.";
+        }
+        if (serverMessage.includes("Stock limit") || serverMessage.includes("stock limit")) {
+          return "Stock limit reached. You already have the maximum available quantity in your cart.";
+        }
+        if (serverMessage.includes("400") || serverMessage.includes("Bad Request")) {
+          return "Unable to update quantity. Please check stock availability.";
+        }
+        
+        // Return original message if it's already user-friendly, otherwise generic message
+        return serverMessage && !serverMessage.includes("400") && !serverMessage.includes("Bad Request")
+          ? serverMessage
+          : "Unable to update cart. Please try again.";
+      };
+      
       toast({
-        title: "Error",
-        description: "Failed to update cart. Please try again.",
+        title: "Unable to Update",
+        description: getUserFriendlyError(error),
         variant: "destructive",
       });
+      
+      // Refresh cart to sync with server state
+      await refreshCart();
     }
   };
 
@@ -250,13 +380,22 @@ const CartPage = () => {
 
     // Verify stock before proceeding
     let hasStockIssues = false;
+    const outOfStockItems: string[] = [];
+    
     for (const item of items) {
-      if (item.variants) {
-        // Use fresh data for verification
+      if (item.variants && Object.keys(item.variants).length > 0) {
+        // For clothing items with variants, check Stock collection
         const availableStock = getAvailableStockWithData(item, freshStockData);
         if (availableStock === 0 || item.quantity > availableStock) {
           hasStockIssues = true;
-          break;
+          outOfStockItems.push(item.name);
+        }
+      } else {
+        // For non-clothing items (Action Figures, Wigs, etc.), check inStock flag
+        // This flag is set by the server based on the product's individual stock
+        if (!item.inStock) {
+          hasStockIssues = true;
+          outOfStockItems.push(item.name);
         }
       }
     }
@@ -265,7 +404,9 @@ const CartPage = () => {
       toast({
         title: "Stock Verification Failed",
         description:
-          "Some items in your cart are out of stock or have insufficient quantity. Please remove or update them before proceeding.",
+          outOfStockItems.length > 0
+            ? `The following items are out of stock: ${outOfStockItems.join(", ")}. Please remove them before proceeding.`
+            : "Some items in your cart are out of stock or have insufficient quantity. Please remove or update them before proceeding.",
         variant: "destructive",
       });
       return;
@@ -490,26 +631,77 @@ const CartPage = () => {
                         {/* Quantity Controls */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity - 1)
-                              }
-                              className="w-8 h-8 p-0 border-[#444] text-gray-600 hover:bg-[#333]"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
+                            {(() => {
+                              // For business users, check minimum quantity
+                              const minQuantity = item.minBusinessQuantity ?? 1;
+                              const isAtMinimum = isBusinessUser && minQuantity > 1 && item.quantity <= minQuantity;
+                              
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleQuantityChange(item.id, item.quantity - 1)
+                                  }
+                                  disabled={isAtMinimum}
+                                  className={`w-8 h-8 p-0 border-[#444] ${
+                                    isAtMinimum
+                                      ? "text-gray-500 cursor-not-allowed opacity-50"
+                                      : "text-gray-600 hover:bg-[#333]"
+                                  }`}
+                                  title={
+                                    isAtMinimum
+                                      ? `Minimum quantity: ${minQuantity} units`
+                                      : "Decrease quantity"
+                                  }
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                              );
+                            })()}
                             <span className="w-12 text-center text-white font-medium">
                               {item.quantity}
                             </span>
                             {(() => {
-                              const availableStock = item.variants
+                              // For clothing items with variants, check Stock collection
+                              const availableStock = item.variants && Object.keys(item.variants).length > 0
                                 ? getAvailableStock(item)
                                 : null;
-                              const isAtMaxStock =
-                                availableStock !== null &&
-                                item.quantity >= availableStock;
+                              
+                              // For non-clothing items, check stock quantity
+                              let isAtMaxStock = false;
+                              let stockMessage = "Increase quantity";
+                              
+                              if (item.variants && Object.keys(item.variants).length > 0) {
+                                // Clothing items with variants
+                                isAtMaxStock = availableStock !== null && item.quantity >= availableStock;
+                                stockMessage = isAtMaxStock
+                                  ? `Only ${availableStock} available in stock`
+                                  : "Increase quantity";
+                              } else {
+                                // Non-clothing items (Action Figures, Wigs, etc.)
+                                // First check inStock flag (set by server)
+                                if (!item.inStock) {
+                                  isAtMaxStock = true;
+                                  stockMessage = "Out of stock";
+                                } else {
+                                  // Try to get stock quantity from cache or fetch it
+                                  const productStock = getProductStock(item);
+                                  if (productStock !== null) {
+                                    // We have stock quantity, check if at max
+                                    isAtMaxStock = item.quantity >= productStock;
+                                    stockMessage = isAtMaxStock
+                                      ? `Only ${productStock} available in stock`
+                                      : "Increase quantity";
+                                  } else {
+                                    // Stock not yet loaded, but inStock is true
+                                    // Allow increment - server will validate
+                                    isAtMaxStock = false;
+                                    stockMessage = "Increase quantity";
+                                  }
+                                }
+                              }
+                              
                               return (
                                 <Button
                                   size="sm"
@@ -526,11 +718,7 @@ const CartPage = () => {
                                       ? "text-gray-500 cursor-not-allowed opacity-50"
                                       : "text-gray-600 hover:bg-[#333]"
                                   }`}
-                                  title={
-                                    isAtMaxStock
-                                      ? `Only ${availableStock} available in stock`
-                                      : "Increase quantity"
-                                  }
+                                  title={stockMessage}
                                 >
                                   <Plus className="w-3 h-3" />
                                 </Button>
@@ -546,8 +734,9 @@ const CartPage = () => {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        {/* Stock warning for clothing items */}
-                        {item.variants &&
+                        {/* Stock warnings */}
+                        {item.variants && Object.keys(item.variants).length > 0 ? (
+                          // Stock warning for clothing items with variants
                           (() => {
                             const availableStock = getAvailableStock(item);
                             if (
@@ -571,7 +760,16 @@ const CartPage = () => {
                               );
                             }
                             return null;
-                          })()}
+                          })()
+                        ) : (
+                          // Stock warning for non-clothing items (Action Figures, etc.)
+                          !item.inStock && (
+                            <div className="mt-2 text-xs text-red-400 flex items-center">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Out of stock - Please remove from cart
+                            </div>
+                          )
+                        )}
                       </div>
                     </div>
                   ))}

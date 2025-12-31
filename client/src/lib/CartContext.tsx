@@ -21,8 +21,43 @@ interface CartItem {
   quantity: number;
   inStock: boolean;
   variants?: { [key: string]: string }; // Selected variants like size, color, etc.
+  minBusinessQuantity?: number; // Minimum quantity for business bulk buying
+  isBelowMinimum?: boolean; // Flag indicating if quantity is below minimum due to stock
   lastModified?: number; // Timestamp for conflict resolution
 }
+
+// Helper function to generate a unique cart item ID
+// For items with variants, includes variant info in the ID (matches ProductDetailPage format)
+// For items without variants, uses just the productId
+const generateCartItemId = (
+  productId: string | number,
+  variants?: { [key: string]: string } | Map<string, string>
+): string => {
+  const productIdStr = String(productId);
+
+  // Normalize variants (handle both objects and Maps)
+  let normalizedVariants: { [key: string]: string } = {};
+  if (variants) {
+    if (variants instanceof Map) {
+      normalizedVariants = Object.fromEntries(variants);
+    } else if (typeof variants === "object" && !Array.isArray(variants)) {
+      normalizedVariants = variants;
+    }
+  }
+
+  // If there are variants, include them in the ID
+  const variantKeys = Object.keys(normalizedVariants);
+  if (variantKeys.length > 0) {
+    const variantString = variantKeys
+      .sort() // Sort keys for consistency
+      .map((key) => `${key}:${normalizedVariants[key]}`)
+      .join("|");
+    return `${productIdStr}_${variantString}`;
+  }
+
+  // For items without variants, use just the productId
+  return productIdStr;
+};
 
 interface CartState {
   items: CartItem[];
@@ -128,7 +163,7 @@ interface CartContextType {
   addItem: (
     item: Omit<CartItem, "quantity">,
     quantity?: number
-  ) => Promise<void>;
+  ) => Promise<{ actualQuantity: number; isBelowMinimum: boolean }>;
   removeItem: (id: string | number) => Promise<void>;
   updateQuantity: (id: string | number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -206,23 +241,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
               withCredentials: true,
             });
             const cartItems = response.data.cart.items || [];
-            const transformedItems = cartItems.map((item: any) => ({
-              id: String(item.productId),
-              productId: String(item.productId),
-              slug: item.slug || null,
-              productSlug: item.slug || null,
-              name: item.name,
-              price: item.price,
-              image: item.image,
-              category: item.category,
-              quantity: item.quantity,
-              inStock: item.inStock,
-              variants:
+            const transformedItems = cartItems.map((item: any) => {
+              const variants =
                 item.variants instanceof Map
                   ? Object.fromEntries(item.variants)
-                  : item.variants || {},
-              lastModified: item.lastModified || Date.now(),
-            }));
+                  : item.variants || {};
+              return {
+                id: generateCartItemId(item.productId, variants),
+                productId: String(item.productId),
+                slug: item.slug || null,
+                productSlug: item.slug || null,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                category: item.category,
+                quantity: item.quantity,
+                inStock: item.inStock,
+                variants: variants,
+                minBusinessQuantity: item.minBusinessQuantity || 1,
+                isBelowMinimum: item.isBelowMinimum || false,
+                lastModified: item.lastModified || Date.now(),
+              };
+            });
 
             dispatch({ type: "LOAD_CART", payload: transformedItems });
             localStorage.setItem(
@@ -280,20 +320,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             });
             const cartItems = response.data.cart.items || [];
             // Transform items from backend format (productId) to frontend format (id)
-            const transformedItems = cartItems.map((item: any) => ({
-              id: String(item.productId), // Ensure ID is string
-              productId: String(item.productId),
-              slug: item.slug || null,
-              productSlug: item.slug || null,
-              name: item.name,
-              price: item.price,
-              image: item.image,
-              category: item.category,
-              quantity: item.quantity,
-              inStock: item.inStock,
-              variants: item.variants || {},
-              lastModified: item.lastModified || Date.now(),
-            }));
+            const transformedItems = cartItems.map((item: any) => {
+              const variants =
+                item.variants instanceof Map
+                  ? Object.fromEntries(item.variants)
+                  : item.variants || {};
+              return {
+                id: generateCartItemId(item.productId, variants),
+                productId: String(item.productId),
+                slug: item.slug || null,
+                productSlug: item.slug || null,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                category: item.category,
+                quantity: item.quantity,
+                inStock: item.inStock,
+                variants: variants,
+                minBusinessQuantity: item.minBusinessQuantity ?? 1,
+                isBelowMinimum: item.isBelowMinimum ?? false,
+                lastModified: item.lastModified || Date.now(),
+              };
+            });
 
             // Always prioritize database data over localStorage
             dispatch({ type: "LOAD_CART", payload: transformedItems });
@@ -310,7 +358,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             if (savedCart) {
               try {
                 const items = JSON.parse(savedCart);
-                dispatch({ type: "LOAD_CART", payload: items });
+                // Ensure all items have minBusinessQuantity and isBelowMinimum fields
+                const normalizedItems = items.map((item: any) => ({
+                  ...item,
+                  minBusinessQuantity: item.minBusinessQuantity ?? 1,
+                  isBelowMinimum: item.isBelowMinimum ?? false,
+                }));
+                dispatch({ type: "LOAD_CART", payload: normalizedItems });
                 setIsCartLoaded(true);
               } catch (localError) {
                 dispatch({ type: "CLEAR_CART" });
@@ -355,6 +409,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             quantity: item.quantity,
             inStock: item.inStock,
             variants: item.variants || {},
+            minBusinessQuantity: item.minBusinessQuantity ?? 1,
+            isBelowMinimum: item.isBelowMinimum ?? false,
           }));
 
           await axios.put(
@@ -399,14 +455,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     quantity: number = 1
   ) => {
     if (!isAuthenticated) {
-      return; // Don't add items if user is not authenticated
+      // Don't add items if user is not authenticated
+      return {
+        actualQuantity: quantity,
+        isBelowMinimum: false,
+      };
     }
 
     try {
       // Add to database first
       const token = localStorage.getItem("authToken");
       const timestamp = Date.now();
-      await axios.post(
+      const response = await axios.post(
         buildApiUrl("/api/cart"),
         {
           productId: String(item.productId || item.id), // Ensure ID is string
@@ -428,17 +488,66 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
 
-      // Then update local state
-      dispatch({
-        type: "ADD_ITEM",
-        payload: { ...item, quantity, lastModified: timestamp },
-      });
-    } catch (error) {
-      // Fallback to local state only
-      dispatch({
-        type: "ADD_ITEM",
-        payload: { ...item, quantity, lastModified: Date.now() },
-      });
+      // Use server response to update local state (server is authoritative)
+      if (response.data?.cart?.items) {
+        const cartItems = response.data.cart.items || [];
+        const transformedItems = cartItems.map((cartItem: any) => {
+          const variants =
+            cartItem.variants instanceof Map
+              ? Object.fromEntries(cartItem.variants)
+              : cartItem.variants || {};
+          return {
+            id: generateCartItemId(cartItem.productId, variants),
+            productId: String(cartItem.productId),
+            slug: cartItem.slug || null,
+            productSlug: cartItem.slug || null,
+            name: cartItem.name,
+            price: cartItem.price,
+            image: cartItem.image,
+            category: cartItem.category,
+            quantity: cartItem.quantity,
+            inStock: cartItem.inStock,
+            variants: variants,
+            minBusinessQuantity: cartItem.minBusinessQuantity || 1,
+            isBelowMinimum: cartItem.isBelowMinimum || false,
+            lastModified: timestamp,
+          };
+        });
+        dispatch({ type: "LOAD_CART", payload: transformedItems });
+        if (user) {
+          localStorage.setItem(
+            `cart_${user.id}`,
+            JSON.stringify(transformedItems)
+          );
+        }
+
+        // Find the added item to return actual quantity
+        const addedItem = transformedItems.find(
+          (cartItem: CartItem) =>
+            String(cartItem.productId) === String(item.productId || item.id) &&
+            JSON.stringify(cartItem.variants || {}) ===
+              JSON.stringify(item.variants || {})
+        );
+
+        return {
+          actualQuantity: addedItem?.quantity ?? quantity,
+          isBelowMinimum: addedItem?.isBelowMinimum ?? false,
+        };
+      } else {
+        // Fallback if response format is unexpected
+        dispatch({
+          type: "ADD_ITEM",
+          payload: { ...item, quantity, lastModified: timestamp },
+        });
+        return {
+          actualQuantity: quantity,
+          isBelowMinimum: false,
+        };
+      }
+    } catch (error: any) {
+      // Don't update local state on error - let server error propagate
+      // The error will be handled by the calling component
+      throw error;
     }
   };
 
@@ -446,18 +555,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       // Remove from database first
       const token = localStorage.getItem("authToken");
-      await axios.delete(buildApiUrl(`/api/cart/${id}`), {
+      const response = await axios.delete(buildApiUrl(`/api/cart/${id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         withCredentials: true,
       });
 
-      // Then update local state
-      dispatch({ type: "REMOVE_ITEM", payload: id });
-    } catch (error) {
-      // Fallback to local state only
-      dispatch({ type: "REMOVE_ITEM", payload: id });
+      // Use server response to update local state
+      if (response.data?.cart?.items) {
+        const cartItems = response.data.cart.items || [];
+        const transformedItems = cartItems.map((cartItem: any) => {
+          const variants =
+            cartItem.variants instanceof Map
+              ? Object.fromEntries(cartItem.variants)
+              : cartItem.variants || {};
+          return {
+            id: generateCartItemId(cartItem.productId, variants),
+            productId: String(cartItem.productId),
+            slug: cartItem.slug || null,
+            productSlug: cartItem.slug || null,
+            name: cartItem.name,
+            price: cartItem.price,
+            image: cartItem.image,
+            category: cartItem.category,
+            quantity: cartItem.quantity,
+            inStock: cartItem.inStock,
+            variants: variants,
+            minBusinessQuantity: cartItem.minBusinessQuantity || 1,
+            isBelowMinimum: cartItem.isBelowMinimum || false,
+          };
+        });
+        dispatch({ type: "LOAD_CART", payload: transformedItems });
+        if (user) {
+          localStorage.setItem(
+            `cart_${user.id}`,
+            JSON.stringify(transformedItems)
+          );
+        }
+      } else {
+        // Fallback if response format is unexpected
+        dispatch({ type: "REMOVE_ITEM", payload: id });
+      }
+    } catch (error: any) {
+      // Don't update local state on error - let server error propagate
+      throw error;
     }
   };
 
@@ -465,7 +607,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       // Update in database first
       const token = localStorage.getItem("authToken");
-      await axios.patch(
+      const response = await axios.patch(
         buildApiUrl(`/api/cart/${id}`),
         { quantity },
         {
@@ -476,11 +618,44 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
 
-      // Then update local state
-      dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
-    } catch (error) {
-      // Fallback to local state only
-      dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
+      // Use server response to update local state (server is authoritative)
+      if (response.data?.cart?.items) {
+        const cartItems = response.data.cart.items || [];
+        const transformedItems = cartItems.map((cartItem: any) => {
+          const variants =
+            cartItem.variants instanceof Map
+              ? Object.fromEntries(cartItem.variants)
+              : cartItem.variants || {};
+          return {
+            id: generateCartItemId(cartItem.productId, variants),
+            productId: String(cartItem.productId),
+            slug: cartItem.slug || null,
+            productSlug: cartItem.slug || null,
+            name: cartItem.name,
+            price: cartItem.price,
+            image: cartItem.image,
+            category: cartItem.category,
+            quantity: cartItem.quantity,
+            inStock: cartItem.inStock,
+            variants: variants,
+            minBusinessQuantity: cartItem.minBusinessQuantity || 1,
+            isBelowMinimum: cartItem.isBelowMinimum || false,
+          };
+        });
+        dispatch({ type: "LOAD_CART", payload: transformedItems });
+        if (user) {
+          localStorage.setItem(
+            `cart_${user.id}`,
+            JSON.stringify(transformedItems)
+          );
+        }
+      } else {
+        // Fallback if response format is unexpected
+        dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
+      }
+    } catch (error: any) {
+      // Don't update local state on error - let server error propagate
+      throw error;
     }
   };
 
@@ -523,19 +698,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       const cartItems = response.data.cart.items || [];
       // Transform items from backend format (productId) to frontend format (id)
-      const transformedItems = cartItems.map((item: any) => ({
-        id: String(item.productId), // Ensure ID is string
-        productId: String(item.productId),
-        slug: item.slug || null,
-        productSlug: item.slug || null,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        category: item.category,
-        quantity: item.quantity,
-        inStock: item.inStock,
-        variants: item.variants || {},
-      }));
+      const transformedItems = cartItems.map((item: any) => {
+        const variants =
+          item.variants instanceof Map
+            ? Object.fromEntries(item.variants)
+            : item.variants || {};
+        return {
+          id: generateCartItemId(item.productId, variants),
+          productId: String(item.productId),
+          slug: item.slug || null,
+          productSlug: item.slug || null,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          category: item.category,
+          quantity: item.quantity,
+          inStock: item.inStock,
+          variants: variants,
+          minBusinessQuantity: item.minBusinessQuantity ?? 1,
+          isBelowMinimum: item.isBelowMinimum ?? false,
+        };
+      });
 
       // Update cart with fresh data from database
       dispatch({ type: "LOAD_CART", payload: transformedItems });

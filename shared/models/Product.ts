@@ -44,6 +44,12 @@ const productSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
+    // Minimum quantity for business bulk buying - optional; defaults to 1
+    minBusinessQuantity: {
+      type: Number,
+      min: 1,
+      default: 1,
+    },
     category: {
       type: String,
       required: true,
@@ -279,6 +285,28 @@ productSchema.pre("save", async function (next) {
   if (typeof brp === "number") {
     (this as any).businessPrice =
       typeof bsp === "number" && bsp > 0 ? bsp : brp;
+  }
+
+  // Auto-update stock status based on quantity for individual_stock items
+  if (
+    (this as any).inventoryType === "individual_stock" &&
+    (this as any).stock &&
+    typeof (this as any).stock.quantity === "number"
+  ) {
+    const quantity = (this as any).stock.quantity;
+    const lowStockThreshold =
+      typeof (this as any).stock.lowStockThreshold === "number"
+        ? (this as any).stock.lowStockThreshold
+        : 5;
+
+    // Update status based on quantity
+    if (quantity === 0) {
+      (this as any).stock.status = "out_of_stock";
+    } else if (quantity > 0 && quantity <= lowStockThreshold) {
+      (this as any).stock.status = "low_stock";
+    } else {
+      (this as any).stock.status = "in_stock";
+    }
   }
 
   next();

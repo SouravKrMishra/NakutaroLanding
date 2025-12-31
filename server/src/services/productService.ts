@@ -516,6 +516,7 @@ class ProductService {
       attributes: attributes,
       specifications: product.specifications || {},
       keyHighlights: product.keyHighlights || [],
+      minBusinessQuantity: product.minBusinessQuantity || 1,
     };
   }
 }

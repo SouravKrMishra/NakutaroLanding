@@ -6,6 +6,15 @@ import mongoose from "mongoose";
 
 type ShopperType = "business" | "individual";
 
+const getAvailableStock = (product: any): number | null => {
+  // For shared_stock, return null (unlimited)
+  if (product.inventoryType === "shared_stock") {
+    return null;
+  }
+  // For individual_stock, return the quantity
+  return product.stock?.quantity ?? 0;
+};
+
 const getEffectiveUnitPrice = (product: any, userType: ShopperType): number => {
   const isBusiness = userType === "business";
   const regularPrice = isBusiness
@@ -58,6 +67,105 @@ const getPrimaryImageUrl = (product: any): string => {
   return images[0]?.url || "";
 };
 
+// Helper function to normalize variants for comparison
+// Converts Maps to objects and sorts keys for consistent comparison
+const normalizeVariants = (variants: any): Record<string, string> => {
+  if (!variants) return {};
+
+  // If it's a Map, convert to object
+  if (variants instanceof Map) {
+    return Object.fromEntries(variants);
+  }
+
+  // If it's already an object, return it
+  if (typeof variants === "object" && !Array.isArray(variants)) {
+    return variants;
+  }
+
+  return {};
+};
+
+// Helper function to compare two variant objects
+const variantsMatch = (variants1: any, variants2: any): boolean => {
+  const normalized1 = normalizeVariants(variants1);
+  const normalized2 = normalizeVariants(variants2);
+
+  const keys1 = Object.keys(normalized1).sort();
+  const keys2 = Object.keys(normalized2).sort();
+
+  // Different number of keys means they don't match
+  if (keys1.length !== keys2.length) return false;
+
+  // Check if all keys and values match
+  for (const key of keys1) {
+    if (!keys2.includes(key)) return false;
+    if (String(normalized1[key]) !== String(normalized2[key])) return false;
+  }
+
+  return true;
+};
+
+// Auto-adjust cart quantities for business users when stock increases
+const autoAdjustCartQuantities = async (cart: any): Promise<boolean> => {
+  if (!cart.items || cart.items.length === 0) return false;
+
+  let hasChanges = false;
+
+  // Get all items marked as below minimum
+  const itemsToCheck = cart.items.filter((item: any) => item.isBelowMinimum);
+
+  if (itemsToCheck.length === 0) return false;
+
+  // Get product IDs for batch query
+  const productIds = itemsToCheck
+    .map((item: any) => {
+      const actualProductId = String(item.productId).split("_")[0];
+      return mongoose.Types.ObjectId.isValid(actualProductId)
+        ? actualProductId
+        : null;
+    })
+    .filter((id: any) => id !== null);
+
+  if (productIds.length === 0) return false;
+
+  // Fetch products to check current stock
+  const products = await Product.find({
+    _id: { $in: productIds },
+    isDeleted: false,
+  }).select("_id stock inventoryType minBusinessQuantity");
+
+  const productMap = new Map(products.map((p: any) => [p._id.toString(), p]));
+
+  // Check each item and adjust if stock is now sufficient
+  for (const item of itemsToCheck) {
+    const actualProductId = String(item.productId).split("_")[0];
+    const product = productMap.get(actualProductId);
+
+    if (!product) continue;
+
+    const availableStock = getAvailableStock(product);
+    const minQuantity =
+      (item as any).minBusinessQuantity || product.minBusinessQuantity || 1;
+
+    // Ensure the cart item records the minimum for future requests
+    (item as any).minBusinessQuantity = minQuantity;
+
+    // If stock is now sufficient for minimum quantity
+    if (availableStock === null || availableStock >= minQuantity) {
+      (item as any).quantity = minQuantity;
+      (item as any).isBelowMinimum = false;
+      hasChanges = true;
+    }
+    // If stock increased but still below minimum, update to new stock level
+    else if (availableStock > (item as any).quantity) {
+      (item as any).quantity = availableStock;
+      hasChanges = true;
+    }
+  }
+
+  return hasChanges;
+};
+
 // Get user's cart
 export const getCart = async (
   req: Request,
@@ -78,6 +186,16 @@ export const getCart = async (
       await cart.save();
     }
 
+    // Auto-adjust quantities for business users if stock has increased
+    const userType: ShopperType =
+      req.user?.userType === "business" ? "business" : "individual";
+    if (userType === "business") {
+      const needsSave = await autoAdjustCartQuantities(cart);
+      if (needsSave) {
+        await cart.save();
+      }
+    }
+
     // Check if any products in cart are deleted and mark them
     if (cart.items && cart.items.length > 0) {
       const productIds = cart.items.map((item) => String(item.productId));
@@ -87,10 +205,14 @@ export const getCart = async (
         .filter((id) => mongoose.Types.ObjectId.isValid(id))
         .map((id) => new mongoose.Types.ObjectId(id));
 
-      let products: Array<{ _id: any; isDeleted: boolean }> = [];
+      let products: Array<{
+        _id: any;
+        isDeleted: boolean;
+        minBusinessQuantity?: number;
+      }> = [];
       if (validObjectIds.length > 0) {
         products = await Product.find({ _id: { $in: validObjectIds } }).select(
-          "_id isDeleted"
+          "_id isDeleted minBusinessQuantity"
         );
       }
 
@@ -107,18 +229,28 @@ export const getCart = async (
         }
       });
 
-      // Mark cart items with deleted products
+      // Mark cart items with deleted products and ensure minBusinessQuantity/isBelowMinimum are present
       const cartObj = cart.toObject();
-      const itemsWithDeletedInfo = cartObj.items.map((item: any) => ({
-        ...item,
-        isDeleted: deletedProductIds.has(item.productId.toString()),
-        isAvailable: !deletedProductIds.has(item.productId.toString()),
-        // Ensure variants is an object (convert Map to object if needed)
-        variants:
-          item.variants instanceof Map
-            ? Object.fromEntries(item.variants)
-            : item.variants || {},
-      })) as any;
+      const itemsWithDeletedInfo = cartObj.items.map((item: any) => {
+        const productIdStr = item.productId?.toString?.() || "";
+        const productDoc = products.find(
+          (p: any) => p._id.toString() === productIdStr
+        );
+        const ensuredMin =
+          item.minBusinessQuantity ?? productDoc?.minBusinessQuantity ?? 1;
+        return {
+          ...item,
+          minBusinessQuantity: ensuredMin,
+          isBelowMinimum: item.isBelowMinimum ?? false,
+          isDeleted: deletedProductIds.has(productIdStr),
+          isAvailable: !deletedProductIds.has(productIdStr),
+          // Ensure variants is an object (convert Map to object if needed)
+          variants:
+            item.variants instanceof Map
+              ? Object.fromEntries(item.variants)
+              : item.variants || {},
+        };
+      }) as any;
 
       res.json({
         success: true,
@@ -126,18 +258,40 @@ export const getCart = async (
       });
     } else {
       const cartObject = cart.toObject();
-      // Ensure variants are properly converted from Map to object
+      // Preload product minBusinessQuantity for items to avoid per-item queries
+      const cartProductIds = cartObject.items
+        .map((item: any) => item.productId)
+        .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+      const productDocs = await Product.find({
+        _id: { $in: cartProductIds },
+        isDeleted: false,
+      }).select("_id minBusinessQuantity");
+      const productMap = new Map(
+        productDocs.map((p: any) => [p._id.toString(), p])
+      );
+
+      // Ensure variants are properly converted from Map to object and min fields are present
       const transformedCart = {
         ...cartObject,
         items:
           cartObject.items && cartObject.items.length > 0
-            ? cartObject.items.map((item: any) => ({
-                ...item,
-                variants:
-                  item.variants instanceof Map
-                    ? Object.fromEntries(item.variants)
-                    : item.variants || {},
-              }))
+            ? cartObject.items.map((item: any) => {
+                const productIdStr = item.productId?.toString?.() || "";
+                const productDoc = productMap.get(productIdStr);
+                const ensuredMin =
+                  item.minBusinessQuantity ??
+                  productDoc?.minBusinessQuantity ??
+                  1;
+                return {
+                  ...item,
+                  minBusinessQuantity: ensuredMin,
+                  isBelowMinimum: item.isBelowMinimum ?? false,
+                  variants:
+                    item.variants instanceof Map
+                      ? Object.fromEntries(item.variants)
+                      : item.variants || {},
+                };
+              })
             : [],
       };
       res.json({ success: true, cart: transformedCart });
@@ -208,31 +362,118 @@ export const addToCart = async (
       return next(createError("Product data unavailable for cart item", 400));
     }
 
+    // Business bulk buying logic
+    const minBusinessQuantity = product.minBusinessQuantity || 1;
+    const availableStock = getAvailableStock(product);
+    let effectiveQuantity = quantity;
+    let isBelowMinimum = false;
+
+    // For business users, enforce minimum quantity
+    if (userType === "business") {
+      // Use the larger of selected quantity or minimum quantity
+      effectiveQuantity = Math.max(quantity, minBusinessQuantity);
+
+      // If stock is limited and less than what we want, cap at available stock
+      if (availableStock !== null && availableStock < effectiveQuantity) {
+        effectiveQuantity = availableStock;
+        // Mark as below minimum only if stock is less than the minimum requirement
+        isBelowMinimum = availableStock < minBusinessQuantity;
+      }
+    }
+
+    // Prevent adding items with zero quantity (out of stock)
+    if (effectiveQuantity <= 0) {
+      return next(
+        createError(
+          "This product is currently out of stock and cannot be added to cart.",
+          400
+        )
+      );
+    }
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
       cart = new Cart({ userId, items: [] });
     }
 
-    // Check if item already exists in cart
-    const existingItemIndex = cart.items.findIndex(
-      (item) => String(item.productId) === productIdStr
-    );
+    // Check if item already exists in cart (must match both productId and variants)
+    const existingItemIndex = cart.items.findIndex((item) => {
+      // First check if productId matches
+      if (String(item.productId) !== productIdStr) return false;
+
+      // Then check if variants match
+      return variantsMatch(item.variants, variants);
+    });
 
     if (existingItemIndex !== -1) {
       // Update quantity of existing item
-      cart.items[existingItemIndex].quantity += quantity;
-      // Refresh server-authoritative fields (in case pricing/image changed)
-      cart.items[existingItemIndex].price = String(effectivePrice);
-      cart.items[existingItemIndex].name = effectiveName;
-      cart.items[existingItemIndex].category = effectiveCategory;
-      cart.items[existingItemIndex].image = effectiveImage;
-      cart.items[existingItemIndex].slug = effectiveSlug;
-      // Always update variants from the request (even if empty) to avoid retaining stale variant data
-      cart.items[existingItemIndex].variants = new Map<string, string>(
-        Object.entries(variants || {}).map(([k, v]) => [k, String(v)])
-      );
-      cart.items[existingItemIndex].markModified("variants");
+      const existingQuantity = cart.items[existingItemIndex].quantity;
+      let newQuantity: number;
+      let newIsBelowMinimum = false;
+
+      if (userType === "business") {
+        // For business users, add requested quantity to existing quantity
+        // Then enforce minimum and stock limits on the total
+        const requestedTotal = existingQuantity + quantity;
+
+        // If stock is limited, cap at available stock
+        if (availableStock !== null && availableStock < requestedTotal) {
+          newQuantity = availableStock;
+          newIsBelowMinimum = availableStock < minBusinessQuantity;
+        } else {
+          // Stock is sufficient or unlimited
+          // If total is below minimum, enforce minimum (but only if stock allows)
+          if (requestedTotal < minBusinessQuantity) {
+            if (
+              availableStock !== null &&
+              availableStock < minBusinessQuantity
+            ) {
+              // Stock is limited and below minimum - use available stock
+              newQuantity = availableStock;
+              newIsBelowMinimum = true;
+            } else {
+              // Stock is sufficient - enforce minimum
+              newQuantity = minBusinessQuantity;
+              newIsBelowMinimum = false;
+            }
+          } else {
+            // Total is at or above minimum - use requested total
+            newQuantity = requestedTotal;
+            newIsBelowMinimum = false;
+          }
+        }
+      } else {
+        // For individual users, simply add to existing quantity
+        newQuantity = existingQuantity + effectiveQuantity;
+      }
+
+      // Prevent updating items to zero quantity (out of stock)
+      // If stock is 0, remove the item instead
+      if (newQuantity <= 0) {
+        cart.items.splice(existingItemIndex, 1);
+      } else {
+        cart.items[existingItemIndex].quantity = newQuantity;
+
+        // Refresh server-authoritative fields (in case pricing/image changed)
+        cart.items[existingItemIndex].price = String(effectivePrice);
+        cart.items[existingItemIndex].name = effectiveName;
+        cart.items[existingItemIndex].category = effectiveCategory;
+        cart.items[existingItemIndex].image = effectiveImage;
+        cart.items[existingItemIndex].slug = effectiveSlug;
+
+        // Update business bulk buying fields
+        (cart.items[existingItemIndex] as any).minBusinessQuantity =
+          minBusinessQuantity;
+        (cart.items[existingItemIndex] as any).isBelowMinimum =
+          newIsBelowMinimum;
+
+        // Always update variants from the request (even if empty) to avoid retaining stale variant data
+        cart.items[existingItemIndex].variants = new Map<string, string>(
+          Object.entries(variants || {}).map(([k, v]) => [k, String(v)])
+        );
+        cart.items[existingItemIndex].markModified("variants");
+      }
     } else {
       // Add new item - use Mongoose's create method for subdocuments
       const newItem = {
@@ -242,7 +483,7 @@ export const addToCart = async (
         price: String(effectivePrice),
         image: effectiveImage,
         category: effectiveCategory,
-        quantity,
+        quantity: effectiveQuantity,
         inStock,
         variants:
           variants && Object.keys(variants).length > 0
@@ -250,6 +491,8 @@ export const addToCart = async (
                 Object.entries(variants).map(([k, v]) => [k, String(v)])
               )
             : new Map<string, string>(),
+        minBusinessQuantity: minBusinessQuantity,
+        isBelowMinimum: isBelowMinimum,
       };
 
       // Push the item and then explicitly set variants to ensure Mongoose recognizes it
@@ -332,6 +575,25 @@ export const updateCartItem = async (
 
     if (itemIndex === -1) {
       return next(createError("Item not found in cart", 404));
+    }
+
+    // Check if user is a business user
+    const userType: ShopperType =
+      req.user?.userType === "business" ? "business" : "individual";
+
+    // For business users, validate minimum quantity
+    if (userType === "business" && quantity > 0) {
+      const cartItem = cart.items[itemIndex];
+      const minQuantity = (cartItem as any).minBusinessQuantity || 1;
+
+      if (quantity < minQuantity) {
+        return next(
+          createError(
+            `Business users must purchase at least ${minQuantity} units of this product. Use quantity 0 to remove the item from cart.`,
+            400
+          )
+        );
+      }
     }
 
     if (quantity === 0) {
@@ -514,6 +776,20 @@ export const syncCart = async (
 
     let cart = await Cart.findOne({ userId });
 
+    // Preload product docs to enforce minBusinessQuantity when not provided
+    const productIds = items
+      .map((item: any) => String(item.productId || "").split("_")[0])
+      .filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const products = productIds.length
+      ? await Product.find({
+          _id: { $in: productIds },
+          isDeleted: false,
+        }).select("_id minBusinessQuantity")
+      : [];
+    const productMap = new Map(
+      products.map((p: any) => [p._id.toString(), p.minBusinessQuantity || 1])
+    );
+
     if (!cart) {
       // Convert variants objects to Maps for new cart
       const itemsWithMaps = items.map((item: any) => ({
@@ -522,6 +798,11 @@ export const syncCart = async (
           item.variants && Object.keys(item.variants).length > 0
             ? new Map(Object.entries(item.variants))
             : new Map(),
+        minBusinessQuantity:
+          item.minBusinessQuantity ??
+          productMap.get(String(item.productId).split("_")[0]) ??
+          1,
+        isBelowMinimum: item.isBelowMinimum ?? false,
       }));
       cart = new Cart({ userId, items: itemsWithMaps });
     } else {
@@ -532,6 +813,11 @@ export const syncCart = async (
           item.variants && Object.keys(item.variants).length > 0
             ? new Map(Object.entries(item.variants))
             : new Map(),
+        minBusinessQuantity:
+          item.minBusinessQuantity ??
+          productMap.get(String(item.productId).split("_")[0]) ??
+          1,
+        isBelowMinimum: item.isBelowMinimum ?? false,
       }));
       cart.items.splice(0, cart.items.length, ...itemsWithMaps);
     }

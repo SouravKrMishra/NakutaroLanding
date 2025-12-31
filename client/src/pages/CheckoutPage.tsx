@@ -296,11 +296,6 @@ const CheckoutPage = () => {
 
   // Verify stock before proceeding to payment
   const verifyStock = (): boolean => {
-    if (!stockData) {
-      // If stock data is not loaded, allow proceeding (backend will verify)
-      return true;
-    }
-
     const errors: Array<{
       itemName: string;
       size: string;
@@ -310,8 +305,13 @@ const CheckoutPage = () => {
     }> = [];
 
     items.forEach((item) => {
-      // Only check stock for clothing items with variants
       if (item.variants && Object.keys(item.variants).length > 0) {
+        // For clothing items with variants, check Stock collection
+        if (!stockData) {
+          // If stock data is not loaded for clothing items, skip (backend will verify)
+          return;
+        }
+
         const availableStock = getAvailableStock(item);
 
         if (availableStock === 0) {
@@ -343,6 +343,18 @@ const CheckoutPage = () => {
             color: colorKey ? item.variants[colorKey] : "N/A",
             requested: item.quantity,
             available: availableStock,
+          });
+        }
+      } else {
+        // For non-clothing items (Action Figures, Wigs, etc.), check inStock flag
+        // This flag is set by the server based on the product's individual stock
+        if (!item.inStock) {
+          errors.push({
+            itemName: item.name,
+            size: "N/A",
+            color: "N/A",
+            requested: item.quantity,
+            available: 0,
           });
         }
       }
@@ -994,13 +1006,31 @@ const CheckoutPage = () => {
                   {/* Items */}
                   <div className="space-y-2">
                     {items.map((item) => {
-                      const availableStock = item.variants
+                      // For clothing items with variants, check Stock collection
+                      const availableStock = item.variants && Object.keys(item.variants).length > 0
                         ? getAvailableStock(item)
                         : null;
-                      const hasStockIssue =
-                        availableStock !== null &&
-                        (availableStock === 0 ||
-                          item.quantity > availableStock);
+                      
+                      // Check stock issues: for clothing items check availableStock, for non-clothing check inStock flag
+                      let hasStockIssue = false;
+                      let stockMessage = "";
+                      
+                      if (item.variants && Object.keys(item.variants).length > 0) {
+                        // Clothing items with variants
+                        hasStockIssue = availableStock !== null &&
+                          (availableStock === 0 || item.quantity > availableStock);
+                        if (hasStockIssue) {
+                          stockMessage = availableStock === 0
+                            ? "Out of stock"
+                            : `Only ${availableStock} available`;
+                        }
+                      } else {
+                        // Non-clothing items (Action Figures, Wigs, etc.)
+                        hasStockIssue = !item.inStock;
+                        if (hasStockIssue) {
+                          stockMessage = "Out of stock";
+                        }
+                      }
 
                       return (
                         <div
@@ -1028,9 +1058,7 @@ const CheckoutPage = () => {
                             {hasStockIssue && (
                               <div className="text-xs text-red-400 mt-0.5 flex items-center">
                                 <AlertCircle className="w-3 h-3 mr-1" />
-                                {availableStock === 0
-                                  ? "Out of stock"
-                                  : `Only ${availableStock} available`}
+                                {stockMessage}
                               </div>
                             )}
                           </div>
