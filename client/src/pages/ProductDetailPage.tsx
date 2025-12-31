@@ -2588,14 +2588,105 @@ const ProductDetailPage = () => {
               </div>
 
               <div className="flex flex-row gap-3 pt-2">
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={product.stock_status !== "instock"}
-                  className="flex-1 bg-accent hover:bg-accent/90 active:bg-accent/80 text-white font-semibold py-3 h-12 rounded-lg transition-all duration-200 text-base shadow-lg shadow-accent/20 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Add to Cart
-                </Button>
+                {(() => {
+                  // Determine if button should be disabled based on stock availability
+                  let isOutOfStock = false;
+
+                  if (product.attributes && product.attributes.length > 0) {
+                    // For clothing items with variants, check stock for selected variant
+                    const availableStock = getCurrentAvailableStock();
+
+                    // Check if all required variants are selected
+                    const sizeAttr = product.attributes.find(
+                      (attr) => attr.name.toLowerCase() === "size"
+                    );
+                    const colorAttr = product.attributes.find((attr) =>
+                      attr.name.toLowerCase().includes("color")
+                    );
+
+                    const hasRequiredVariants =
+                      sizeAttr &&
+                      colorAttr &&
+                      selectedVariants[sizeAttr.name] &&
+                      selectedVariants[colorAttr.name];
+
+                    if (hasRequiredVariants && availableStock !== null) {
+                      // Check if item is already in cart
+                      let alreadyInCartQuantity = 0;
+                      const existingCartItem = items.find((item) => {
+                        // First check if productId matches
+                        if (String(item.productId) !== String(product.id))
+                          return false;
+
+                        // Then check if variants match
+                        const itemVariants = item.variants || {};
+                        const selectedVariantsKeys =
+                          Object.keys(selectedVariants).sort();
+                        const itemVariantsKeys =
+                          Object.keys(itemVariants).sort();
+
+                        // Different number of variant keys means they don't match
+                        if (
+                          selectedVariantsKeys.length !==
+                          itemVariantsKeys.length
+                        )
+                          return false;
+
+                        // Check if all variant keys and values match
+                        for (const key of selectedVariantsKeys) {
+                          if (!itemVariantsKeys.includes(key)) return false;
+                          if (
+                            String(itemVariants[key]) !==
+                            String(selectedVariants[key])
+                          )
+                            return false;
+                        }
+
+                        return true;
+                      });
+                      alreadyInCartQuantity = existingCartItem?.quantity || 0;
+
+                      // Disable if no stock remaining (available stock - already in cart <= 0)
+                      const remainingStock =
+                        availableStock - alreadyInCartQuantity;
+                      isOutOfStock = remainingStock <= 0;
+                    } else {
+                      // Disable if variants not selected
+                      isOutOfStock = !hasRequiredVariants;
+                    }
+                  } else {
+                    // For non-clothing items, check stock_quantity or stock_status
+                    if (
+                      product.stock_quantity !== null &&
+                      product.stock_quantity !== undefined
+                    ) {
+                      // Check if item is already in cart
+                      let alreadyInCartQuantity = 0;
+                      const existingCartItem = items.find(
+                        (item) => String(item.productId) === String(product.id)
+                      );
+                      alreadyInCartQuantity = existingCartItem?.quantity || 0;
+
+                      // Disable if no stock remaining (stock_quantity - already in cart <= 0)
+                      const remainingStock =
+                        product.stock_quantity - alreadyInCartQuantity;
+                      isOutOfStock = remainingStock <= 0;
+                    } else {
+                      isOutOfStock = product.stock_status !== "instock";
+                    }
+                  }
+
+                  return (
+                    <Button
+                      onClick={handleAddToCart}
+                      disabled={isOutOfStock}
+                      className="flex-1 bg-accent hover:bg-accent/90 active:bg-accent/80 text-white font-semibold py-3 h-12 rounded-lg transition-all duration-200 text-base shadow-lg shadow-accent/20 touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Add to Cart
+                    </Button>
+                  );
+                })()}
 
                 <div className="flex gap-2.5">
                   <Button

@@ -557,7 +557,7 @@ export const updateCartItem = async (
     }
 
     const { productId } = req.params;
-    const { quantity } = req.body;
+    const { quantity, variants: requestVariants } = req.body;
 
     if (quantity === undefined || quantity < 0) {
       return next(createError("Invalid quantity", 400));
@@ -569,9 +569,24 @@ export const updateCartItem = async (
       return next(createError("Cart not found", 404));
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) => item.productId === productId
-    );
+    // Match by productId and variants (if variants are provided in request body)
+    const variants = requestVariants || {};
+    const itemIndex = cart.items.findIndex((item) => {
+      // First check if productId matches
+      if (String(item.productId) !== productId) return false;
+
+      // If variants are provided, check if they match
+      if (Object.keys(variants).length > 0) {
+        return variantsMatch(item.variants, variants);
+      }
+
+      // If no variants provided, match items without variants
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants || {};
+      return Object.keys(itemVariants).length === 0;
+    });
 
     if (itemIndex === -1) {
       return next(createError("Item not found in cart", 404));
@@ -677,15 +692,38 @@ export const removeFromCart = async (
 
     const { productId } = req.params;
 
+    // Parse variants from query params if present (format: ?variant_Size=M&variant_Color=Red)
+    const variants: { [key: string]: string } = {};
+    Object.keys(req.query).forEach((key) => {
+      if (key.startsWith("variant_")) {
+        const variantKey = key.replace("variant_", "");
+        variants[variantKey] = String(req.query[key]);
+      }
+    });
+
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
       return next(createError("Cart not found", 404));
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) => item.productId === productId
-    );
+    // Match by productId and variants (if variants are provided)
+    const itemIndex = cart.items.findIndex((item) => {
+      // First check if productId matches
+      if (String(item.productId) !== productId) return false;
+
+      // If variants are provided, check if they match
+      if (Object.keys(variants).length > 0) {
+        return variantsMatch(item.variants, variants);
+      }
+
+      // If no variants provided, match items without variants
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants || {};
+      return Object.keys(itemVariants).length === 0;
+    });
 
     if (itemIndex === -1) {
       return next(createError("Item not found in cart", 404));

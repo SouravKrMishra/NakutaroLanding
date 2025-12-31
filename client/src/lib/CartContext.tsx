@@ -553,9 +553,36 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const removeItem = async (id: string | number) => {
     try {
+      // Find the cart item to get productId and variants
+      const cartItem = state.items.find(
+        (item) => String(item.id) === String(id)
+      );
+
+      if (!cartItem) {
+        throw new Error("Item not found in cart");
+      }
+
+      // Extract productId (if ID contains variants, extract the base productId)
+      const productId = String(
+        cartItem.productId || id.toString().split("_")[0]
+      );
+      const variants = cartItem.variants || {};
+
+      // Build URL with variants as query params if they exist
+      let url = buildApiUrl(`/api/cart/${productId}`);
+      const variantKeys = Object.keys(variants);
+      if (variantKeys.length > 0) {
+        const queryParams = new URLSearchParams();
+        // Send variants as individual params: ?variant_Size=M&variant_Color=Red
+        variantKeys.forEach((key) => {
+          queryParams.append(`variant_${key}`, variants[key]);
+        });
+        url += `?${queryParams.toString()}`;
+      }
+
       // Remove from database first
       const token = localStorage.getItem("authToken");
-      const response = await axios.delete(buildApiUrl(`/api/cart/${id}`), {
+      const response = await axios.delete(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -605,11 +632,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateQuantity = async (id: string | number, quantity: number) => {
     try {
+      // Find the cart item to get productId and variants
+      const cartItem = state.items.find(
+        (item) => String(item.id) === String(id)
+      );
+
+      if (!cartItem) {
+        throw new Error("Item not found in cart");
+      }
+
+      // Extract productId (if ID contains variants, extract the base productId)
+      const productId = String(
+        cartItem.productId || id.toString().split("_")[0]
+      );
+      const variants = cartItem.variants || {};
+
       // Update in database first
       const token = localStorage.getItem("authToken");
       const response = await axios.patch(
-        buildApiUrl(`/api/cart/${id}`),
-        { quantity },
+        buildApiUrl(`/api/cart/${productId}`),
+        { quantity, variants },
         {
           headers: {
             Authorization: `Bearer ${token}`,

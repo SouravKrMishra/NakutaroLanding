@@ -410,18 +410,6 @@ const DashboardPage = () => {
     } catch (error) {}
   };
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "High":
-        return "text-red-400";
-      case "Medium":
-        return "text-yellow-400";
-      case "Low":
-        return "text-green-400";
-      default:
-        return "text-gray-400";
-    }
-  };
 
   const stats = isIndividual
     ? [
@@ -1047,9 +1035,8 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* Wishlist Management (individual only) */}
-        {isIndividual && (
-          <div className="mt-8">
+        {/* Wishlist Management */}
+        <div className="mt-8">
             <Card className="bg-[#1a1a1a] border-[#333]">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1117,13 +1104,6 @@ const DashboardPage = () => {
                               >
                                 {item.inStock ? "In Stock" : "Out of Stock"}
                               </Badge>
-                              <span
-                                className={`text-sm font-medium ${getPriorityColor(
-                                  item.priority
-                                )}`}
-                              >
-                                {item.priority} Priority
-                              </span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-6 text-sm text-gray-400">
@@ -1164,7 +1144,6 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
           </div>
-        )}
 
         {/* Product Recommendations (individual only) */}
         {isIndividual && (

@@ -35,7 +35,6 @@ export const getWishlist = async (req: Request, res: Response) => {
       reviews: item.productReviews,
       series: item.series,
       quantity: item.quantity,
-      priority: item.priority,
       addedDate: item.addedDate.toISOString().split("T")[0],
       inStock:
         item.inStock && !deletedProductIds.has(item.productId.toString()),
@@ -71,7 +70,6 @@ export const addToWishlist = async (req: Request, res: Response) => {
       reviews = 0,
       series = "General",
       quantity = 1,
-      priority = "Medium",
       inStock = true,
     } = req.body;
 
@@ -107,7 +105,6 @@ export const addToWishlist = async (req: Request, res: Response) => {
       productReviews: reviews,
       series,
       quantity,
-      priority,
       inStock,
     });
 
@@ -146,7 +143,7 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
   }
 };
 
-// Update wishlist item (e.g., priority, quantity)
+// Update wishlist item (e.g., quantity)
 export const updateWishlistItem = async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -159,7 +156,7 @@ export const updateWishlistItem = async (req: Request, res: Response) => {
     }
 
     const { productId } = req.params;
-    const { priority, quantity, inStock } = req.body;
+    const { quantity, inStock } = req.body;
 
     const updatedItem = await Wishlist.findOneAndUpdate(
       {
@@ -167,7 +164,6 @@ export const updateWishlistItem = async (req: Request, res: Response) => {
         productId: productId,
       },
       {
-        ...(priority && { priority }),
         ...(quantity && { quantity }),
         ...(inStock !== undefined && { inStock }),
       },

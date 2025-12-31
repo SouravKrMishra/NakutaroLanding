@@ -20,7 +20,6 @@ export interface WishlistItem {
   reviews: number;
   series?: string;
   quantity?: number;
-  priority?: "High" | "Medium" | "Low";
   addedDate?: string;
   inStock?: boolean;
 }
@@ -111,7 +110,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
       // Add to wishlist
       const newItem: WishlistItem = {
         ...item,
-        priority: "Medium",
         addedDate: new Date().toISOString().split("T")[0],
         inStock: true,
         quantity: 1,
@@ -132,7 +130,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
         reviews: item.reviews,
         series: item.category || "General",
         quantity: 1,
-        priority: "Medium",
         inStock: true,
       };
 
@@ -149,7 +146,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
         // Re-add the item
         const newItem: WishlistItem = {
           ...item,
-          priority: "Medium",
           addedDate: new Date().toISOString().split("T")[0],
           inStock: true,
           quantity: 1,

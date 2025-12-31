@@ -43,11 +43,6 @@ const wishlistSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
-    priority: {
-      type: String,
-      enum: ["High", "Medium", "Low"],
-      default: "Medium",
-    },
     addedDate: {
       type: Date,
       default: Date.now,
