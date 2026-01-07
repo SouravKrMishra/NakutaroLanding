@@ -75,8 +75,8 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   // When compiled, __dirname is dist/server, so we need to go up to project root
-  // then into dist/public. Using process.cwd() to get project root is more reliable.
-  const distPath = path.resolve(process.cwd(), "dist", "public");
+  // then into dist/server. Using process.cwd() to get project root is more reliable.
+  const distPath = path.resolve(process.cwd(), "dist", "server");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -84,10 +84,16 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Serve static files ONLY - Express will automatically skip if file doesn't exist
+  // API routes are registered BEFORE this, so they'll be checked first
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // SPA fallback - serve index.html for routes that don't match files or API routes
+  app.get("*", (req, res) => {
+    // Skip API and uploads routes - they should have been handled already
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+      return;
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

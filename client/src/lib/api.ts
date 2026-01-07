@@ -4,7 +4,7 @@
 // For development, force relative URLs to use the Vite proxy and avoid CORS
 export const API_BASE_URL = import.meta.env.DEV
   ? ""
-  : import.meta.env.VITE_API_BASE_URL || "";
+  : import.meta.env.VITE_API_BASE_URL || "https://backend.animeindia.org";
 
 // Helper function to build API URLs
 export const buildApiUrl = (endpoint: string): string => {

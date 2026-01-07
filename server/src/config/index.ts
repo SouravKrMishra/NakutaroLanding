@@ -3,13 +3,30 @@
 
 export const config = {
   port: process.env.PORT || 5000,
-  nodeEnv: process.env.NODE_ENV || "development",
+  nodeEnv: process.env.NODE_ENV,
   cors: {
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
-      : process.env.NODE_ENV === "production"
-      ? "https://animeindia.org"
-      : "http://localhost:5173",
+    origin: (() => {
+      const isProduction = process.env.NODE_ENV === "production";
+      const defaultProductionOrigin = "https://animeindia.org";
+      const defaultDevelopmentOrigin = "http://localhost:5173";
+
+      if (process.env.CORS_ORIGIN) {
+        const origins = process.env.CORS_ORIGIN.split(",").map((origin) =>
+          origin.trim()
+        );
+        // In production, ensure https://animeindia.org is always included
+        if (
+          isProduction &&
+          !origins.includes(defaultProductionOrigin) &&
+          !origins.includes("https://animeindia.org")
+        ) {
+          origins.push(defaultProductionOrigin);
+        }
+        return origins;
+      }
+
+      return isProduction ? defaultProductionOrigin : defaultDevelopmentOrigin;
+    })(),
   },
   jwt: {
     secret: process.env.JWT_SECRET,
