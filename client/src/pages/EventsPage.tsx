@@ -4,6 +4,8 @@ import { fadeIn, staggerContainer, slideIn } from "@/lib/animations.ts";
 import EventsSection from "@/components/EventsSection.tsx";
 import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
+import axios from "axios";
+import { buildApiUrl } from "@/lib/api.ts";
 import {
   Calendar,
   Calendar as CalendarIcon,
@@ -11,6 +13,8 @@ import {
   Users,
   Star,
   Trophy,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const EventsPage = () => {
@@ -20,6 +24,70 @@ const EventsPage = () => {
   }, []);
 
   const [activeSlide, setActiveSlide] = useState(0);
+  const [eventImages, setEventImages] = useState<any[]>([]);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+
+  // Fetch event images from API
+  useEffect(() => {
+    const fetchEventImages = async () => {
+      try {
+        const response = await axios.get(
+          buildApiUrl("/api/settings/events/images")
+        );
+        if (response.data.success && response.data.images) {
+          // Store full image objects
+          const images = response.data.images.filter((img: any) => img.url);
+          setEventImages(images);
+          // Reset activeSlide if it's out of bounds
+          setActiveSlide((prev) => {
+            if (images.length === 0) return 0;
+            return prev >= images.length ? 0 : prev;
+          });
+          // Set global auto-scroll enabled setting
+          setAutoScrollEnabled(
+            response.data.autoScrollEnabled !== undefined
+              ? response.data.autoScrollEnabled
+              : true
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch event images:", error);
+        // Continue with empty array if fetch fails
+        setEventImages([]);
+        setActiveSlide(0);
+      }
+    };
+
+    fetchEventImages();
+  }, []);
+
+  // Auto-rotate carousel with per-image delay settings
+  useEffect(() => {
+    if (
+      eventImages.length === 0 ||
+      !autoScrollEnabled ||
+      eventImages.length <= 1
+    )
+      return;
+
+    const currentImage = eventImages[activeSlide];
+    if (!currentImage) return;
+
+    // Get delay for current image (default to 5 seconds if not set)
+    const delay =
+      currentImage.autoScrollDelay !== undefined
+        ? currentImage.autoScrollDelay
+        : 5000;
+
+    // Ensure delay is valid (at least 1 second)
+    const validDelay = Math.max(1000, delay);
+
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % eventImages.length);
+    }, validDelay);
+
+    return () => clearInterval(interval);
+  }, [eventImages, activeSlide, autoScrollEnabled]);
 
   const upcomingEvents = [
     {
@@ -48,13 +116,17 @@ const EventsPage = () => {
     },
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % upcomingEvents.length);
-    }, 5000);
+  const handlePreviousSlide = () => {
+    if (eventImages.length === 0) return;
+    setActiveSlide(
+      (prev) => (prev - 1 + eventImages.length) % eventImages.length
+    );
+  };
 
-    return () => clearInterval(interval);
-  }, [upcomingEvents.length]);
+  const handleNextSlide = () => {
+    if (eventImages.length === 0) return;
+    setActiveSlide((prev) => (prev + 1) % eventImages.length);
+  };
 
   // Event timeline data - focusing on 2023-2025 only
   const timelineEvents = [
@@ -92,128 +164,108 @@ const EventsPage = () => {
 
   return (
     <div className="events-page pt-28 pb-16 overflow-hidden">
+      {/* Title Section */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="text-center max-w-4xl mx-auto"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 leading-tight">
+            <div className="inline-block">
+              <span style={{ color: "var(--theme-color-hex)" }}>
+                Anime India Events
+              </span>
+              <div
+                className="block h-1 rounded-full mt-1"
+                style={{
+                  backgroundColor: "var(--theme-color-hex)",
+                  opacity: 0.3,
+                }}
+              />
+            </div>
+          </h1>
+        </motion.div>
+      </div>
+
       {/* Hero Section with Animated Background */}
       <div className="relative h-[60vh] sm:h-[65vh] md:h-[70vh] min-h-[400px] sm:min-h-[450px] md:min-h-[500px] mb-12 sm:mb-16 md:mb-20 overflow-hidden bg-[#121212]">
-        <div className="absolute inset-0 opacity-20">
-          {/* Animated Grid Pattern */}
-          <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
-
-          {/* Anime-inspired decorative elements */}
-          <motion.div
-            className="absolute top-1/4 left-1/4 w-40 h-40 bg-accent rounded-full filter blur-[80px]"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.3, 0.2],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          <motion.div
-            className="absolute bottom-1/3 right-1/4 w-60 h-60 bg-accent rounded-full filter blur-[100px]"
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.15, 0.25, 0.15],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-          />
-
-          {/* Flying elements */}
-          <motion.div
-            className="absolute -top-10 -left-10 w-20 h-20 text-accent/20"
-            animate={{
-              x: [0, window.innerWidth + 20],
-              y: [0, window.innerHeight + 20],
-              rotate: [0, 360],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z"
-                opacity="0.4"
-              ></path>
-              <path d="M10.14,13.79a1,1,0,0,0,1.72,0l2.41-4a1,1,0,0,0-1.72-1L10.85,12Z"></path>
-            </svg>
-          </motion.div>
-
-          <motion.div
-            className="absolute -bottom-10 -right-10 w-16 h-16 text-accent/15"
-            animate={{
-              x: [window.innerWidth, -20],
-              y: [window.innerHeight, -20],
-              rotate: [0, -360],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21,7H3A1,1,0,0,0,2,8V16a1,1,0,0,0,1,1H21a1,1,0,0,0,1-1V8A1,1,0,0,0,21,7ZM11,14.71a.79.79,0,0,1-.71.29.83.83,0,0,1-.7-.29L7.33,12H9.21l1.05,1.29L14.79,9H10a1,1,0,0,1,0-2h5a1,1,0,0,1,.92.62,1,1,0,0,1-.21,1.09Z"></path>
-            </svg>
-          </motion.div>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="text-center max-w-4xl mx-auto px-4 sm:px-0"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.6, ease: "backOut" }}
-                className="inline-block bg-accent/10 px-4 py-1 rounded-full border border-accent/20 mb-6"
-              >
-                <span className="text-accent font-medium text-sm">
-                  Upcoming Events 2024-2025
-                </span>
-              </motion.div>
-
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-                <div className="inline-block">
-                  <span style={{ color: "var(--theme-color-hex)" }}>
-                    Anime India Events
-                  </span>
-                  <div
-                    className="block h-1 rounded-full mt-1"
-                    style={{
-                      backgroundColor: "var(--theme-color-hex)",
-                      opacity: 0.3,
-                    }}
-                  />
-                </div>
-                <div className="text-white block mt-2">&amp; Conventions</div>
-              </h1>
-
-              <motion.p
-                variants={fadeIn("up", "tween", 0.2, 1)}
-                className="text-gray-400 text-base sm:text-lg md:text-xl mb-5 sm:mb-6 md:mb-8 max-w-3xl mx-auto px-4 sm:px-6"
-              >
-                Join us at our upcoming anime conventions, cosplay competitions,
-                and exclusive screenings. Experience the vibrant community of
-                anime enthusiasts across India.
-              </motion.p>
-            </motion.div>
+        {/* Carousel Images */}
+        {eventImages.length > 0 && (
+          <div className="absolute inset-0 z-0">
+            <AnimatePresence mode="wait" initial={false}>
+              {eventImages[activeSlide] && (
+                <motion.img
+                  key={activeSlide}
+                  src={eventImages[activeSlide].url}
+                  alt={`Event carousel image ${activeSlide + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                />
+              )}
+            </AnimatePresence>
+            {/* Overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none"></div>
           </div>
+        )}
+        <div className="absolute inset-0 opacity-20 z-0">
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
         </div>
+
+        {/* Navigation arrows - placed outside carousel container to ensure they're on top */}
+        {eventImages.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handlePreviousSlide();
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all cursor-pointer"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleNextSlide();
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all cursor-pointer"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+            {/* Dots indicator */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2">
+              {eventImages.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveSlide(index);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
+                    index === activeSlide
+                      ? "bg-white w-8"
+                      : "bg-white/50 hover:bg-white/75"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Timeline Section */}

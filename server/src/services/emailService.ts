@@ -181,7 +181,7 @@ export const sendOTPEmail = async (
           <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #667eea; margin: 0;">${otp}</p>
         </div>
         <p style="font-size: 14px; color: #666;">This OTP will expire in 10 minutes. If you didn't request this code, please ignore this email.</p>
-        <p style="font-size: 14px; color: #666; margin-top: 30px;">Best regards,<br>The Team</p>
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">Best regards,<br>Anime India</p>
       </div>
     </body>
     </html>
@@ -199,7 +199,7 @@ export const sendOTPEmail = async (
     This OTP will expire in 10 minutes. If you didn't request this code, please ignore this email.
     
     Best regards,
-    The Team
+    Anime India
   `;
 
   return await sendEmail({

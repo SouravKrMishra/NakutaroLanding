@@ -8,9 +8,20 @@ import { Mail, Phone, Clock, MessageSquare } from "lucide-react";
 const ContactPage = () => {
   const [activeTab, setActiveTab] = useState<string>("contact");
 
-  // Reset scroll position when page loads
+  // Reset scroll position when page loads, or scroll to hash if present
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    const hash = window.location.hash;
+    if (hash === "#get-in-touch") {
+      // Wait for the component to render, then scroll to the section
+      setTimeout(() => {
+        const element = document.getElementById("get-in-touch");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
   }, []);
 
   const tabs = [

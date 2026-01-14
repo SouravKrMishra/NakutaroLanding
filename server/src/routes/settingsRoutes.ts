@@ -29,4 +29,30 @@ router.get("/banner/products", async (req, res) => {
   }
 });
 
+// Public endpoint to get events images
+router.get("/events/images", async (req, res) => {
+  try {
+    const setting = await Settings.findOne({ key: "events_images" });
+
+    // Default events images if not set
+    const defaultImages = {
+      images: [],
+      autoScrollEnabled: true,
+    };
+
+    const imagesData = setting ? setting.value : defaultImages;
+
+    res.json({
+      success: true,
+      ...imagesData,
+    });
+  } catch (error) {
+    console.error("Error fetching events images:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch events images",
+    });
+  }
+});
+
 export default router;

@@ -30,7 +30,6 @@ import {
   ShoppingCart,
   Star,
   ArrowRight,
-  User,
 } from "lucide-react";
 
 const DashboardPage = () => {
@@ -410,46 +409,9 @@ const DashboardPage = () => {
     } catch (error) {}
   };
 
-
-  const stats = isIndividual
+  // Only calculate stats for business users (they're only displayed for business users)
+  const stats = !isIndividual
     ? [
-        {
-          title: "Orders",
-          value: orderAnalytics.totalOrders.toString(),
-          change: orderAnalytics.totalOrders > 0 ? "+12%" : "0%",
-          icon: <ShoppingCart className="w-6 h-6" />,
-          color: "text-accent",
-        },
-        {
-          title: "Monthly Spending",
-          value: `₹${orderAnalytics.monthlySpending.toLocaleString()}`,
-          change:
-            orderAnalytics.monthlyChange >= 0
-              ? `+${orderAnalytics.monthlyChange}%`
-              : `${orderAnalytics.monthlyChange}%`,
-          icon: <DollarSign className="w-6 h-6" />,
-          color:
-            orderAnalytics.monthlyChange >= 0
-              ? "text-green-400"
-              : "text-red-400",
-        },
-        {
-          title: "Wishlist Items",
-          value: `${wishlistItems?.length || 0}`,
-          change:
-            wishlistItems && wishlistItems.length > 0 ? "Active" : "Empty",
-          icon: <Heart className="w-6 h-6" />,
-          color: "text-pink-400",
-        },
-        {
-          title: "Average Order Value",
-          value: `₹${orderAnalytics.averageOrderValue.toLocaleString()}`,
-          change: orderAnalytics.averageOrderValue > 0 ? "+5%" : "0%",
-          icon: <DollarSign className="w-6 h-6" />,
-          color: "text-purple-400",
-        },
-      ]
-    : [
         {
           title: "Total Orders",
           value: orderAnalytics.totalOrders.toString(),
@@ -484,7 +446,8 @@ const DashboardPage = () => {
           icon: <TrendingUp className="w-6 h-6" />,
           color: "text-orange-400",
         },
-      ];
+      ]
+    : [];
 
   const headerTitle = isIndividual ? "Your Dashboard" : "Business Dashboard";
   const headerSubtitle = isIndividual
@@ -586,40 +549,13 @@ const DashboardPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Account / Business Information */}
-          {isIndividual ? (
-            <Card className="bg-[#1a1a1a] border-[#333]">
-              <CardHeader>
-                <CardTitle className="flex items-center text-accent">
-                  <User className="w-5 h-5 mr-2" />
-                  Account Info
-                </CardTitle>
-                <CardDescription>Your account details</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-400">Email</p>
-                    <p className="font-medium text-white">{user?.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Phone</p>
-                    <p className="font-medium text-white">
-                      {user?.phoneNumber || "Not provided"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Location</p>
-                    <p className="font-medium text-white">
-                      {(user?.city || "City") +
-                        (user?.state ? `, ${user.state}` : "")}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
+        <div
+          className={`grid grid-cols-1 ${
+            !isIndividual ? "lg:grid-cols-3" : "lg:grid-cols-2"
+          } gap-8`}
+        >
+          {/* Business Information - Only for business users */}
+          {!isIndividual && (
             <Card className="bg-[#1a1a1a] border-[#333]">
               <CardHeader>
                 <CardTitle className="flex items-center text-accent">
@@ -789,11 +725,9 @@ const DashboardPage = () => {
                 <Button
                   variant="outline"
                   className="w-full justify-start border-accent text-accent hover:bg-accent/20 hover:text-accent"
-                  onClick={() =>
-                    document
-                      .getElementById("contact")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  onClick={() => {
+                    setLocation("/contact#get-in-touch");
+                  }}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Contact Support
@@ -1037,113 +971,113 @@ const DashboardPage = () => {
 
         {/* Wishlist Management */}
         <div className="mt-8">
-            <Card className="bg-[#1a1a1a] border-[#333]">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center text-accent">
-                      <Heart className="w-5 h-5 mr-2" />
-                      Wishlist Management
-                    </CardTitle>
-                    <CardDescription>
-                      Track items you want to order later
-                    </CardDescription>
-                  </div>
+          <Card className="bg-[#1a1a1a] border-[#333]">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center text-accent">
+                    <Heart className="w-5 h-5 mr-2" />
+                    Wishlist Management
+                  </CardTitle>
+                  <CardDescription>
+                    Track items you want to order later
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                  onClick={() => setLocation("/products")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Items
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {wishlistLoading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading wishlist...</p>
+                </div>
+              ) : !wishlistItems || wishlistItems.length === 0 ? (
+                <div className="text-center py-8">
+                  <Heart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-gray-400 mb-2">Your wishlist is empty</p>
+                  <p className="text-sm text-gray-500">
+                    Browse our catalog and add items you'd like to order later
+                  </p>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
                     onClick={() => setLocation("/products")}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Items
+                    Browse Products
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {wishlistLoading ? (
-                  <div className="text-center py-8">
-                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading wishlist...</p>
-                  </div>
-                ) : !wishlistItems || wishlistItems.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Heart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-2">Your wishlist is empty</p>
-                    <p className="text-sm text-gray-500">
-                      Browse our catalog and add items you'd like to order later
-                    </p>
-                    <Button
-                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
-                      onClick={() => setLocation("/products")}
+              ) : (
+                <div className="space-y-4">
+                  {(wishlistItems || []).map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Browse Products
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {(wishlistItems || []).map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-white">
-                              {item.name}
-                            </h4>
-                            <div className="flex items-center space-x-2">
-                              <Badge
-                                variant="outline"
-                                className={`hover:bg-transparent ${
-                                  item.inStock
-                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                    : "bg-red-500/20 text-red-400 border-red-500/30"
-                                }`}
-                              >
-                                {item.inStock ? "In Stock" : "Out of Stock"}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-6 text-sm text-gray-400">
-                            <span>Series: {item.series}</span>
-                            <span>Price: {item.price}</span>
-                            <span>Quantity: {item.quantity}</span>
-                            <span>Added: {item.addedDate}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-white">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center space-x-2">
+                            <Badge
+                              variant="outline"
+                              className={`hover:bg-transparent ${
+                                item.inStock
+                                  ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                  : "bg-red-500/20 text-red-400 border-red-500/30"
+                              }`}
+                            >
+                              {item.inStock ? "In Stock" : "Out of Stock"}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
-                            onClick={() => handleMoveToCart(item)}
-                            disabled={!item.inStock}
-                          >
-                            <ShoppingCart className="w-4 h-4 mr-1" />
-                            Order Now
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                            onClick={async () => {
-                              try {
-                                await removeFromWishlist(item.id);
-                              } catch (error) {}
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                        <div className="flex items-center space-x-6 text-sm text-gray-400">
+                          <span>Series: {item.series}</span>
+                          <span>Price: {item.price}</span>
+                          <span>Quantity: {item.quantity}</span>
+                          <span>Added: {item.addedDate}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                          onClick={() => handleMoveToCart(item)}
+                          disabled={!item.inStock}
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          Order Now
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                          onClick={async () => {
+                            try {
+                              await removeFromWishlist(item.id);
+                            } catch (error) {}
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Product Recommendations (individual only) */}
         {isIndividual && (
