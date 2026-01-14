@@ -710,6 +710,187 @@ export const getUserProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const {
+      name,
+      phoneNumber,
+      // Business fields
+      companyName,
+      businessType,
+      industry,
+      companySize,
+      website,
+      description,
+      address,
+      city,
+      state,
+      pincode,
+    } = req.body;
+
+    // Build update object based on user type
+    const updateFields: any = {};
+    const unsetFields: any = {};
+
+    // Update basic fields (allowed for all users) - only if non-empty
+    if (name && name.trim() !== "") {
+      updateFields.name = name.trim();
+    }
+    if (phoneNumber !== undefined && phoneNumber !== null) {
+      // Allow empty string for phoneNumber (optional for individual users)
+      updateFields.phoneNumber = phoneNumber.trim();
+    }
+
+    // Handle business fields based on user type
+    if (user.userType === "business") {
+      // Only update business fields if they have non-empty values (don't save empty strings)
+      if (companyName !== undefined && companyName !== null) {
+        const trimmed = companyName.trim();
+        if (trimmed !== "") updateFields.companyName = trimmed;
+      }
+      if (businessType !== undefined && businessType !== null) {
+        const trimmed = businessType.trim();
+        if (trimmed !== "") updateFields.businessType = trimmed;
+      }
+      if (industry !== undefined && industry !== null) {
+        const trimmed = industry.trim();
+        if (trimmed !== "") updateFields.industry = trimmed;
+      }
+      if (companySize !== undefined && companySize !== null) {
+        const trimmed = companySize.trim();
+        if (trimmed !== "") updateFields.companySize = trimmed;
+      }
+      if (website !== undefined && website !== null) {
+        const trimmed = website.trim();
+        if (trimmed !== "") updateFields.website = trimmed;
+      }
+      if (description !== undefined && description !== null) {
+        const trimmed = description.trim();
+        if (trimmed !== "") updateFields.description = trimmed;
+      }
+      // Address fields - unset if empty, update if non-empty
+      if (address !== undefined && address !== null) {
+        const trimmed = address.trim();
+        if (trimmed !== "") {
+          updateFields.address = trimmed;
+        } else {
+          unsetFields.address = "";
+        }
+      }
+      if (city !== undefined && city !== null) {
+        const trimmed = city.trim();
+        if (trimmed !== "") {
+          updateFields.city = trimmed;
+        } else {
+          unsetFields.city = "";
+        }
+      }
+      if (state !== undefined && state !== null) {
+        const trimmed = state.trim();
+        if (trimmed !== "") {
+          updateFields.state = trimmed;
+        } else {
+          unsetFields.state = "";
+        }
+      }
+      if (pincode !== undefined && pincode !== null) {
+        const trimmed = pincode.trim();
+        if (trimmed !== "") {
+          updateFields.pincode = trimmed;
+        } else {
+          unsetFields.pincode = "";
+        }
+      }
+    } else if (user.userType === "individual") {
+      // For individual users, allow shipping details (address, city, state, pincode)
+      // but unset business fields
+      if (address !== undefined && address !== null) {
+        const trimmed = address.trim();
+        if (trimmed !== "") {
+          updateFields.address = trimmed;
+        } else {
+          unsetFields.address = "";
+        }
+      }
+      if (city !== undefined && city !== null) {
+        const trimmed = city.trim();
+        if (trimmed !== "") {
+          updateFields.city = trimmed;
+        } else {
+          unsetFields.city = "";
+        }
+      }
+      if (state !== undefined && state !== null) {
+        const trimmed = state.trim();
+        if (trimmed !== "") {
+          updateFields.state = trimmed;
+        } else {
+          unsetFields.state = "";
+        }
+      }
+      if (pincode !== undefined && pincode !== null) {
+        const trimmed = pincode.trim();
+        if (trimmed !== "") {
+          updateFields.pincode = trimmed;
+        } else {
+          unsetFields.pincode = "";
+        }
+      }
+
+      // Always unset business fields for individual users
+      unsetFields.companyName = "";
+      unsetFields.businessType = "";
+      unsetFields.industry = "";
+      unsetFields.companySize = "";
+      unsetFields.website = "";
+      unsetFields.description = "";
+    }
+
+    // Build the update query
+    const updateQuery: any = {};
+    if (Object.keys(updateFields).length > 0) {
+      updateQuery.$set = updateFields;
+    }
+    if (Object.keys(unsetFields).length > 0) {
+      updateQuery.$unset = unsetFields;
+    }
+
+    // Use updateOne to avoid Mongoose applying defaults
+    if (Object.keys(updateQuery).length > 0) {
+      await User.updateOne({ _id: user._id }, updateQuery);
+      // Reload user to get updated data
+      const updatedUser = await User.findById(userId);
+      if (updatedUser) {
+        Object.assign(user, updatedUser.toObject());
+      }
+    } else {
+      // If no fields to update, just save (shouldn't happen, but safety check)
+      await user.save();
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: buildUserResponse(user),
+    });
+  } catch (error: any) {
+    console.error("Error updating profile:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Verify OTP and activate account
 export const verifyOTP = async (req: Request, res: Response) => {
   const errors = validationResult(req);

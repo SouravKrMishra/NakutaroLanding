@@ -735,6 +735,7 @@ const DashboardPage = () => {
                 <Button
                   variant="outline"
                   className="w-full justify-start border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                  onClick={() => setLocation("/account-settings")}
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Account Settings

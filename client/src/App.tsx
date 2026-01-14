@@ -22,6 +22,7 @@ import ProductDetailPage from "@/pages/ProductDetailPage.js";
 import LoginPage from "@/pages/LoginPage.tsx";
 import RegisterPage from "@/pages/RegisterPage.tsx";
 import DashboardPage from "@/pages/DashboardPage.tsx";
+import AccountSettingsPage from "@/pages/AccountSettingsPage.tsx";
 import CartPage from "@/pages/CartPage.tsx";
 import CheckoutPage from "@/pages/CheckoutPage.tsx";
 import OrderSuccessPage from "@/pages/OrderSuccessPage.tsx";
@@ -92,6 +93,14 @@ function App() {
                         component={() => (
                           <ProtectedRoute>
                             <DashboardPage />
+                          </ProtectedRoute>
+                        )}
+                      />
+                      <Route
+                        path="/account-settings"
+                        component={() => (
+                          <ProtectedRoute>
+                            <AccountSettingsPage />
                           </ProtectedRoute>
                         )}
                       />

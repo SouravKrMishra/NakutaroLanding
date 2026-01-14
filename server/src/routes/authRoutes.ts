@@ -7,6 +7,7 @@ import {
   verify,
   logout,
   getUserProfile,
+  updateUserProfile,
   verifyOTP,
   resendOTP,
 } from "../controllers/authController.js";
@@ -90,6 +91,9 @@ router.post("/logout", logout);
 
 // Get user profile route
 router.get("/user/profile", authenticateToken, getUserProfile);
+
+// Update user profile route
+router.put("/user/profile", authenticateToken, updateUserProfile);
 
 // OTP Verification route
 router.post(
