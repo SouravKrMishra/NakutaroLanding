@@ -353,6 +353,7 @@ const ProductsPage = () => {
   const [selectedProductColors, setSelectedProductColors] = useState<{
     [productId: string]: string;
   }>({});
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const pageSize = 12;
   const isUpdatingFromUrl = useRef(false);
   const hasInitialized = useRef(false);
@@ -1280,7 +1281,11 @@ const ProductsPage = () => {
                       />
                     </div>
                     {/* Category Dropdown */}
-                    <DropdownMenu modal={false}>
+                    <DropdownMenu 
+                      modal={false} 
+                      open={categoryDropdownOpen} 
+                      onOpenChange={setCategoryDropdownOpen}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
@@ -1302,6 +1307,7 @@ const ProductsPage = () => {
                         className="bg-[#1E1E1E] border-[#2D2D2D] p-2 w-[calc(100vw-2rem)] sm:w-64 max-w-sm max-h-[400px] overflow-y-auto"
                         align="start"
                         side="bottom"
+                        onCloseAutoFocus={(e) => e.preventDefault()}
                       >
                         <div className="space-y-1">
                           <div className="text-xs font-semibold text-gray-300 px-2 py-1.5">
@@ -1313,9 +1319,13 @@ const ProductsPage = () => {
                               <DropdownMenuCheckboxItem
                                 key={category.name}
                                 checked={activeCategory.includes(category.name)}
-                                onCheckedChange={() =>
-                                  handleCategoryClick(category.name)
-                                }
+                                onCheckedChange={() => {
+                                  handleCategoryClick(category.name);
+                                }}
+                                onSelect={(e) => {
+                                  // Prevent dropdown from closing when clicking checkbox
+                                  e.preventDefault();
+                                }}
                                 className="text-sm text-gray-300 hover:bg-[#2D2D2D] hover:text-white focus:bg-[#2D2D2D] focus:text-white cursor-pointer"
                               >
                                 <div className="flex items-center justify-between w-full">
@@ -1460,14 +1470,127 @@ const ProductsPage = () => {
             </div>
 
             <div className="ProductStart border-t border-[#2D2D2D] pt-6">
+              {/* No Results Message */}
+              {!loading && products.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <div className="w-24 h-24 bg-[#2D2D2D] rounded-full flex items-center justify-center mb-6">
+                    <Search className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    No Products Found
+                  </h3>
+                  <p className="text-gray-400 text-center max-w-md mb-6">
+                    {activeCategory.length > 0 ||
+                    committedPriceRange[0] !== 0 ||
+                    committedPriceRange[1] !== 10000 ||
+                    Object.values(ratings).some((r) => r) ||
+                    activeSearchQuery.trim() !== ""
+                      ? "We couldn't find any products matching your filters. Try adjusting your search criteria or clearing some filters."
+                      : "There are currently no products available."}
+                  </p>
+                  {(activeCategory.length > 0 ||
+                    committedPriceRange[0] !== 0 ||
+                    committedPriceRange[1] !== 10000 ||
+                    Object.values(ratings).some((r) => r) ||
+                    activeSearchQuery.trim() !== "") && (
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        onClick={clearFilters}
+                        className="bg-accent hover:bg-accent/80 text-white"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Clear All Filters
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setActiveSearchQuery("");
+                          setCurrentPage(1);
+                        }}
+                        className="border-[#444] text-gray-300 hover:bg-[#2D2D2D] hover:text-white"
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        Clear Search
+                      </Button>
+                    </div>
+                  )}
+                  {/* Show active filters */}
+                  {(activeCategory.length > 0 ||
+                    committedPriceRange[0] !== 0 ||
+                    committedPriceRange[1] !== 10000 ||
+                    Object.values(ratings).some((r) => r) ||
+                    activeSearchQuery.trim() !== "") && (
+                    <div className="mt-8 w-full max-w-2xl">
+                      <p className="text-sm text-gray-400 mb-3 text-center">
+                        Active Filters:
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {activeSearchQuery.trim() && (
+                          <div className="bg-[#2D2D2D] border border-[#444] rounded-lg px-3 py-1.5 flex items-center gap-2">
+                            <Search className="w-3 h-3 text-gray-400" />
+                            <span className="text-sm text-gray-300">
+                              Search: "{activeSearchQuery}"
+                            </span>
+                          </div>
+                        )}
+                        {activeCategory.map((cat) => (
+                          <div
+                            key={cat}
+                            className="bg-[#2D2D2D] border border-[#444] rounded-lg px-3 py-1.5 flex items-center gap-2"
+                          >
+                            <Folder className="w-3 h-3 text-gray-400" />
+                            <span className="text-sm text-gray-300">{cat}</span>
+                          </div>
+                        ))}
+                        {(committedPriceRange[0] !== 0 ||
+                          committedPriceRange[1] !== 10000) && (
+                          <div className="bg-[#2D2D2D] border border-[#444] rounded-lg px-3 py-1.5 flex items-center gap-2">
+                            <Tag className="w-3 h-3 text-gray-400" />
+                            <span className="text-sm text-gray-300">
+                              ₹{committedPriceRange[0].toLocaleString()} - ₹
+                              {committedPriceRange[1].toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {Object.entries(ratings)
+                          .filter(([_, isActive]) => isActive)
+                          .map(([rating, _]) => (
+                            <div
+                              key={rating}
+                              className="bg-[#2D2D2D] border border-[#444] rounded-lg px-3 py-1.5 flex items-center gap-2"
+                            >
+                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                              <span className="text-sm text-gray-300">
+                                {rating}+ Stars
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <div
+                  className={
+                    view === "grid"
+                      ? "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+                      : "space-y-4 sm:space-y-6"
+                  }
+                >
+                  {Array.from({ length: pageSize }, (_, i) => (
+                    <ProductSkeleton key={i} view={view} />
+                  ))}
+                </div>
+              )}
+
               {/* Grid View */}
-              {view === "grid" && (
+              {!loading && products.length > 0 && view === "grid" && (
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                  {loading
-                    ? Array.from({ length: pageSize }, (_, i) => (
-                        <ProductSkeleton key={i} view="grid" />
-                      ))
-                    : products.map((product) => (
+                  {products.map((product) => (
                         <div
                           key={product.id}
                           className="relative bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
@@ -1711,13 +1834,9 @@ const ProductsPage = () => {
               )}
 
               {/* List View */}
-              {view === "list" && (
+              {!loading && products.length > 0 && view === "list" && (
                 <div className="space-y-4 sm:space-y-6">
-                  {loading
-                    ? Array.from({ length: pageSize }, (_, i) => (
-                        <ProductSkeleton key={i} view="list" />
-                      ))
-                    : products.map((product) => (
+                  {products.map((product) => (
                         <div
                           key={product.id}
                           className="relative flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
@@ -1952,13 +2071,16 @@ const ProductsPage = () => {
               )}
             </div>
 
-            {/* Pagination */}
-            <div className="flex justify-center mt-8">
+            {/* Pagination - Only show if there are products */}
+            {!loading && products.length > 0 && totalPages > 0 && (
+            <div className="flex justify-center mt-8 mb-8">
               <div className="flex space-x-1">
                 <button
-                  onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                    onClick={() =>
+                      handlePageChange(Math.max(currentPage - 1, 1))
+                    }
                   disabled={currentPage === 1 || totalPages === 0}
-                  className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors"
+                    className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Previous page"
                 >
                   <ChevronRight className="h-4 w-4 transform rotate-180" />
@@ -1974,7 +2096,9 @@ const ProductsPage = () => {
                           : "bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D]"
                       } flex items-center justify-center transition-colors`}
                       aria-label={`Page ${page}`}
-                      aria-current={page === currentPage ? "page" : undefined}
+                        aria-current={
+                          page === currentPage ? "page" : undefined
+                        }
                       disabled={totalPages === 0}
                     >
                       {page}
@@ -1986,13 +2110,14 @@ const ProductsPage = () => {
                     handlePageChange(Math.min(currentPage + 1, totalPages))
                   }
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors"
+                    className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

@@ -23,6 +23,8 @@ interface CartItem {
   variants?: { [key: string]: string }; // Selected variants like size, color, etc.
   minBusinessQuantity?: number; // Minimum quantity for business bulk buying
   isBelowMinimum?: boolean; // Flag indicating if quantity is below minimum due to stock
+  isDeleted?: boolean; // Flag indicating if product is soft-deleted
+  isAvailable?: boolean; // Flag indicating if product is available (not deleted)
   lastModified?: number; // Timestamp for conflict resolution
 }
 
@@ -339,6 +341,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
                 variants: variants,
                 minBusinessQuantity: item.minBusinessQuantity ?? 1,
                 isBelowMinimum: item.isBelowMinimum ?? false,
+                isDeleted: item.isDeleted ?? false,
+                isAvailable: item.isAvailable ?? true,
                 lastModified: item.lastModified || Date.now(),
               };
             });
@@ -510,6 +514,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             variants: variants,
             minBusinessQuantity: cartItem.minBusinessQuantity || 1,
             isBelowMinimum: cartItem.isBelowMinimum || false,
+            isDeleted: cartItem.isDeleted ?? false,
+            isAvailable: cartItem.isAvailable ?? true,
             lastModified: timestamp,
           };
         });
@@ -611,6 +617,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             variants: variants,
             minBusinessQuantity: cartItem.minBusinessQuantity || 1,
             isBelowMinimum: cartItem.isBelowMinimum || false,
+            isDeleted: cartItem.isDeleted ?? false,
+            isAvailable: cartItem.isAvailable ?? true,
           };
         });
         dispatch({ type: "LOAD_CART", payload: transformedItems });
@@ -682,6 +690,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             variants: variants,
             minBusinessQuantity: cartItem.minBusinessQuantity || 1,
             isBelowMinimum: cartItem.isBelowMinimum || false,
+            isDeleted: cartItem.isDeleted ?? false,
+            isAvailable: cartItem.isAvailable ?? true,
           };
         });
         dispatch({ type: "LOAD_CART", payload: transformedItems });
@@ -759,6 +769,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           variants: variants,
           minBusinessQuantity: item.minBusinessQuantity ?? 1,
           isBelowMinimum: item.isBelowMinimum ?? false,
+          isDeleted: item.isDeleted ?? false,
+          isAvailable: item.isAvailable ?? true,
         };
       });
 

@@ -48,20 +48,6 @@ const DashboardPage = () => {
     userType === "individual" ||
     (!userType && user && !user.companyName && !user.businessType);
 
-  // Debug logging - check user data
-  React.useEffect(() => {
-    if (user) {
-      console.log("Dashboard Debug:", {
-        user,
-        userType: user.userType,
-        userTypeLower: userType,
-        isIndividual,
-        hasUser: !!user,
-        allUserKeys: Object.keys(user),
-      });
-    }
-  }, [user, userType, isIndividual]);
-
   const analyticsTitle = isIndividual
     ? "Shopping Insights"
     : "Inventory Analytics";
@@ -202,8 +188,8 @@ const DashboardPage = () => {
         // Filter out pending/failed orders for analytics
         const completedOrders = orders.filter(isOrderCompleted);
 
-        // Get the 4 most recent orders for display (all orders, not just completed)
-        const recentOrdersData = orders.slice(0, 4).map((order: any) => ({
+        // Get all orders for display (all orders, not just completed)
+        const recentOrdersData = orders.map((order: any) => ({
           id: order.orderNumber,
           customer: `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}`,
           amount: `₹${order.total.toLocaleString()}`,
@@ -599,19 +585,19 @@ const DashboardPage = () => {
             </Card>
           )}
 
-          {/* Recent Orders */}
+          {/* Orders */}
           <Card className="bg-[#1a1a1a] border-[#333]">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center text-accent">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    Recent Orders
+                    Orders
                   </CardTitle>
                   <CardDescription>
                     {isIndividual
-                      ? "Your latest orders"
-                      : "Latest business transactions"}
+                      ? "All your orders"
+                      : "All business transactions"}
                   </CardDescription>
                 </div>
                 <Button
@@ -620,24 +606,22 @@ const DashboardPage = () => {
                   className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
                   onClick={() => setLocation("/orders")}
                 >
-                  View All Orders
+                  View Details
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {ordersLoading ? (
                   <div className="text-center py-8">
                     <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading recent orders...</p>
+                    <p className="text-gray-400">Loading orders...</p>
                   </div>
                 ) : ordersError ? (
                   <div className="text-center py-8">
                     <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-2">
-                      Unable to load recent orders
-                    </p>
+                    <p className="text-gray-400 mb-2">Unable to load orders</p>
                     <p className="text-sm text-gray-500">{ordersError}</p>
                     <Button
                       className="mt-4 bg-accent hover:bg-accent/80 text-white"
@@ -649,9 +633,9 @@ const DashboardPage = () => {
                 ) : recentOrders.length === 0 ? (
                   <div className="text-center py-8">
                     <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-2">No recent orders found</p>
+                    <p className="text-gray-400 mb-2">No orders found</p>
                     <p className="text-sm text-gray-500">
-                      Your recent orders will appear here.
+                      Your orders will appear here.
                     </p>
                   </div>
                 ) : (

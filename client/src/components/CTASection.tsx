@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-import { fadeIn } from "@/lib/animations.ts";
 import { ShoppingBag, Calendar, Users, Mail } from "lucide-react";
 
 const CTASection = () => {
@@ -9,33 +7,9 @@ const CTASection = () => {
       <div className="absolute inset-0 bg-[#171717] overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
 
-        {/* Decorative elements */}
-        <motion.div
-          className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[120px] opacity-10"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.05, 0.1, 0.05],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        <motion.div
-          className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[100px] opacity-5"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.05, 0.08, 0.05],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
+        {/* Decorative elements - Static */}
+        <div className="absolute top-20 left-10 w-40 h-40 bg-accent rounded-full filter blur-[80px] opacity-10 pointer-events-none"></div>
+        <div className="absolute bottom-40 right-10 w-60 h-60 bg-accent rounded-full filter blur-[80px] opacity-5 pointer-events-none"></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -48,51 +22,27 @@ const CTASection = () => {
           <div className="relative z-10">
             {/* Heading section */}
             <div className="text-center mb-10">
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, ease: "backOut" }}
-                className="inline-block bg-gradient-to-r from-white/10 to-white/5 px-4 py-1.5 rounded-full border border-white/20 mb-6"
-              >
+              <div className="inline-block bg-gradient-to-r from-white/10 to-white/5 px-4 py-1.5 rounded-full border border-white/20 mb-6">
                 <span className="text-white font-medium text-sm">
                   JOIN OUR COMMUNITY
                 </span>
-              </motion.div>
+              </div>
 
-              <motion.h2
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true }}
-                variants={fadeIn("up", "tween", 0.1, 1)}
-                className="text-3xl md:text-5xl font-bold mb-6 text-white"
-              >
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">
                 Your <span className="text-accent">Anime Adventure</span>
                 <br />
                 Starts Here!
-              </motion.h2>
+              </h2>
 
-              <motion.p
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true }}
-                variants={fadeIn("up", "tween", 0.2, 1)}
-                className="text-xl text-gray-300 max-w-2xl mx-auto"
-              >
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
                 Discover premium anime merchandise and connect with fellow
                 enthusiasts across India. From action figures to exclusive
                 apparel!
-              </motion.p>
+              </p>
             </div>
 
             {/* Features grid */}
-            <motion.div
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              variants={fadeIn("up", "tween", 0.3, 1)}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <div className="bg-[#181818]/70 backdrop-blur-sm p-6 rounded-xl border border-white/10 text-center">
                 <div className="bg-accent/20 w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center">
                   <ShoppingBag className="h-7 w-7 text-accent" />
@@ -128,16 +78,10 @@ const CTASection = () => {
                   Connect with passionate anime fans across the country
                 </p>
               </div>
-            </motion.div>
+            </div>
 
             {/* CTA buttons */}
-            <motion.div
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              variants={fadeIn("up", "tween", 0.4, 1)}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
                 href="https://shop.animeindia.org"
                 target="_blank"
@@ -165,7 +109,7 @@ const CTASection = () => {
                   Contact Us
                 </span>
               </a>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

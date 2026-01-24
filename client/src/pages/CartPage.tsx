@@ -215,22 +215,32 @@ const CartPage = () => {
     newQuantity: number
   ) => {
     try {
-      if (newQuantity <= 0) {
-        await removeItem(id);
-        toast({
-          title: "Item Removed",
-          description: "Item has been removed from your cart.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Find the cart item
       const cartItem = items.find((item) => String(item.id) === String(id));
       if (!cartItem) {
         toast({
           title: "Error",
           description: "Item not found in cart.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prevent updating quantity for deleted products (only allow removal)
+      if (cartItem.isDeleted && newQuantity > 0) {
+        toast({
+          title: "Product Unavailable",
+          description: "This product is no longer available. Please remove it from your cart.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (newQuantity <= 0) {
+        await removeItem(id);
+        toast({
+          title: "Item Removed",
+          description: "Item has been removed from your cart.",
           variant: "destructive",
         });
         return;
@@ -367,6 +377,42 @@ const CartPage = () => {
       return;
     }
 
+    // Check if cart contains soft-deleted products
+    if (hasDeletedProducts) {
+      toast({
+        title: "Cannot Proceed to Checkout",
+        description: "Please remove all unavailable products from your cart before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check minimum cart value for business users (after coupon discount)
+    const cartValueAfterDiscount = subtotalAfterDiscount;
+    if (isBusinessUser && businessMinCartValue > 0 && cartValueAfterDiscount < businessMinCartValue) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Business users must have a minimum cart value of ₹${businessMinCartValue.toLocaleString()} (after discount) to proceed with checkout. Add ₹${(businessMinCartValue - cartValueAfterDiscount).toLocaleString()} more to continue.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check minimum cart value for individual users when cart contains Posters or Stickers (after coupon discount)
+    if (
+      !isBusinessUser &&
+      hasPostersOrStickers &&
+      individualPostersStickersMinCartValue > 0 &&
+      cartValueAfterDiscount < individualPostersStickersMinCartValue
+    ) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹${individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed with checkout. Add ₹${(individualPostersStickersMinCartValue - cartValueAfterDiscount).toLocaleString()} more to continue.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Fetch fresh stock data before verification
     setStockLoading(true);
     const freshStockData = await fetchStockData();
@@ -415,12 +461,36 @@ const CartPage = () => {
     }
 
     setIsCheckingOut(true);
-    setLocation("/checkout");
+    // Pass coupon code via URL params if applied
+    if (appliedCoupon && couponDiscount > 0) {
+      setLocation(`/checkout?coupon=${encodeURIComponent(appliedCoupon.code)}`);
+    } else {
+      setLocation("/checkout");
+    }
   };
 
-  const shippingCost = total > 1000 ? 0 : 100;
+  // Calculate shipping cost - free if coupon has freeShipping enabled (only for individual users)
+  // Individual users: free shipping at ₹2000+, Business users: free shipping at ₹1000+ (but never from coupons)
+  const freeShippingThreshold = isBusinessUser ? 1000 : 2000;
+  const baseShippingCost = total >= freeShippingThreshold ? 0 : 100;
+  // Business users don't get free shipping from coupons, only individual users do
+  const shippingCost = !isBusinessUser && appliedCoupon?.freeShipping ? 0 : baseShippingCost;
   const subtotalAfterDiscount = total - couponDiscount;
   const finalTotal = subtotalAfterDiscount + shippingCost;
+
+  // Minimum cart value for business users (from .env)
+  const businessMinCartValue = Number(import.meta.env.VITE_BUSINESS_MIN_CART_VALUE) || 0;
+  
+  // Minimum cart value for individual users when cart contains Posters or Stickers (from .env)
+  const individualPostersStickersMinCartValue = Number(import.meta.env.VITE_INDIVIDUAL_POSTERS_STICKERS_MIN_CART_VALUE) || 0;
+  
+  // Check if cart contains Posters or Stickers products
+  const hasPostersOrStickers = items.some(
+    (item) => item.category === "Posters" || item.category === "Stickers"
+  );
+
+  // Check if cart contains any soft-deleted products
+  const hasDeletedProducts = items.some((item) => item.isDeleted ?? false);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -434,9 +504,11 @@ const CartPage = () => {
 
     setIsValidatingCoupon(true);
     try {
+      const userType = user?.userType || "individual";
       const response = await axios.post(buildApiUrl("/api/coupons/validate"), {
         code: couponCode,
         userId: user?.id || null,
+        userType: userType,
         cartItems: items.map((item) => ({
           productId: item.productId || item.id,
           price: parseFloat(item.price),
@@ -448,15 +520,6 @@ const CartPage = () => {
       if (response.data.valid) {
         setAppliedCoupon(response.data.coupon);
         setCouponDiscount(response.data.coupon.discountAmount);
-        // Save to localStorage for checkout page
-        localStorage.setItem(
-          "appliedCoupon",
-          JSON.stringify(response.data.coupon)
-        );
-        localStorage.setItem(
-          "couponDiscount",
-          response.data.coupon.discountAmount.toString()
-        );
         toast({
           title: "Coupon Applied!",
           description: response.data.message,
@@ -483,9 +546,6 @@ const CartPage = () => {
     setAppliedCoupon(null);
     setCouponDiscount(0);
     setCouponCode("");
-    // Remove from localStorage
-    localStorage.removeItem("appliedCoupon");
-    localStorage.removeItem("couponDiscount");
     toast({
       title: "Coupon Removed",
       description: "The coupon has been removed from your cart",
@@ -572,17 +632,23 @@ const CartPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {items.map((item) => (
+                  {items.map((item) => {
+                    const isDeleted = item.isDeleted ?? false;
+                    return (
                     <div
                       key={item.id}
-                      className="flex items-center space-x-4 p-4 bg-[#2a2a2a] rounded-lg border border-[#333] hover:border-accent/30 transition-colors"
+                      className={`flex items-center space-x-4 p-4 bg-[#2a2a2a] rounded-lg border transition-colors ${
+                        isDeleted
+                          ? "border-red-500/50 opacity-60 grayscale"
+                          : "border-[#333] hover:border-accent/30"
+                      }`}
                     >
                       {/* Product Image */}
                       <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444] flex-shrink-0">
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover ${isDeleted ? "grayscale" : ""}`}
                           onError={(e) => {
                             e.currentTarget.src =
                               "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23333'/%3E%3Ctext x='40' y='40' text-anchor='middle' dy='.3em' fill='%23666' font-size='10'%3EImage%3C/text%3E%3C/svg%3E";
@@ -592,26 +658,44 @@ const CartPage = () => {
 
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
+                        {isDeleted && (
+                          <div className="mb-2 text-xs text-white bg-red-500/20 border-2 border-red-500/50 rounded px-2 py-1 inline-flex items-center font-semibold">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            This product is no longer available
+                          </div>
+                        )}
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <h3 className="font-medium text-white hover:text-accent transition-colors cursor-pointer">
-                              <Link
-                                href={`/product/${
-                                  item.productSlug ||
-                                  item.slug ||
-                                  item.productId ||
-                                  item.id
-                                }`}
-                              >
-                                {item.name}
-                              </Link>
+                            <h3 className={`font-medium transition-colors ${
+                              isDeleted
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "text-white hover:text-accent cursor-pointer"
+                            }`}>
+                              {isDeleted ? (
+                                item.name
+                              ) : (
+                                <Link
+                                  href={`/product/${
+                                    item.productSlug ||
+                                    item.slug ||
+                                    item.productId ||
+                                    item.id
+                                  }`}
+                                >
+                                  {item.name}
+                                </Link>
+                              )}
                             </h3>
-                            <p className="text-sm text-gray-400">
+                            <p className={`text-sm ${
+                              isDeleted ? "text-gray-300" : "text-gray-400"
+                            }`}>
                               {item.category}
                             </p>
                             {item.variants &&
                               Object.keys(item.variants).length > 0 && (
-                                <div className="text-xs text-accent mt-1">
+                                <div className={`text-xs mt-1 ${
+                                  isDeleted ? "text-gray-300" : "text-accent"
+                                }`}>
                                   {Object.entries(item.variants)
                                     .map(([key, value]) => `${key}: ${value}`)
                                     .join(", ")}
@@ -619,10 +703,14 @@ const CartPage = () => {
                               )}
                           </div>
                           <div className="text-right ml-4">
-                            <p className="font-bold text-accent">
+                            <p className={`font-bold ${
+                              isDeleted ? "text-gray-300" : "text-accent"
+                            }`}>
                               {item.price}
                             </p>
-                            <p className="text-sm text-gray-400">
+                            <p className={`text-sm ${
+                              isDeleted ? "text-gray-300" : "text-gray-400"
+                            }`}>
                               {parseFloat(item.price.replace(/[^\d.]/g, "")) *
                                 item.quantity}{" "}
                               total
@@ -634,6 +722,35 @@ const CartPage = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             {(() => {
+                              // Disable controls for deleted products
+                              if (isDeleted) {
+                                return (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled
+                                      className="w-8 h-8 p-0 border-[#444] text-gray-500 cursor-not-allowed opacity-50"
+                                      title="Product is no longer available"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </Button>
+                                    <span className="w-12 text-center text-gray-300 font-medium">
+                                      {item.quantity}
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled
+                                      className="w-8 h-8 p-0 border-[#444] text-gray-500 cursor-not-allowed opacity-50"
+                                      title="Product is no longer available"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </Button>
+                                  </>
+                                );
+                              }
+                              
                               // For business users, check minimum quantity
                               const minQuantity = item.minBusinessQuantity ?? 1;
                               const isAtMinimum = isBusinessUser && minQuantity > 1 && item.quantity <= minQuantity;
@@ -661,10 +778,17 @@ const CartPage = () => {
                                 </Button>
                               );
                             })()}
-                            <span className="w-12 text-center text-white font-medium">
-                              {item.quantity}
-                            </span>
+                            {!isDeleted && (
+                              <span className="w-12 text-center text-white font-medium">
+                                {item.quantity}
+                              </span>
+                            )}
                             {(() => {
+                              // Disable controls for deleted products
+                              if (isDeleted) {
+                                return null;
+                              }
+                              
                               // For clothing items with variants, check Stock collection
                               const availableStock = item.variants && Object.keys(item.variants).length > 0
                                 ? getAvailableStock(item)
@@ -727,14 +851,20 @@ const CartPage = () => {
                               );
                             })()}
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRemoveItem(item.id, item.name)}
-                            className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div style={isDeleted ? { filter: 'grayscale(0)' } : undefined}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRemoveItem(item.id, item.name)}
+                              className={
+                                isDeleted
+                                  ? "border-accent bg-accent text-white hover:bg-accent/80 hover:text-white"
+                                  : "border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                         {/* Stock warnings */}
                         {item.variants && Object.keys(item.variants).length > 0 ? (
@@ -772,9 +902,17 @@ const CartPage = () => {
                             </div>
                           )
                         )}
+                        {/* Deleted product warning */}
+                        {isDeleted && (
+                          <div className="mt-2 text-xs text-white bg-red-500/20 border border-red-500/50 rounded px-2 py-1 flex items-center font-medium">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Please remove this item to proceed with checkout
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -811,11 +949,17 @@ const CartPage = () => {
                         )}
                       </span>
                     </div>
-                    {shippingCost > 0 && (
+                    {shippingCost > 0 && !(!isBusinessUser && appliedCoupon?.freeShipping) && (
                       <div className="text-xs text-gray-500 bg-[#2a2a2a] p-2 rounded">
                         <AlertCircle className="w-3 h-3 inline mr-1" />
-                        Add ₹{(1000 - total).toLocaleString()} more for free
+                        Add ₹{(freeShippingThreshold - total).toLocaleString()} more for free
                         shipping
+                      </div>
+                    )}
+                    {!isBusinessUser && appliedCoupon?.freeShipping && shippingCost === 0 && (
+                      <div className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 p-2 rounded">
+                        <CheckCircle className="w-3 h-3 inline mr-1" />
+                        Free shipping applied with coupon
                       </div>
                     )}
 
@@ -930,7 +1074,7 @@ const CartPage = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center text-gray-400">
                       <Truck className="w-4 h-4 mr-2 text-accent" />
-                      Free shipping on orders over ₹1,000
+                      Free shipping on orders over ₹{freeShippingThreshold.toLocaleString()}
                     </div>
                     <div className="flex items-center text-gray-400">
                       <Shield className="w-4 h-4 mr-2 text-accent" />
@@ -942,14 +1086,46 @@ const CartPage = () => {
                     </div>
                   </div>
 
+                  {/* Warning for deleted products */}
+                  {hasDeletedProducts && (
+                    <div 
+                      className="border-2 border-red-500/50 rounded-xl p-4 text-center"
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                    >
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <AlertCircle className="w-5 h-5 text-red-400" />
+                        <p className="text-red-400 font-semibold">
+                          Unavailable Products in Cart
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-300 mb-2">
+                        Some products in your cart are no longer available. Please remove them to proceed with checkout.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Checkout Button */}
                   <Button
                     onClick={handleCheckout}
-                    disabled={isCheckingOut || items.length === 0}
-                    className="w-full bg-accent hover:bg-accent/80 text-white py-3 text-lg font-medium"
+                    disabled={
+                      isCheckingOut || 
+                      items.length === 0 || 
+                      hasDeletedProducts ||
+                      (isBusinessUser && businessMinCartValue > 0 && subtotalAfterDiscount < businessMinCartValue) ||
+                      (!isBusinessUser && hasPostersOrStickers && individualPostersStickersMinCartValue > 0 && subtotalAfterDiscount < individualPostersStickersMinCartValue)
+                    }
+                    className="w-full bg-accent hover:bg-accent/80 text-white py-3 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CreditCard className="w-5 h-5 mr-2" />
-                    {isCheckingOut ? "Processing..." : "Proceed to Checkout"}
+                    {isCheckingOut 
+                      ? "Processing..." 
+                      : hasDeletedProducts
+                      ? "Remove Unavailable Items"
+                      : isBusinessUser && businessMinCartValue > 0 && subtotalAfterDiscount < businessMinCartValue
+                      ? `Add ₹${(businessMinCartValue - subtotalAfterDiscount).toLocaleString()} More`
+                      : !isBusinessUser && hasPostersOrStickers && individualPostersStickersMinCartValue > 0 && subtotalAfterDiscount < individualPostersStickersMinCartValue
+                      ? `Add ₹${(individualPostersStickersMinCartValue - subtotalAfterDiscount).toLocaleString()} More`
+                      : "Proceed to Checkout"}
                   </Button>
 
                   {/* Continue Shopping */}

@@ -262,13 +262,30 @@ export const getCart = async (
       const cartProductIds = cartObject.items
         .map((item: any) => item.productId)
         .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+      
+      // Fetch all products (including deleted ones) to check deletion status
       const productDocs = await Product.find({
         _id: { $in: cartProductIds },
-        isDeleted: false,
-      }).select("_id minBusinessQuantity");
+      }).select("_id isDeleted minBusinessQuantity");
+      
       const productMap = new Map(
         productDocs.map((p: any) => [p._id.toString(), p])
       );
+
+      // Create set of deleted product IDs
+      const deletedProductIds = new Set(
+        productDocs
+          .filter((p: any) => p.isDeleted)
+          .map((p: any) => p._id.toString())
+      );
+
+      // Mark invalid ObjectIds as deleted
+      cartObject.items?.forEach((item: any) => {
+        const productIdStr = item.productId?.toString?.() || "";
+        if (!mongoose.Types.ObjectId.isValid(productIdStr)) {
+          deletedProductIds.add(productIdStr);
+        }
+      });
 
       // Ensure variants are properly converted from Map to object and min fields are present
       const transformedCart = {
@@ -286,6 +303,8 @@ export const getCart = async (
                   ...item,
                   minBusinessQuantity: ensuredMin,
                   isBelowMinimum: item.isBelowMinimum ?? false,
+                  isDeleted: deletedProductIds.has(productIdStr),
+                  isAvailable: !deletedProductIds.has(productIdStr),
                   variants:
                     item.variants instanceof Map
                       ? Object.fromEntries(item.variants)
@@ -515,21 +534,40 @@ export const addToCart = async (
 
     await cart.save();
 
+    // Get all product IDs from cart to check for deleted products
+    const cartProductIds = cart.items
+      .map((item: any) => item.productId)
+      .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+
+    // Fetch products to check deletion status
+    const products = await Product.find({
+      _id: { $in: cartProductIds },
+    }).select("_id isDeleted");
+
+    const deletedProductIds = new Set(
+      products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+    );
+
     // Convert mongoose document to plain object to avoid serialization issues
     const cartObject = cart.toObject();
 
-    // Convert Map variants to plain objects for JSON response
+    // Convert Map variants to plain objects and add deleted status
     const transformedCart = {
       ...cartObject,
       items:
         cartObject.items && cartObject.items.length > 0
-          ? cartObject.items.map((item: any) => ({
-              ...item,
-              variants:
-                item.variants instanceof Map
-                  ? Object.fromEntries(item.variants)
-                  : item.variants || {},
-            }))
+          ? cartObject.items.map((item: any) => {
+              const productIdStr = item.productId?.toString?.() || "";
+              return {
+                ...item,
+                isDeleted: deletedProductIds.has(productIdStr),
+                isAvailable: !deletedProductIds.has(productIdStr),
+                variants:
+                  item.variants instanceof Map
+                    ? Object.fromEntries(item.variants)
+                    : item.variants || {},
+              };
+            })
           : [],
     };
 
@@ -592,13 +630,21 @@ export const updateCartItem = async (
       return next(createError("Item not found in cart", 404));
     }
 
+    // Check if the product is deleted - prevent updating quantity (except removing)
+    const cartItem = cart.items[itemIndex];
+    const productIdStr = String(cartItem.productId);
+    const product = await Product.findOne({ _id: productIdStr }).select("_id isDeleted");
+    
+    if (product && product.isDeleted && quantity > 0) {
+      return next(createError("This product is no longer available and cannot be updated. Please remove it from your cart.", 400));
+    }
+
     // Check if user is a business user
     const userType: ShopperType =
       req.user?.userType === "business" ? "business" : "individual";
 
     // For business users, validate minimum quantity
     if (userType === "business" && quantity > 0) {
-      const cartItem = cart.items[itemIndex];
       const minQuantity = (cartItem as any).minBusinessQuantity || 1;
 
       if (quantity < minQuantity) {
@@ -625,19 +671,39 @@ export const updateCartItem = async (
         });
       } else {
         await cart.save();
+        
+        // Get all product IDs from cart to check for deleted products
+        const cartProductIds = cart.items
+          .map((item: any) => item.productId)
+          .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+
+        // Fetch products to check deletion status
+        const products = await Product.find({
+          _id: { $in: cartProductIds },
+        }).select("_id isDeleted");
+
+        const deletedProductIds = new Set(
+          products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+        );
+
         const cartObject = cart.toObject();
-        // Convert Map variants to plain objects for JSON response
+        // Convert Map variants to plain objects and add deleted status
         const transformedCart = {
           ...cartObject,
           items:
             cartObject.items && cartObject.items.length > 0
-              ? cartObject.items.map((item: any) => ({
-                  ...item,
-                  variants:
-                    item.variants instanceof Map
-                      ? Object.fromEntries(item.variants)
-                      : item.variants || {},
-                }))
+              ? cartObject.items.map((item: any) => {
+                  const productIdStr = item.productId?.toString?.() || "";
+                  return {
+                    ...item,
+                    isDeleted: deletedProductIds.has(productIdStr),
+                    isAvailable: !deletedProductIds.has(productIdStr),
+                    variants:
+                      item.variants instanceof Map
+                        ? Object.fromEntries(item.variants)
+                        : item.variants || {},
+                  };
+                })
               : [],
         };
         res.json({
@@ -651,19 +717,38 @@ export const updateCartItem = async (
       cart.items[itemIndex].quantity = quantity;
       await cart.save();
 
+      // Get all product IDs from cart to check for deleted products
+      const cartProductIds = cart.items
+        .map((item: any) => item.productId)
+        .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+
+      // Fetch products to check deletion status
+      const products = await Product.find({
+        _id: { $in: cartProductIds },
+      }).select("_id isDeleted");
+
+      const deletedProductIds = new Set(
+        products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+      );
+
       const cartObject = cart.toObject();
-      // Convert Map variants to plain objects for JSON response
+      // Convert Map variants to plain objects and add deleted status
       const transformedCart = {
         ...cartObject,
         items:
           cartObject.items && cartObject.items.length > 0
-            ? cartObject.items.map((item: any) => ({
-                ...item,
-                variants:
-                  item.variants instanceof Map
-                    ? Object.fromEntries(item.variants)
-                    : item.variants || {},
-              }))
+            ? cartObject.items.map((item: any) => {
+                const productIdStr = item.productId?.toString?.() || "";
+                return {
+                  ...item,
+                  isDeleted: deletedProductIds.has(productIdStr),
+                  isAvailable: !deletedProductIds.has(productIdStr),
+                  variants:
+                    item.variants instanceof Map
+                      ? Object.fromEntries(item.variants)
+                      : item.variants || {},
+                };
+              })
             : [],
       };
       res.json({
@@ -741,19 +826,39 @@ export const removeFromCart = async (
       });
     } else {
       await cart.save();
+
+      // Get all product IDs from cart to check for deleted products
+      const cartProductIds = cart.items
+        .map((item: any) => item.productId)
+        .filter((id: any) => mongoose.Types.ObjectId.isValid(id));
+
+      // Fetch products to check deletion status
+      const products = await Product.find({
+        _id: { $in: cartProductIds },
+      }).select("_id isDeleted");
+
+      const deletedProductIds = new Set(
+        products.filter((p: any) => p.isDeleted).map((p: any) => p._id.toString())
+      );
+
       const cartObject = cart.toObject();
-      // Convert Map variants to plain objects for JSON response
+      // Convert Map variants to plain objects and add deleted status
       const transformedCart = {
         ...cartObject,
         items:
           cartObject.items && cartObject.items.length > 0
-            ? cartObject.items.map((item: any) => ({
-                ...item,
-                variants:
-                  item.variants instanceof Map
-                    ? Object.fromEntries(item.variants)
-                    : item.variants || {},
-              }))
+            ? cartObject.items.map((item: any) => {
+                const productIdStr = item.productId?.toString?.() || "";
+                return {
+                  ...item,
+                  isDeleted: deletedProductIds.has(productIdStr),
+                  isAvailable: !deletedProductIds.has(productIdStr),
+                  variants:
+                    item.variants instanceof Map
+                      ? Object.fromEntries(item.variants)
+                      : item.variants || {},
+                };
+              })
             : [],
       };
       res.json({

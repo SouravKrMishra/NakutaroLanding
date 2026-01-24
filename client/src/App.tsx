@@ -15,6 +15,7 @@ import { ThemeCustomizer } from "./components/ThemeCustomizer.js";
 import HomePage from "@/pages/HomePage.js";
 import ProductsPage from "@/pages/ProductsPage.js";
 import EventsPage from "@/pages/EventsPage.js";
+import AllEventsPage from "@/pages/AllEventsPage.tsx";
 import ContactPage from "@/pages/ContactPage.js";
 import NotFoundPage from "@/pages/not-found.js";
 import BusinessPage from "@/pages/BusinessPage.js";
@@ -33,6 +34,7 @@ import ShippingPolicyPage from "@/pages/ShippingPolicyPage.tsx";
 import IndividualLoginPage from "@/pages/IndividualLoginPage.tsx";
 import IndividualRegisterPage from "@/pages/IndividualRegisterPage.tsx";
 import VerifyOTPPage from "@/pages/VerifyOTPPage.tsx";
+import ComingSoonPage from "@/pages/ComingSoonPage.tsx";
 
 // Shared components
 import Header from "./components/Header.js";
@@ -63,6 +65,7 @@ function App() {
                         component={ProductDetailPage}
                       />
                       <Route path="/events" component={EventsPage} />
+                      <Route path="/events/all" component={AllEventsPage} />
                       <Route path="/contact" component={ContactPage} />
                       <Route path="/business" component={BusinessPage} />
                       <Route
@@ -88,6 +91,7 @@ function App() {
                         component={IndividualRegisterPage}
                       />
                       <Route path="/verify-otp" component={VerifyOTPPage} />
+                      <Route path="/coming-soon" component={ComingSoonPage} />
                       <Route
                         path="/dashboard"
                         component={() => (

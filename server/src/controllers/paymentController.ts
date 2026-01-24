@@ -57,6 +57,30 @@ const updatePaymentStatus = async (
         order.paymentStatus = "COMPLETED";
         order.status = "PAID";
 
+        // Apply coupon if one was used (mark as used only after successful payment)
+        if (order.couponCode) {
+          try {
+            const { applyCoupon } = await import(
+              "../controllers/couponController.js"
+            );
+            const mockReq = {
+              body: {
+                code: order.couponCode,
+                userId: transaction.userId?.toString(),
+                orderId: order._id.toString(),
+              },
+            } as any;
+            const mockRes = {
+              json: (data: any) => data,
+            } as any;
+            await applyCoupon(mockReq, mockRes, () => {});
+            console.log(`Coupon ${order.couponCode} marked as used for order ${order._id}`);
+          } catch (error) {
+            // Don't fail the order if coupon application fails
+            console.error("Failed to apply coupon:", error);
+          }
+        }
+
         // Clear cart for the user
         try {
           const cart = await Cart.findOne({ userId: transaction.userId });

@@ -8,22 +8,34 @@ import {
   refundPhonepePayment,
   checkRefundStatus,
 } from "../controllers/paymentController.js";
-import { isPhonepeEnabled, isCODEnabled } from "../services/paymentSettingsService.js";
+import {
+  initiateContropayPayment,
+  contropayRedirect,
+  checkContropayPaymentStatus,
+  getContropayConfig,
+} from "../controllers/contropayController.js";
+import {
+  isPhonepeEnabled,
+  isCODEnabled,
+  isContropayEnabled,
+} from "../services/paymentSettingsService.js";
 
 const router = express.Router();
 
 // Public endpoint to get payment gateway statuses
 router.get("/status", async (req, res) => {
   try {
-    const [phonepeEnabled, codEnabled] = await Promise.all([
+    const [phonepeEnabled, codEnabled, contropayEnabled] = await Promise.all([
       isPhonepeEnabled(),
       isCODEnabled(),
+      isContropayEnabled(),
     ]);
 
     res.json({
       success: true,
       phonepe: { enabled: phonepeEnabled },
       cod: { enabled: codEnabled },
+      contropay: { enabled: contropayEnabled },
     });
   } catch (error) {
     console.error("Error fetching payment gateway statuses:", error);
@@ -59,5 +71,15 @@ router.post("/phonepe/refund", authenticateToken, refundPhonepePayment);
 
 // Check refund status endpoint
 router.get("/phonepe/refund/:refundId", authenticateToken, checkRefundStatus);
+
+// Contropay payment routes
+router.get("/contropay/config", getContropayConfig); // Public - get supported chains/tokens
+router.get("/contropay/redirect", contropayRedirect); // Public - handle redirect from Contropay
+router.post("/contropay/initiate", authenticateToken, initiateContropayPayment);
+router.get(
+  "/contropay/status/:paymentLinkId",
+  authenticateToken,
+  checkContropayPaymentStatus
+);
 
 export default router;

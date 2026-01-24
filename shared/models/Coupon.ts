@@ -58,6 +58,17 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // User type restriction
+    applicableUserType: {
+      type: String,
+      enum: ["business", "individual", "both"],
+      default: "both",
+    },
+    // Free shipping option
+    freeShipping: {
+      type: Boolean,
+      default: false,
+    },
     // Product selection similar to SaleTiming
     selectionType: {
       type: String,

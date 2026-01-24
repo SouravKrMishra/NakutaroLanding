@@ -10,7 +10,7 @@ export const validateCoupon = async (
   next: NextFunction
 ) => {
   try {
-    const { code, userId, cartItems, cartTotal } = req.body;
+    const { code, userId, cartItems, cartTotal, userType } = req.body;
 
     if (!code) {
       return next(createError("Coupon code is required", 400));
@@ -25,6 +25,19 @@ export const validateCoupon = async (
         valid: false,
         message: "Invalid coupon code",
       });
+    }
+
+    // Check user type restriction
+    const applicableUserType = coupon.applicableUserType || "both";
+    const requestUserType = userType || req.user?.userType || "individual";
+    
+    if (applicableUserType !== "both") {
+      if (applicableUserType !== requestUserType) {
+        return res.json({
+          valid: false,
+          message: "Invalid coupon code",
+        });
+      }
     }
 
     // Check if active
@@ -198,6 +211,7 @@ export const validateCoupon = async (
           discountValue: coupon.discountValue,
           applicableAmount,
           discountAmount: Math.round(discountAmount),
+          freeShipping: coupon.freeShipping || false,
         },
         message: "Coupon applied successfully",
       });
@@ -224,6 +238,7 @@ export const validateCoupon = async (
         discountValue: coupon.discountValue,
         applicableAmount: cartTotal,
         discountAmount: Math.round(discountAmount),
+        freeShipping: coupon.freeShipping || false,
       },
       message: "Coupon applied successfully",
     });
@@ -233,7 +248,8 @@ export const validateCoupon = async (
   }
 };
 
-// Apply coupon (record usage) - should be called when order is created
+// Apply coupon (record usage) - should be called when order is successfully placed/paid
+// This prevents coupons from being marked as used before payment is confirmed
 export const applyCoupon = async (
   req: Request,
   res: Response,
@@ -252,6 +268,29 @@ export const applyCoupon = async (
 
     if (!coupon) {
       return next(createError("Invalid coupon code", 404));
+    }
+
+    // Check if this coupon has already been used for this order
+    // This prevents duplicate marking if the function is called multiple times
+    if (orderId) {
+      const alreadyUsed = coupon.usedBy.some(
+        (usage: any) =>
+          usage.orderId?.toString() === orderId.toString() ||
+          (usage.orderId && String(usage.orderId) === String(orderId))
+      );
+      if (alreadyUsed) {
+        console.log(
+          `Coupon ${code} already marked as used for order ${orderId}, skipping`
+        );
+        return res.json({
+          message: "Coupon already applied for this order",
+          coupon: {
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+          },
+        });
+      }
     }
 
     // Increment usage count

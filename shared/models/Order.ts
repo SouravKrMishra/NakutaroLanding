@@ -88,8 +88,21 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["card", "cod", "PHONEPE"],
+    enum: ["card", "cod", "PHONEPE", "CONTROPAY"],
     required: true,
+  },
+  // Crypto payment details (for CONTROPAY)
+  cryptoChain: {
+    type: String,
+    default: null,
+  },
+  cryptoToken: {
+    type: String,
+    default: null,
+  },
+  contropayPaymentLinkId: {
+    type: String,
+    default: null,
   },
   subtotal: {
     type: Number,

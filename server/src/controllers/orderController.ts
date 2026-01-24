@@ -212,29 +212,9 @@ export const createOrder = async (
       }
     }
 
-    // Apply coupon if one was used (record usage)
-    if (couponCode) {
-      try {
-        const { applyCoupon } = await import(
-          "../controllers/couponController.js"
-        );
-        // Create a mock request/response for applyCoupon
-        const mockReq = {
-          body: {
-            code: couponCode,
-            userId: userId.toString(),
-            orderId: order._id.toString(),
-          },
-        } as any;
-        const mockRes = {
-          json: (data: any) => data,
-        } as any;
-        await applyCoupon(mockReq, mockRes, () => {});
-      } catch (error) {
-        // Don't fail the order if coupon application fails
-        console.error("Failed to apply coupon:", error);
-      }
-    }
+    // Note: Coupon usage is NOT marked here - it will be marked when order is confirmed/paid
+    // For COD orders, coupon will be marked when order status changes to confirmed
+    // For payment orders, coupon will be marked when payment is successful
 
     // Add items to purchase history for recommendations
     for (const item of normalizedItems) {
@@ -467,7 +447,46 @@ export const updateOrderStatus = async (
       status?.toLowerCase() === "processing" &&
       previousStatus?.toLowerCase() !== "processing";
 
+    // For COD orders, mark coupon as used when order is confirmed/processing
+    // Check if order is moving from pending to a confirmed state (processing, confirmed, shipped, etc.)
+    const isCODOrder = order.paymentMethod === "cod";
+    const isMovingToConfirmedState =
+      statusChanged &&
+      status &&
+      ["processing", "confirmed", "shipped", "delivered"].includes(
+        status.toLowerCase()
+      ) &&
+      previousStatus?.toLowerCase() === "pending";
+    const shouldMarkCouponForCOD =
+      isCODOrder && isMovingToConfirmedState && order.couponCode;
+
     await order.save();
+
+    // Mark coupon as used for COD orders when they are confirmed
+    if (shouldMarkCouponForCOD) {
+      try {
+        const { applyCoupon } = await import(
+          "../controllers/couponController.js"
+        );
+        const mockReq = {
+          body: {
+            code: order.couponCode,
+            userId: order.userId?.toString(),
+            orderId: order._id.toString(),
+          },
+        } as any;
+        const mockRes = {
+          json: (data: any) => data,
+        } as any;
+        await applyCoupon(mockReq, mockRes, () => {});
+        console.log(
+          `Coupon ${order.couponCode} marked as used for COD order ${order._id} (status: ${status})`
+        );
+      } catch (error) {
+        // Don't fail the order update if coupon application fails
+        console.error("Failed to apply coupon for COD order:", error);
+      }
+    }
 
     if (shouldReduceStockForCOD) {
       try {
@@ -524,6 +543,9 @@ export const createOrderForPhonepe = async (
       testMode,
       couponCode,
       couponDiscount,
+      paymentMethod,
+      cryptoChain,
+      cryptoToken,
     } = req.body;
 
     // Validate required fields
@@ -597,13 +619,16 @@ export const createOrderForPhonepe = async (
     const estimatedDelivery = new Date();
     estimatedDelivery.setDate(estimatedDelivery.getDate() + 4);
 
+    // Determine actual payment method (PHONEPE or CONTROPAY)
+    const actualPaymentMethod = paymentMethod === "CONTROPAY" ? "CONTROPAY" : "PHONEPE";
+
     // Create order with appropriate status based on test mode
     const order = new Order({
       userId,
       orderNumber,
       items: normalizedItems,
       shippingInfo,
-      paymentMethod: "PHONEPE",
+      paymentMethod: actualPaymentMethod,
       subtotal: computedSubtotal,
       shippingCost: computedShipping,
       phonepeFee,
@@ -614,33 +639,17 @@ export const createOrderForPhonepe = async (
       paymentStatus: testMode ? "COMPLETED" : "PENDING",
       estimatedDelivery,
       testMode: testMode || false,
+      // Crypto payment details (for CONTROPAY)
+      ...(actualPaymentMethod === "CONTROPAY" && {
+        cryptoChain: cryptoChain || null,
+        cryptoToken: cryptoToken || null,
+      }),
     });
 
     await order.save();
 
-    // Apply coupon if one was used (record usage)
-    if (couponCode) {
-      try {
-        const { applyCoupon } = await import(
-          "../controllers/couponController.js"
-        );
-        // Create a mock request/response for applyCoupon
-        const mockReq = {
-          body: {
-            code: couponCode,
-            userId: userId.toString(),
-            orderId: order._id.toString(),
-          },
-        } as any;
-        const mockRes = {
-          json: (data: any) => data,
-        } as any;
-        await applyCoupon(mockReq, mockRes, () => {});
-      } catch (error) {
-        // Don't fail the order if coupon application fails
-        console.error("Failed to apply coupon:", error);
-      }
-    }
+    // Note: Coupon usage is NOT marked here - it will be marked when payment is successful
+    // Coupon will be marked as used in the payment callback when payment status is COMPLETED
 
     // Add items to purchase history for recommendations (including test orders)
     for (const item of normalizedItems) {

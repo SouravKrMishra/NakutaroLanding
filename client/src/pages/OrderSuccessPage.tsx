@@ -187,6 +187,7 @@ const OrderSuccessPage = () => {
         try {
           await clearCart();
           localStorage.removeItem("phonepe_transaction");
+          localStorage.removeItem("contropay_transaction");
         } catch (cartError) {}
 
         // Clear timeout on success

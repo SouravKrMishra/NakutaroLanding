@@ -59,8 +59,10 @@ const createOrderValidation = [
     .isLength({ min: 1 })
     .withMessage("Pincode is required"),
   body("paymentMethod")
-    .isIn(["card", "cod", "PHONEPE"])
-    .withMessage("Payment method must be either 'card', 'cod', or 'PHONEPE'"),
+    .isIn(["card", "cod", "PHONEPE", "CONTROPAY"])
+    .withMessage(
+      "Payment method must be either 'card', 'cod', 'PHONEPE', or 'CONTROPAY'"
+    ),
   body("total")
     .isFloat({ min: 0 })
     .withMessage("Total must be a non-negative number"),

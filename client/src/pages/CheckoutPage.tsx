@@ -25,6 +25,8 @@ import {
   ShoppingCart,
   Smartphone,
   Wallet,
+  Bitcoin,
+  ChevronDown,
 } from "lucide-react";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
@@ -51,12 +53,31 @@ const CheckoutPage = () => {
   const [phonepeTransactionId, setPhonepeTransactionId] = useState("");
   const [phonepePaymentUrl, setPhonepePaymentUrl] = useState("");
   const [showPhonepeRedirect, setShowPhonepeRedirect] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"PHONEPE" | "cod">(
-    "PHONEPE"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    "PHONEPE" | "cod" | "CONTROPAY"
+  >("PHONEPE");
   const [codEnabled, setCodEnabled] = useState(true); // Default to true
   const [phonepeAvailable, setPhonepeAvailable] = useState(true); // Default to true
+  const [contropayAvailable, setContropayAvailable] = useState(false);
   const [paymentSettingsLoading, setPaymentSettingsLoading] = useState(true);
+
+  // Contropay crypto payment state
+  const [contropayConfig, setContropayConfig] = useState<{
+    chains: string[];
+    chainTokens: Record<string, string[]>;
+    chainDisplayNames: Record<string, string>;
+    defaultChain: string;
+    defaultToken: string;
+    inrUsdRate: number;
+  } | null>(null);
+  const [selectedChain, setSelectedChain] = useState("TRON");
+  const [selectedToken, setSelectedToken] = useState("USDT");
+  const [contropayPaymentUrl, setContropayPaymentUrl] = useState("");
+  const [contropayPaymentLinkId, setContropayPaymentLinkId] = useState("");
+  const [showContropayRedirect, setShowContropayRedirect] = useState(false);
+  const [contropayPaymentOpened, setContropayPaymentOpened] = useState(false);
+  const [checkingContropayStatus, setCheckingContropayStatus] = useState(false);
+  const [contropayOrderId, setContropayOrderId] = useState("");
 
   // Coupon state - retrieve from localStorage (set by CartPage)
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -97,38 +118,75 @@ const CheckoutPage = () => {
     const fetchPaymentStatuses = async () => {
       setPaymentSettingsLoading(true);
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || ""}/api/payments/status`
-        );
-        if (response.ok) {
-          const data = await response.json();
+        // Fetch payment statuses and Contropay config in parallel
+        const [statusResponse, contropayConfigResponse] = await Promise.all([
+          fetch(
+            `${import.meta.env.VITE_API_BASE_URL || ""}/api/payments/status`
+          ),
+          fetch(
+            `${
+              import.meta.env.VITE_API_BASE_URL || ""
+            }/api/payments/contropay/config`
+          ),
+        ]);
+
+        if (statusResponse.ok) {
+          const data = await statusResponse.json();
           const phonepeEnabled = data.phonepe?.enabled ?? false;
           const codEnabledStatus = data.cod?.enabled ?? true;
+          const contropayEnabled = data.contropay?.enabled ?? false;
 
           setPhonepeAvailable(phonepeEnabled);
           setCodEnabled(codEnabledStatus);
+          setContropayAvailable(contropayEnabled);
 
           // If current payment method is disabled, switch to an available one
           if (paymentMethod === "cod" && !codEnabledStatus) {
-            // Switch to PhonePe if available, otherwise keep COD (will show error)
             if (phonepeEnabled) {
               setPaymentMethod("PHONEPE");
+            } else if (contropayEnabled) {
+              setPaymentMethod("CONTROPAY");
             }
           } else if (paymentMethod === "PHONEPE" && !phonepeEnabled) {
-            // Switch to COD if available, otherwise keep PhonePe (will show error)
             if (codEnabledStatus) {
+              setPaymentMethod("cod");
+            } else if (contropayEnabled) {
+              setPaymentMethod("CONTROPAY");
+            }
+          } else if (paymentMethod === "CONTROPAY" && !contropayEnabled) {
+            if (phonepeEnabled) {
+              setPaymentMethod("PHONEPE");
+            } else if (codEnabledStatus) {
               setPaymentMethod("cod");
             }
           }
 
           // If no payment method is available, default to the first available one
-          if (!phonepeEnabled && !codEnabledStatus) {
-            // Both disabled - this will show an error message
+          if (!phonepeEnabled && !codEnabledStatus && !contropayEnabled) {
             setPaymentMethod("PHONEPE");
-          } else if (!phonepeEnabled && codEnabledStatus) {
+          } else if (phonepeEnabled) {
+            // Keep current or default to PhonePe
+          } else if (contropayEnabled) {
+            setPaymentMethod("CONTROPAY");
+          } else if (codEnabledStatus) {
             setPaymentMethod("cod");
-          } else if (phonepeEnabled && !codEnabledStatus) {
-            setPaymentMethod("PHONEPE");
+          }
+        }
+
+        // Fetch Contropay config for chain/token options
+        if (contropayConfigResponse.ok) {
+          const configData = await contropayConfigResponse.json();
+          if (configData.success) {
+            setContropayConfig({
+              chains: configData.chains,
+              chainTokens: configData.chainTokens,
+              chainDisplayNames: configData.chainDisplayNames,
+              defaultChain: configData.defaultChain,
+              defaultToken: configData.defaultToken,
+              inrUsdRate: configData.inrUsdRate,
+            });
+            setSelectedChain(configData.defaultChain || "TRON");
+            setSelectedToken(configData.defaultToken || "USDT");
           }
         }
       } catch (error) {
@@ -136,31 +194,15 @@ const CheckoutPage = () => {
         // Default to enabled on error for backward compatibility
         setPhonepeAvailable(true);
         setCodEnabled(true);
+        setContropayAvailable(false);
       } finally {
         setPaymentSettingsLoading(false);
       }
     };
 
-    // Fetch immediately
+    // Fetch once on mount
     fetchPaymentStatuses();
-
-    // Refetch every 15 seconds to get latest payment gateway status
-    const intervalId = setInterval(fetchPaymentStatuses, 15000);
-
-    // Also refetch when page becomes visible (user switches tabs/windows)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchPaymentStatuses();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // Cleanup
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []); // Empty deps - only run on mount/unmount
+  }, []); // Empty deps - only run on mount
 
   // Fetch user details from database and pre-fill form
   React.useEffect(() => {
@@ -216,23 +258,54 @@ const CheckoutPage = () => {
     }
   }, [items, setLocation]);
 
-  // Load coupon from localStorage (set by CartPage)
+  // Load and validate coupon from URL params (passed from CartPage)
   useEffect(() => {
-    const savedCoupon = localStorage.getItem("appliedCoupon");
-    const savedDiscount = localStorage.getItem("couponDiscount");
+    const validateCouponFromUrl = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const couponCode = urlParams.get("coupon");
 
-    if (savedCoupon) {
-      try {
-        setAppliedCoupon(JSON.parse(savedCoupon));
-      } catch (e) {
-        console.error("Failed to parse saved coupon", e);
+      if (!couponCode) {
+        return;
       }
-    }
 
-    if (savedDiscount) {
-      setCouponDiscount(parseFloat(savedDiscount));
+      try {
+        // Validate the coupon with the server
+        const token = localStorage.getItem("authToken");
+        const userType = user?.userType || "individual";
+        const response = await axios.post(
+          buildApiUrl("/api/coupons/validate"),
+          {
+            code: couponCode,
+            cartTotal: total,
+            userType: userType,
+          },
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+
+        if (response.data.valid) {
+          // Coupon is valid - apply it
+          setAppliedCoupon(response.data.coupon);
+          setCouponDiscount(response.data.coupon.discountAmount);
+        } else {
+          // Coupon is not valid
+          console.log("Coupon is not valid:", response.data.message);
+          setAppliedCoupon(null);
+          setCouponDiscount(0);
+        }
+      } catch (e) {
+        console.error("Failed to validate coupon", e);
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+      }
+    };
+
+    // Only validate if we have cart items
+    if (total > 0) {
+      validateCouponFromUrl();
     }
-  }, []);
+  }, [total, user?.userType]);
 
   // Fetch stock data for verification
   useEffect(() => {
@@ -258,7 +331,9 @@ const CheckoutPage = () => {
   }, []);
 
   // Helper function to resolve product type from category
-  const resolveStockProductType = (category: string): "tshirt" | "hoodie" | "sweatshirt" => {
+  const resolveStockProductType = (
+    category: string
+  ): "tshirt" | "hoodie" | "sweatshirt" => {
     const categoryLower = category?.toLowerCase() || "";
     if (categoryLower.includes("hoodie")) return "hoodie";
     if (categoryLower.includes("sweatshirt")) return "sweatshirt";
@@ -371,9 +446,26 @@ const CheckoutPage = () => {
     return true;
   };
 
-  const shippingCost = total > 1000 ? 0 : 100;
+  // Calculate shipping cost - free if coupon has freeShipping enabled (only for individual users)
+  // Individual users: free shipping at ₹2000+, Business users: free shipping at ₹1000+ (but never from coupons)
+  const isBusinessUser = user?.userType === "business";
+  const freeShippingThreshold = isBusinessUser ? 1000 : 2000;
+  const baseShippingCost = total >= freeShippingThreshold ? 0 : 100;
+  // Business users don't get free shipping from coupons, only individual users do
+  const shippingCost = !isBusinessUser && appliedCoupon?.freeShipping ? 0 : baseShippingCost;
   const subtotalAfterDiscount = total - couponDiscount;
   const finalTotal = subtotalAfterDiscount + shippingCost;
+
+  // Minimum cart value for business users (from .env)
+  const businessMinCartValue = Number(import.meta.env.VITE_BUSINESS_MIN_CART_VALUE) || 0;
+
+  // Minimum cart value for individual users when cart contains Posters or Stickers (from .env)
+  const individualPostersStickersMinCartValue = Number(import.meta.env.VITE_INDIVIDUAL_POSTERS_STICKERS_MIN_CART_VALUE) || 0;
+  
+  // Check if cart contains Posters or Stickers products
+  const hasPostersOrStickers = items.some(
+    (item) => item.category === "Posters" || item.category === "Stickers"
+  );
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -395,8 +487,84 @@ const CheckoutPage = () => {
     );
   };
 
+  // Save shipping details to user profile for individual users
+  const saveShippingDetailsToProfile = async () => {
+    if (!user) return;
+
+    // Check if user is individual
+    const userType = (user?.userType || "").toLowerCase();
+    const isIndividualUser =
+      userType === "individual" ||
+      (!userType && !user.companyName && !user.businessType);
+
+    // Only save for individual users
+    if (!isIndividualUser) return;
+
+    // Only save if shipping details are filled
+    if (
+      !shippingInfo.address?.trim() ||
+      !shippingInfo.city?.trim() ||
+      !shippingInfo.state?.trim() ||
+      !shippingInfo.pincode?.trim()
+    ) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
+
+      // Update user profile with shipping details
+      await axios.put(
+        buildApiUrl("/api/auth/user/profile"),
+        {
+          phoneNumber: shippingInfo.phone.trim(),
+          address: shippingInfo.address.trim(),
+          city: shippingInfo.city.trim(),
+          state: shippingInfo.state.trim(),
+          pincode: shippingInfo.pincode.trim(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+    } catch (error) {
+      // Silently fail - don't interrupt order flow if profile update fails
+      // Profile update failure shouldn't block order creation
+    }
+  };
+
   // Create COD order
   const createCODOrder = async () => {
+    // Check minimum cart value for business users (after coupon discount)
+    const cartValueAfterDiscount = subtotalAfterDiscount;
+    if (isBusinessUser && businessMinCartValue > 0 && cartValueAfterDiscount < businessMinCartValue) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Business users must have a minimum cart value of ₹${businessMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check minimum cart value for individual users when cart contains Posters or Stickers (after coupon discount)
+    if (
+      !isBusinessUser &&
+      hasPostersOrStickers &&
+      individualPostersStickersMinCartValue > 0 &&
+      cartValueAfterDiscount < individualPostersStickersMinCartValue
+    ) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹${individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if COD is enabled
     if (!codEnabled) {
       toast({
@@ -550,6 +718,9 @@ const CheckoutPage = () => {
 
       const orderResult = await orderResponse.json();
 
+      // Save shipping details to user profile for individual users
+      await saveShippingDetailsToProfile();
+
       // Clear cart
       clearCart();
 
@@ -572,6 +743,32 @@ const CheckoutPage = () => {
 
   // Initialize PhonePe payment
   const initializePhonepePayment = async () => {
+    // Check minimum cart value for business users (after coupon discount)
+    const cartValueAfterDiscount = subtotalAfterDiscount;
+    if (isBusinessUser && businessMinCartValue > 0 && cartValueAfterDiscount < businessMinCartValue) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Business users must have a minimum cart value of ₹${businessMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check minimum cart value for individual users when cart contains Posters or Stickers (after coupon discount)
+    if (
+      !isBusinessUser &&
+      hasPostersOrStickers &&
+      individualPostersStickersMinCartValue > 0 &&
+      cartValueAfterDiscount < individualPostersStickersMinCartValue
+    ) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹${individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if PhonePe is enabled
     if (!phonepeAvailable) {
       toast({
@@ -733,6 +930,9 @@ const CheckoutPage = () => {
 
       const orderResult = await orderResponse.json();
 
+      // Save shipping details to user profile for individual users
+      await saveShippingDetailsToProfile();
+
       // Then initiate PhonePe payment
       const paymentResponse = await fetch(
         `${
@@ -804,6 +1004,340 @@ const CheckoutPage = () => {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Initialize Contropay crypto payment
+  const initializeContropayPayment = async () => {
+    // Check minimum cart value for business users (after coupon discount)
+    const cartValueAfterDiscount = subtotalAfterDiscount;
+    if (isBusinessUser && businessMinCartValue > 0 && cartValueAfterDiscount < businessMinCartValue) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Business users must have a minimum cart value of ₹${businessMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check minimum cart value for individual users when cart contains Posters or Stickers (after coupon discount)
+    if (
+      !isBusinessUser &&
+      hasPostersOrStickers &&
+      individualPostersStickersMinCartValue > 0 &&
+      cartValueAfterDiscount < individualPostersStickersMinCartValue
+    ) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹${individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if Contropay is enabled
+    if (!contropayAvailable) {
+      toast({
+        title: "Contropay Not Available",
+        description:
+          "Crypto payment gateway is currently disabled. Please use another payment method.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateShipping()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required shipping fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Verify stock before proceeding
+    if (!verifyStock()) {
+      toast({
+        title: "Stock Verification Failed",
+        description:
+          "Some items in your cart are out of stock or have insufficient quantity. Please review and update your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to continue with payment.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    // Check if token exists
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Generate merchant transaction ID first
+      const merchantTransactionId = `TXN_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
+      // Map cart items to order items format
+      const orderItems = items.map((item) => {
+        let productId = item.id;
+        if (typeof item.id === "string" && item.id.includes("_")) {
+          const parts = item.id.split("_");
+          productId = parts[0];
+        }
+
+        let size: string | null = null;
+        let color: string | null = null;
+
+        if (item.variants) {
+          const entries = Object.entries(item.variants);
+          const sizeEntry = entries.find(
+            ([key]) => key.toLowerCase() === "size"
+          );
+          if (sizeEntry) {
+            size = sizeEntry[1]?.toString().toUpperCase() || null;
+          }
+
+          const colorEntry = entries.find(
+            ([key]) => key.toLowerCase() === "color"
+          );
+          if (colorEntry) {
+            color =
+              colorEntry[1]
+                ?.toString()
+                .split(" ")
+                .map(
+                  (part) =>
+                    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                )
+                .join(" ") || null;
+          }
+        }
+
+        return {
+          productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          category: item.category,
+          size,
+          color,
+        };
+      });
+
+      // First, create the order
+      const orderData = {
+        items: orderItems,
+        shippingInfo,
+        paymentMethod: "CONTROPAY",
+        subtotal: total,
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: couponDiscount || 0,
+        shippingCost,
+        total: finalTotal,
+        merchantTransactionId,
+        cryptoChain: selectedChain,
+        cryptoToken: selectedToken,
+      };
+
+      // Create order first (using phonepe endpoint as it handles pending orders)
+      const orderResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/orders/phonepe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(orderData),
+        }
+      );
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        let errorMessage = errorData.message || "Failed to create order";
+        if (
+          errorData.errors &&
+          Array.isArray(errorData.errors) &&
+          errorData.errors.length > 0
+        ) {
+          const firstError = errorData.errors[0];
+          errorMessage = firstError.msg || firstError.message || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const orderResult = await orderResponse.json();
+
+      // Save shipping details to user profile for individual users
+      await saveShippingDetailsToProfile();
+
+      // Then initiate Contropay payment
+      const paymentResponse = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL || ""
+        }/api/payments/contropay/initiate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            amount: finalTotal * 100, // Convert rupees to paise
+            merchantTransactionId,
+            redirectUrl: `${window.location.origin}/api/payments/contropay/redirect?orderId=${orderResult.order.id}`,
+            merchantOrderId: orderResult.order.orderNumber,
+            chain: selectedChain,
+            token: selectedToken,
+          }),
+        }
+      );
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        if (errorData.demo_mode) {
+          toast({
+            title: "Contropay Setup Required",
+            description:
+              "Please configure your Contropay API credentials to enable crypto payments.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(
+          errorData.message || "Failed to initialize Contropay payment"
+        );
+      }
+
+      const data = await paymentResponse.json();
+
+      if (data.success) {
+        setContropayPaymentLinkId(data.paymentLinkId);
+        setContropayPaymentUrl(data.paymentUrl);
+        setContropayOrderId(orderResult.order.id || orderResult.order._id);
+        setContropayPaymentOpened(false);
+        setShowContropayRedirect(true);
+
+        // Store transaction details in localStorage for verification
+        localStorage.setItem(
+          "contropay_transaction",
+          JSON.stringify({
+            paymentLinkId: data.paymentLinkId,
+            orderId: orderResult.order.id || orderResult.order._id,
+            amount: finalTotal,
+            usdAmount: data.usdAmount,
+            chain: selectedChain,
+            token: selectedToken,
+            timestamp: Date.now(),
+          })
+        );
+      } else {
+        throw new Error(data.message || "Payment initialization failed");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initialize crypto payment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Check Contropay payment status after user completes payment
+  const checkContropayPaymentStatus = async () => {
+    if (!contropayPaymentLinkId) return;
+
+    setCheckingContropayStatus(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_BASE_URL || ""
+        }/api/payments/contropay/status/${contropayPaymentLinkId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.status === "completed") {
+          // Payment successful - clear cart and redirect
+          clearCart();
+          localStorage.removeItem("contropay_transaction");
+
+          toast({
+            title: "Payment Successful",
+            description: "Your crypto payment has been confirmed!",
+          });
+
+          setLocation(`/order-success?orderId=${contropayOrderId}`);
+        } else if (data.status === "expired" || data.status === "cancelled") {
+          toast({
+            title: "Payment Failed",
+            description: `Payment ${data.status}. Please try again.`,
+            variant: "destructive",
+          });
+          setShowContropayRedirect(false);
+        } else {
+          // Still pending or unconfirmed
+          toast({
+            title: "Payment Pending",
+            description:
+              "Your payment is still being processed. Please wait a moment and check again.",
+          });
+        }
+      } else {
+        throw new Error(data.message || "Failed to check payment status");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to check payment status",
+        variant: "destructive",
+      });
+    } finally {
+      setCheckingContropayStatus(false);
+    }
+  };
+
+  // Handle chain change - update token to default for that chain
+  const handleChainChange = (newChain: string) => {
+    setSelectedChain(newChain);
+    if (contropayConfig) {
+      const tokens = contropayConfig.chainTokens[newChain];
+      // Prefer USDT if available, otherwise first token
+      const defaultToken = tokens?.includes("USDT")
+        ? "USDT"
+        : tokens?.[0] || "USDT";
+      setSelectedToken(defaultToken);
     }
   };
 
@@ -1009,22 +1543,29 @@ const CheckoutPage = () => {
                   <div className="space-y-2">
                     {items.map((item) => {
                       // For clothing items with variants, check Stock collection
-                      const availableStock = item.variants && Object.keys(item.variants).length > 0
-                        ? getAvailableStock(item)
-                        : null;
-                      
+                      const availableStock =
+                        item.variants && Object.keys(item.variants).length > 0
+                          ? getAvailableStock(item)
+                          : null;
+
                       // Check stock issues: for clothing items check availableStock, for non-clothing check inStock flag
                       let hasStockIssue = false;
                       let stockMessage = "";
-                      
-                      if (item.variants && Object.keys(item.variants).length > 0) {
+
+                      if (
+                        item.variants &&
+                        Object.keys(item.variants).length > 0
+                      ) {
                         // Clothing items with variants
-                        hasStockIssue = availableStock !== null &&
-                          (availableStock === 0 || item.quantity > availableStock);
+                        hasStockIssue =
+                          availableStock !== null &&
+                          (availableStock === 0 ||
+                            item.quantity > availableStock);
                         if (hasStockIssue) {
-                          stockMessage = availableStock === 0
-                            ? "Out of stock"
-                            : `Only ${availableStock} available`;
+                          stockMessage =
+                            availableStock === 0
+                              ? "Out of stock"
+                              : `Only ${availableStock} available`;
                         }
                       } else {
                         // Non-clothing items (Action Figures, Wigs, etc.)
@@ -1082,6 +1623,33 @@ const CheckoutPage = () => {
 
                   {/* Totals */}
                   <div className="border-t border-[#333] pt-4 space-y-2">
+                    {/* Minimum cart value warning for business users (after discount) */}
+                    {isBusinessUser && businessMinCartValue > 0 && subtotalAfterDiscount < businessMinCartValue && (
+                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-2">
+                        <div className="flex items-center text-orange-400 font-medium text-sm mb-1">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          Minimum Order Value Required
+                        </div>
+                        <p className="text-xs text-orange-300">
+                          Business users must have a minimum cart value of ₹{businessMinCartValue.toLocaleString()} (after discount) to proceed. 
+                          Add ₹{(businessMinCartValue - subtotalAfterDiscount).toLocaleString()} more to checkout.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Minimum cart value warning for individual users with Posters/Stickers (after discount) */}
+                    {!isBusinessUser && hasPostersOrStickers && individualPostersStickersMinCartValue > 0 && subtotalAfterDiscount < individualPostersStickersMinCartValue && (
+                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-2">
+                        <div className="flex items-center text-orange-400 font-medium text-sm mb-1">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          Minimum Order Value Required
+                        </div>
+                        <p className="text-xs text-orange-300">
+                          Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹{individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed. 
+                          Add ₹{(individualPostersStickersMinCartValue - subtotalAfterDiscount).toLocaleString()} more to checkout.
+                        </p>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Subtotal</span>
                       <span className="text-white">
@@ -1137,7 +1705,9 @@ const CheckoutPage = () => {
                       </div>
                     ) : (
                       <>
-                        {!phonepeAvailable && !codEnabled ? (
+                        {!phonepeAvailable &&
+                        !codEnabled &&
+                        !contropayAvailable ? (
                           <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-6 text-center shadow-lg">
                             <div className="flex flex-col items-center space-y-3">
                               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50">
@@ -1287,6 +1857,141 @@ const CheckoutPage = () => {
                                 </div>
                               </div>
                             </div>
+
+                            {/* Contropay Crypto Option */}
+                            <div
+                              onClick={() => {
+                                if (contropayAvailable) {
+                                  setPaymentMethod("CONTROPAY");
+                                }
+                              }}
+                              className={`p-4 rounded-lg border-2 transition-all ${
+                                !contropayAvailable
+                                  ? "border-gray-600 bg-gray-800/50 cursor-not-allowed opacity-50"
+                                  : paymentMethod === "CONTROPAY"
+                                  ? "border-orange-500 bg-orange-500/10 cursor-pointer"
+                                  : "border-[#444] bg-[#2a2a2a] hover:border-orange-500/50 cursor-pointer"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                      paymentMethod === "CONTROPAY"
+                                        ? "border-orange-500 bg-orange-500"
+                                        : "border-gray-500"
+                                    }`}
+                                  >
+                                    {paymentMethod === "CONTROPAY" && (
+                                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                                    )}
+                                  </div>
+                                  <Bitcoin
+                                    className={`w-5 h-5 ${
+                                      !contropayAvailable
+                                        ? "text-gray-500"
+                                        : "text-orange-400"
+                                    }`}
+                                  />
+                                  <div>
+                                    <div
+                                      className={`font-medium ${
+                                        !contropayAvailable
+                                          ? "text-gray-500"
+                                          : "text-white"
+                                      }`}
+                                    >
+                                      Crypto Payment
+                                      {!contropayAvailable && (
+                                        <span className="ml-2 text-xs text-red-400">
+                                          (Disabled)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {!contropayAvailable
+                                        ? "This payment method is currently unavailable"
+                                        : "Pay with USDT, BTC, ETH, BNB & more"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Chain/Token Selector - shown when Contropay is selected */}
+                              {paymentMethod === "CONTROPAY" &&
+                                contropayAvailable &&
+                                contropayConfig && (
+                                  <div className="mt-4 pt-4 border-t border-[#444]">
+                                    <div className="grid grid-cols-2 gap-3">
+                                      {/* Chain Selector */}
+                                      <div>
+                                        <label className="text-xs text-gray-400 mb-1 block">
+                                          Network
+                                        </label>
+                                        <div className="relative">
+                                          <select
+                                            value={selectedChain}
+                                            onChange={(e) =>
+                                              handleChainChange(e.target.value)
+                                            }
+                                            className="w-full bg-[#1a1a1a] border border-[#555] rounded-lg px-3 py-2 text-white text-sm appearance-none cursor-pointer focus:border-orange-500 focus:outline-none"
+                                          >
+                                            {contropayConfig.chains.map(
+                                              (chain) => (
+                                                <option
+                                                  key={chain}
+                                                  value={chain}
+                                                >
+                                                  {contropayConfig
+                                                    .chainDisplayNames[chain] ||
+                                                    chain}
+                                                </option>
+                                              )
+                                            )}
+                                          </select>
+                                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        </div>
+                                      </div>
+
+                                      {/* Token Selector */}
+                                      <div>
+                                        <label className="text-xs text-gray-400 mb-1 block">
+                                          Token
+                                        </label>
+                                        <div className="relative">
+                                          <select
+                                            value={selectedToken}
+                                            onChange={(e) =>
+                                              setSelectedToken(e.target.value)
+                                            }
+                                            className="w-full bg-[#1a1a1a] border border-[#555] rounded-lg px-3 py-2 text-white text-sm appearance-none cursor-pointer focus:border-orange-500 focus:outline-none"
+                                          >
+                                            {contropayConfig.chainTokens[
+                                              selectedChain
+                                            ]?.map((token) => (
+                                              <option key={token} value={token}>
+                                                {token}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* USD Equivalent Display */}
+                                    {contropayConfig.inrUsdRate && (
+                                      <div className="mt-2 text-xs text-gray-400 text-center">
+                                        ≈ $
+                                        {(
+                                          finalTotal *
+                                          contropayConfig.inrUsdRate
+                                        ).toFixed(2)}{" "}
+                                        USD
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                            </div>
                           </>
                         )}
                       </>
@@ -1311,21 +2016,29 @@ const CheckoutPage = () => {
                     onClick={
                       paymentMethod === "PHONEPE"
                         ? initializePhonepePayment
+                        : paymentMethod === "CONTROPAY"
+                        ? initializeContropayPayment
                         : createCODOrder
                     }
                     disabled={
                       isProcessing ||
                       paymentSettingsLoading ||
                       (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
-                      (paymentMethod === "cod" && !codEnabled)
+                      (paymentMethod === "cod" && !codEnabled) ||
+                      (paymentMethod === "CONTROPAY" && !contropayAvailable) ||
+                      (isBusinessUser && businessMinCartValue > 0 && subtotalAfterDiscount < businessMinCartValue) ||
+                      (!isBusinessUser && hasPostersOrStickers && individualPostersStickersMinCartValue > 0 && subtotalAfterDiscount < individualPostersStickersMinCartValue)
                     }
                     className={`w-full py-3 ${
                       paymentMethod === "PHONEPE"
                         ? "bg-purple-600 hover:bg-purple-700"
+                        : paymentMethod === "CONTROPAY"
+                        ? "bg-orange-600 hover:bg-orange-700"
                         : "bg-green-600 hover:bg-green-700"
                     } text-white ${
                       (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
-                      (paymentMethod === "cod" && !codEnabled)
+                      (paymentMethod === "cod" && !codEnabled) ||
+                      (paymentMethod === "CONTROPAY" && !contropayAvailable)
                         ? "opacity-50 cursor-not-allowed"
                         : ""
                     }`}
@@ -1342,6 +2055,13 @@ const CheckoutPage = () => {
                           ? "PhonePe Unavailable"
                           : "Pay with PhonePe"}
                       </div>
+                    ) : paymentMethod === "CONTROPAY" ? (
+                      <div className="flex items-center">
+                        <Bitcoin className="w-5 h-5 mr-2" />
+                        {!contropayAvailable
+                          ? "Crypto Unavailable"
+                          : `Pay with ${selectedToken}`}
+                      </div>
                     ) : (
                       <div className="flex items-center">
                         <Wallet className="w-5 h-5 mr-2" />
@@ -1353,6 +2073,7 @@ const CheckoutPage = () => {
                   {/* Show message if no payment methods available */}
                   {!phonepeAvailable &&
                     !codEnabled &&
+                    !contropayAvailable &&
                     !paymentSettingsLoading && (
                       <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-5 text-center shadow-lg">
                         <div className="flex items-center justify-center space-x-3 mb-2">
@@ -1386,6 +2107,22 @@ const CheckoutPage = () => {
                       <p className="text-xs text-gray-400">
                         <strong>Supported:</strong> UPI, Credit/Debit Cards, Net
                         Banking, Wallets
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentMethod === "CONTROPAY" && (
+                    <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">
+                      <div className="flex items-center text-orange-400 mb-2">
+                        <Bitcoin className="w-4 h-4 mr-2" />
+                        Crypto Payment
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        <strong>Supported:</strong> USDT, BTC, ETH, BNB, LTC,
+                        TRX, DAI on multiple networks
+                      </p>
+                      <p className="text-xs text-yellow-400 mt-1">
+                        Note: Payment links expire after 10 minutes
                       </p>
                     </div>
                   )}
@@ -1449,6 +2186,127 @@ const CheckoutPage = () => {
                 <p className="text-xs text-gray-400">
                   Your payment information is encrypted and secure. PhonePe
                   follows PCI DSS compliance standards.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contropay Crypto Redirect Modal */}
+      {showContropayRedirect && contropayPaymentUrl && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bitcoin className="w-8 h-8 text-orange-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {contropayPaymentOpened
+                  ? "Complete Your Payment"
+                  : "Crypto Payment"}
+              </h3>
+              <p className="text-gray-400 mb-6">
+                {contropayPaymentOpened
+                  ? "Complete your payment in the opened window, then click 'I've Completed Payment' below."
+                  : "Click below to open Contropay's secure payment page in a new tab."}
+              </p>
+
+              <div className="bg-[#2a2a2a] p-4 rounded-lg border border-[#444] mb-6">
+                <p className="text-sm text-gray-400 mb-2">
+                  Transaction Details:
+                </p>
+                <p className="text-white font-medium">
+                  Amount: ₹{finalTotal.toLocaleString()}
+                  {contropayConfig && (
+                    <span className="text-gray-400 text-sm ml-2">
+                      (≈ ${(finalTotal * contropayConfig.inrUsdRate).toFixed(2)}{" "}
+                      USD)
+                    </span>
+                  )}
+                </p>
+                <p className="text-orange-400 text-sm mt-1">
+                  Paying with: {selectedToken} on{" "}
+                  {contropayConfig?.chainDisplayNames[selectedChain] ||
+                    selectedChain}
+                </p>
+                <p className="text-gray-500 text-xs mt-2">
+                  Payment ID: {contropayPaymentLinkId}
+                </p>
+              </div>
+
+              {!contropayPaymentOpened ? (
+                <div className="flex space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowContropayRedirect(false)}
+                    className="flex-1 border-gray-500 text-gray-300 hover:bg-gray-500/20"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      window.open(contropayPaymentUrl, "_blank");
+                      setContropayPaymentOpened(true);
+                    }}
+                    className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                  >
+                    <Bitcoin className="w-4 h-4 mr-2" />
+                    Open Payment Page
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Button
+                    onClick={checkContropayPaymentStatus}
+                    disabled={checkingContropayStatus}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {checkingContropayStatus ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Checking Payment Status...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        I've Completed Payment
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(contropayPaymentUrl, "_blank")}
+                      className="flex-1 border-gray-500 text-gray-300 hover:bg-gray-500/20"
+                    >
+                      Reopen Payment Page
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowContropayRedirect(false);
+                        setContropayPaymentOpened(false);
+                      }}
+                      className="flex-1 border-red-500 text-red-400 hover:bg-red-500/20"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-[#2a2a2a] rounded border border-[#444]">
+                <div className="flex items-center text-green-400 mb-2">
+                  <Shield className="w-4 h-4 mr-2" />
+                  <span className="text-sm font-medium">
+                    Secure Crypto Payment
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {contropayPaymentOpened
+                    ? "After completing payment, it may take a few moments for the blockchain to confirm. Click the button above to check status."
+                    : "Your transaction is secured by blockchain technology. Payment links expire after 10 minutes."}
                 </p>
               </div>
             </div>

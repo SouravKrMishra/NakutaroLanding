@@ -24,6 +24,9 @@ import {
   Link as LinkIcon,
   Copy,
   Check,
+  AlertCircle,
+  Home,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -142,6 +145,7 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"not_found" | "unavailable" | "server_error" | "network_error" | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState<{
@@ -241,26 +245,31 @@ const ProductDetailPage = () => {
       if (err.response) {
         console.error("Response status:", err.response.status);
         console.error("Response data:", err.response.data);
-        if (err.response.status === 404) {
-          setError("This product is no longer available.");
+        const status = err.response.status;
+        if (status === 404) {
+          setErrorType("not_found");
+          setError("This product could not be found. It may have been removed or the URL is incorrect.");
+        } else if (status === 403 || status === 401) {
+          setErrorType("unavailable");
+          setError("This product is not available or you don't have permission to view it.");
+        } else if (status >= 500) {
+          setErrorType("server_error");
+          setError("We're experiencing technical difficulties. Please try again later.");
         } else {
-          setError(
-            `Failed to fetch product details. Server error: ${err.response.status}`
-          );
+          setErrorType("unavailable");
+          setError("This product is currently unavailable.");
         }
       } else if (err.request) {
         console.error(
           "No response received from server. Is the backend running?"
         );
         console.error("Request URL:", err.config?.url);
-        setError(
-          "Failed to fetch product details. Backend server is not responding."
-        );
+        setErrorType("network_error");
+        setError("Unable to connect to the server. Please check your internet connection and try again.");
       } else {
         console.error("Error setting up request:", err.message);
-        setError(
-          "Failed to fetch product details. Please check your connection."
-        );
+        setErrorType("network_error");
+        setError("Something went wrong while loading the product. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -854,17 +863,212 @@ const ProductDetailPage = () => {
   }
 
   if (error) {
+    // Determine icon and title based on error type
+    const getErrorDetails = () => {
+      switch (errorType) {
+        case "not_found":
+          return {
+            icon: Search,
+            iconColor: "text-orange-400",
+            iconBg: "bg-orange-500/10",
+            title: "Product Not Found",
+            description: error,
+            showProductId: true,
+          };
+        case "unavailable":
+          return {
+            icon: Package,
+            iconColor: "text-yellow-400",
+            iconBg: "bg-yellow-500/10",
+            title: "Product Unavailable",
+            description: error,
+            showProductId: false,
+          };
+        case "server_error":
+          return {
+            icon: AlertCircle,
+            iconColor: "text-red-400",
+            iconBg: "bg-red-500/10",
+            title: "Server Error",
+            description: error,
+            showProductId: false,
+          };
+        case "network_error":
+          return {
+            icon: AlertCircle,
+            iconColor: "text-blue-400",
+            iconBg: "bg-blue-500/10",
+            title: "Connection Error",
+            description: error,
+            showProductId: false,
+          };
+        default:
+          return {
+            icon: AlertCircle,
+            iconColor: "text-gray-400",
+            iconBg: "bg-gray-500/10",
+            title: "Error Loading Product",
+            description: error,
+            showProductId: false,
+          };
+      }
+    };
+
+    const errorDetails = getErrorDetails();
+    const ErrorIcon = errorDetails.icon;
+
     return (
-      <div className="pt-28 pb-16 flex flex-col items-center justify-center min-h-[50vh]">
-        <p className="text-red-500">{error}</p>
+      <div className="min-h-screen bg-[#181818] text-white pt-28 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto">
+            {/* Error Icon */}
+            <div className={`w-24 h-24 ${errorDetails.iconBg} rounded-full flex items-center justify-center mb-6`}>
+              <ErrorIcon className={`w-12 h-12 ${errorDetails.iconColor}`} />
+            </div>
+
+            {/* Error Title */}
+            <h1 className="text-3xl font-bold text-white mb-4 text-center">
+              {errorDetails.title}
+            </h1>
+
+            {/* Error Description */}
+            <p className="text-gray-400 text-center mb-2 max-w-md">
+              {errorDetails.description}
+            </p>
+
+            {/* Product ID if available */}
+            {errorDetails.showProductId && productId && (
+              <p className="text-sm text-gray-500 mb-8">
+                Product ID: <span className="font-mono">{productId}</span>
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full sm:w-auto">
+              <Button
+                onClick={() => setLocation("/products")}
+                className="bg-accent hover:bg-accent/80 text-white px-6 py-3"
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Browse Products
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="border-[#555] bg-[#1E1E1E] text-white hover:bg-[#2D2D2D] hover:text-white hover:border-[#666] px-6 py-3"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Go to Home
+              </Button>
+              {errorType === "network_error" || errorType === "server_error" ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setError(null);
+                    setErrorType(null);
+                    fetchProduct();
+                  }}
+                  className="border-[#555] bg-[#1E1E1E] text-white hover:bg-[#2D2D2D] hover:text-white hover:border-[#666] px-6 py-3"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              ) : null}
+            </div>
+
+            {/* Helpful Suggestions */}
+            <div className="mt-12 w-full">
+              <div className="bg-[#1E1E1E] border border-[#2D2D2D] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  What can you do?
+                </h3>
+                <ul className="space-y-3 text-gray-400">
+                  {errorType === "not_found" && (
+                    <>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>Check if the product URL is correct</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>The product may have been removed or is no longer available</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>Browse our collection to find similar products</span>
+                      </li>
+                    </>
+                  )}
+                  {(errorType === "server_error" || errorType === "network_error") && (
+                    <>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>Check your internet connection</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>Wait a few moments and try again</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>If the problem persists, please contact support</span>
+                      </li>
+                    </>
+                  )}
+                  {errorType === "unavailable" && (
+                    <>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>This product may be temporarily out of stock</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <ChevronRight className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+                        <span>Check back later or browse similar products</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!product) {
+  if (!product && !loading) {
     return (
-      <div className="pt-28 pb-16 text-center">
-        <p>Product not found.</p>
+      <div className="min-h-screen bg-[#181818] text-white pt-28 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-2xl mx-auto">
+            <div className="w-24 h-24 bg-orange-500/10 rounded-full flex items-center justify-center mb-6">
+              <Search className="w-12 h-12 text-orange-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-4 text-center">
+              Product Not Found
+            </h1>
+            <p className="text-gray-400 text-center mb-8 max-w-md">
+              The product you're looking for doesn't exist or has been removed.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={() => setLocation("/products")}
+                className="bg-accent hover:bg-accent/80 text-white px-6 py-3"
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Browse Products
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/")}
+                className="border-[#444] text-gray-300 hover:bg-[#2D2D2D] hover:text-white px-6 py-3"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Go to Home
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

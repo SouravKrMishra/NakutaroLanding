@@ -60,6 +60,8 @@ const productSchema = new mongoose.Schema(
         "Action Figures",
         "Wigs",
         "Accessories",
+        "Posters",
+        "Stickers",
         "Other",
       ],
       default: "Other",

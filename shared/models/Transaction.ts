@@ -5,6 +5,11 @@ export interface ITransaction extends Document {
   orderId?: mongoose.Types.ObjectId;
   merchantTransactionId: string;
   phonepeTransactionId?: string;
+  // Contropay specific fields
+  contropayPaymentLinkId?: string;
+  contropayWalletAddress?: string;
+  chain?: string; // BSC, ETH, TRON, etc.
+  token?: string; // USDT, BNB, BTC, etc.
   amount: number;
   currency: string;
   paymentMethod: string;
@@ -40,6 +45,20 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
       index: true,
     },
+    // Contropay specific fields
+    contropayPaymentLinkId: {
+      type: String,
+      index: true,
+    },
+    contropayWalletAddress: {
+      type: String,
+    },
+    chain: {
+      type: String, // BSC, ETH, TRON, POLYGON, BTC, LITECOIN
+    },
+    token: {
+      type: String, // USDT, BNB, ETH, BTC, etc.
+    },
     amount: {
       type: Number,
       required: true,
@@ -51,7 +70,7 @@ const transactionSchema = new Schema<ITransaction>(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ["PHONEPE", "CARD", "COD"],
+      enum: ["PHONEPE", "CARD", "COD", "CONTROPAY"],
     },
     status: {
       type: String,
