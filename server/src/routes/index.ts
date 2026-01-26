@@ -9,6 +9,7 @@ import cartRoutes from "./cartRoutes.js";
 import paymentRoutes from "./paymentRoutes.js";
 import couponRoutes from "./couponRoutes.js";
 import settingsRoutes from "./settingsRoutes.js";
+import shiprocketRoutes from "./shiprocketRoutes.js";
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use("/newsletter", newsletterRoutes);
 router.use("/auth", authRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/settings", settingsRoutes);
+router.use("/shiprocket", shiprocketRoutes);
 // Mount catch-all routes last
 router.use("/", productRoutes);
 router.use("/", recommendationRoutes);

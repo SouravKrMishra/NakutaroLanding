@@ -168,6 +168,10 @@ const ProductDetailPage = () => {
   const [pincodeStatus, setPincodeStatus] = useState<{
     estimatedDate: string;
     message: string;
+    courierName?: string | null;
+    estimatedDays?: number | null;
+    codAvailable?: boolean;
+    shippingCost?: number | null;
   } | null>(null);
   const [pincodeError, setPincodeError] = useState<string | null>(null);
   const [pincodeChecking, setPincodeChecking] = useState(false);
@@ -1156,7 +1160,7 @@ const ProductDetailPage = () => {
     return hasHtmlTags ? trimmed : trimmed.replace(/\n/g, "<br>");
   };
 
-  const handlePincodeCheck = () => {
+  const handlePincodeCheck = async () => {
     if (!pincode || !/^\d{6}$/.test(pincode)) {
       setPincodeError("Please enter a valid 6-digit PIN code.");
       setPincodeStatus(null);
@@ -1166,16 +1170,50 @@ const ProductDetailPage = () => {
     setPincodeChecking(true);
     setPincodeError(null);
 
-    setTimeout(() => {
-      const offset = 3 + ((parseInt(pincode.slice(-2), 10) || 0) % 4); // 3-6 days
-      const estimatedDate = formatDeliveryDate(offset);
+    try {
+      const response = await axios.post(
+        buildApiUrl("/api/shiprocket/check-serviceability"),
+        {
+          deliveryPincode: pincode,
+          cod: true, // Check for COD availability
+        }
+      );
 
+      const data = response.data;
+
+      if (data.serviceable) {
+        setPincodeStatus({
+          estimatedDate: data.estimatedDeliveryDate,
+          message: data.message,
+          courierName: data.courierName,
+          estimatedDays: data.estimatedDeliveryDays,
+          codAvailable: data.codAvailable,
+          shippingCost: data.shippingCost,
+        });
+        setPincodeError(null);
+      } else {
+        setPincodeError(data.message || "Delivery not available to this PIN code.");
+        setPincodeStatus(null);
+      }
+    } catch (error: any) {
+      console.error("Pincode check failed:", error);
+      
+      // Fallback to local estimation if API fails
+      const offset = 3 + ((parseInt(pincode.slice(-2), 10) || 0) % 4);
+      const estimatedDate = formatDeliveryDate(offset);
+      
       setPincodeStatus({
         estimatedDate,
         message: `Estimated delivery by ${estimatedDate}`,
+        courierName: null,
+        estimatedDays: offset,
+        codAvailable: true,
+        shippingCost: null,
       });
+      setPincodeError(null);
+    } finally {
       setPincodeChecking(false);
-    }, 600);
+    }
   };
 
   const incrementQuantity = () => {
@@ -3174,10 +3212,43 @@ const ProductDetailPage = () => {
                 )}
 
                 {pincodeStatus && (
-                  <div className="rounded-lg bg-green-900/20 border border-green-800/50 px-4 py-2.5">
-                    <p className="text-sm font-medium text-green-400">
-                      {pincodeStatus.message}
-                    </p>
+                  <div className="rounded-lg bg-green-900/20 border border-green-800/50 px-4 py-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded bg-green-500/20">
+                        <Clock className="h-3.5 w-3.5 text-green-400" />
+                      </div>
+                      <p className="text-sm font-medium text-green-400">
+                        {pincodeStatus.message}
+                      </p>
+                    </div>
+                    
+                    {/* Additional delivery details */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      {pincodeStatus.courierName && (
+                        <div className="text-xs text-gray-400">
+                          <span className="text-gray-500">Courier:</span>{" "}
+                          <span className="text-gray-300">{pincodeStatus.courierName}</span>
+                        </div>
+                      )}
+                      {pincodeStatus.estimatedDays != null && (
+                        <div className="text-xs text-gray-400">
+                          <span className="text-gray-500">Delivery:</span>{" "}
+                          <span className="text-gray-300">
+                            {pincodeStatus.estimatedDays === 0 
+                              ? "Same day" 
+                              : `${pincodeStatus.estimatedDays} day${pincodeStatus.estimatedDays === 1 ? "" : "s"}`}
+                          </span>
+                        </div>
+                      )}
+                      {pincodeStatus.codAvailable !== undefined && (
+                        <div className="text-xs text-gray-400">
+                          <span className="text-gray-500">COD:</span>{" "}
+                          <span className={pincodeStatus.codAvailable ? "text-green-400" : "text-red-400"}>
+                            {pincodeStatus.codAvailable ? "Available" : "Not Available"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
