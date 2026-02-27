@@ -9,8 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useWishlist } from "@/lib/WishlistContext.tsx";
+import { useCart } from "@/lib/CartContext.tsx";
+import { useToast } from "@/hooks/use-toast.ts";
 import { Link } from "wouter";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
@@ -34,7 +37,9 @@ import {
 
 const DashboardPage = () => {
   const [, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const { addItem: addToCart } = useCart();
   const {
     wishlistItems,
     removeFromWishlist,
@@ -54,6 +59,20 @@ const DashboardPage = () => {
   const analyticsDescription = isIndividual
     ? "Monitor your personal spend and shopping patterns"
     : "Track your anime figure inventory and performance";
+
+  const formatOrderStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      ORDER_REQUESTED: "Order Requested",
+      PENDING_PAYMENT: "Pending Payment",
+      ORDER_SUCCESS: "Confirmed",
+      ORDER_FAILED: "Failed",
+      PROCESSING: "Processing",
+      SHIPPED: "Shipped",
+      DELIVERED: "Delivered",
+      CANCELLED: "Cancelled",
+    };
+    return labels[status] || status.replace(/_/g, " ");
+  };
 
   // State for recommendations
   const [productRecommendations, setProductRecommendations] = React.useState<
@@ -152,48 +171,39 @@ const DashboardPage = () => {
 
         // Helper function to check if an order is completed/paid (not pending or failed)
         const isOrderCompleted = (order: any): boolean => {
-          const status = order.status?.toLowerCase() || "";
+          const status = order.status || "";
           const paymentStatus = order.paymentStatus?.toUpperCase() || "";
 
-          // Exclude cancelled orders
-          if (status === "cancelled") {
+          if (status === "CANCELLED" || status === "ORDER_FAILED") {
             return false;
           }
-
-          // Exclude orders with pending or failed payment status
           if (paymentStatus === "PENDING" || paymentStatus === "FAILED") {
             return false;
           }
-
-          // Exclude orders with pending payment status
           if (
-            status === "pending" ||
-            status === "pending_payment" ||
-            status === "payment_failed"
+            status === "ORDER_REQUESTED" ||
+            status === "PENDING_PAYMENT"
           ) {
             return false;
           }
-
-          // Include orders that are completed/paid/confirmed
           return (
             paymentStatus === "COMPLETED" ||
-            status === "processing" ||
-            status === "shipped" ||
-            status === "delivered" ||
-            status === "paid" ||
-            status === "confirmed"
+            status === "ORDER_SUCCESS" ||
+            status === "PROCESSING" ||
+            status === "SHIPPED" ||
+            status === "DELIVERED"
           );
         };
 
         // Filter out pending/failed orders for analytics
         const completedOrders = orders.filter(isOrderCompleted);
 
-        // Get all orders for display (all orders, not just completed)
+        // All orders for display – raw status (e.g. PROCESSING) so badge/filter comparisons work
         const recentOrdersData = orders.map((order: any) => ({
           id: order.orderNumber,
           customer: `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}`,
           amount: `₹${order.total.toLocaleString()}`,
-          status: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+          status: order.status,
           date: new Date(order.orderDate).toLocaleDateString(),
           items: order.items
             .map((item: any) => `${item.quantity}x ${item.name}`)
@@ -370,9 +380,152 @@ const DashboardPage = () => {
   };
 
   const handleMoveToCart = async (item: any) => {
+    if (!item?.inStock) {
+      toast({
+        title: "Out of stock",
+        description: "This item is currently unavailable.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Login required",
+        description: (
+          <span>
+            Please{" "}
+            <button
+              type="button"
+              onClick={() => setLocation("/login/individual")}
+              className="underline underline-offset-2 hover:text-white hover:bg-white/20 hover:px-1.5 hover:py-0.5 hover:rounded transition-all duration-200 cursor-pointer font-medium"
+            >
+              log in
+            </button>{" "}
+            to add items to your cart.
+          </span>
+        ),
+        variant: "destructive",
+      });
+      return;
+    }
+    const isClothingItem = ["T-Shirts", "Hoodies", "Sweatshirt"].includes(
+      item.category || ""
+    );
+    if (isClothingItem) {
+      toast({
+        title: "Size selection required",
+        description: "Please choose a size on the product page.",
+        variant: "default",
+      });
+      setLocation(`/product/${(item as { slug?: string }).slug || item.id}`);
+      return;
+    }
     try {
+      const priceStr =
+        typeof item.price === "string"
+          ? item.price
+          : `₹${Number(item.price || 0).toLocaleString()}`;
+      await addToCart(
+        {
+          id: String(item.id),
+          productId: item.id,
+          slug: (item as { slug?: string }).slug ?? null,
+          productSlug: (item as { slug?: string }).slug ?? null,
+          name: item.name,
+          price: priceStr,
+          image: item.image || "",
+          category: item.category || "",
+          inStock: Boolean(item.inStock),
+        },
+        1
+      );
       await removeFromWishlist(item.id);
-    } catch (error) {}
+      toast({
+        title: "Added to cart",
+        description: `${item.name} has been added to your cart and removed from your wishlist.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddRecommendationToCart = async (product: any) => {
+    if (!product?.inStock) {
+      toast({
+        title: "Out of stock",
+        description: "This item is currently unavailable.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Login required",
+        description: (
+          <span>
+            Please{" "}
+            <button
+              type="button"
+              onClick={() => setLocation("/login/individual")}
+              className="underline underline-offset-2 hover:text-white hover:bg-white/20 hover:px-1.5 hover:py-0.5 hover:rounded transition-all duration-200 cursor-pointer font-medium"
+            >
+              log in
+            </button>{" "}
+            to add items to your cart.
+          </span>
+        ),
+        variant: "destructive",
+      });
+      return;
+    }
+    const isClothingItem = ["T-Shirts", "Hoodies", "Sweatshirt"].includes(
+      product.category || ""
+    );
+    if (isClothingItem) {
+      toast({
+        title: "Size selection required",
+        description: "Please choose a size on the product page.",
+        variant: "default",
+      });
+      setLocation(`/product/${product.slug || product.id}`);
+      return;
+    }
+    try {
+      const priceStr =
+        typeof product.price === "string"
+          ? product.price
+          : `₹${Number(product.price || 0).toLocaleString()}`;
+      await addToCart(
+        {
+          id: String(product.id),
+          productId: product.id,
+          slug: product.slug ?? null,
+          productSlug: product.slug ?? null,
+          name: product.name,
+          price: priceStr,
+          image: product.image || "",
+          category: product.category || "",
+          inStock: Boolean(product.inStock),
+        },
+        1
+      );
+      toast({
+        title: "Added to cart",
+        description: `${product.name} has been added to your cart.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addPurchaseToHistory = async (productData: {
@@ -577,7 +730,9 @@ const DashboardPage = () => {
                   <div>
                     <p className="text-sm text-gray-400">Location</p>
                     <p className="font-medium text-white">
-                      {user?.city}, {user?.state}
+                      {user?.addresses && user.addresses.length > 0
+                        ? `${user.addresses[0].city}, ${user.addresses[0].state}`
+                        : "Not set"}
                     </p>
                   </div>
                 </div>
@@ -585,101 +740,116 @@ const DashboardPage = () => {
             </Card>
           )}
 
-          {/* Orders */}
-          <Card className="bg-[#1a1a1a] border-[#333]">
-            <CardHeader>
+          {/* Orders - show only recent 5, fixed height */}
+          <Card className="bg-[#1a1a1a] border-[#333] flex flex-col min-h-0">
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center text-accent">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    Orders
+                    Recent Orders
                   </CardTitle>
                   <CardDescription>
                     {isIndividual
-                      ? "All your orders"
-                      : "All business transactions"}
+                      ? "Your latest orders"
+                      : "Latest business transactions"}
                   </CardDescription>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
+                  className="border-accent text-accent hover:bg-accent/20 hover:text-accent shrink-0"
                   onClick={() => setLocation("/orders")}
                 >
-                  View Details
+                  View all
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+            <CardContent className="pt-0 flex-1 min-h-0 flex flex-col">
+              <div className="space-y-2 max-h-[280px] overflow-y-auto overflow-x-hidden pr-1 scrollbar-thin">
                 {ordersLoading ? (
-                  <div className="text-center py-8">
-                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading orders...</p>
+                  <div className="text-center py-6">
+                    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                    <p className="text-gray-400 text-sm">Loading orders...</p>
                   </div>
                 ) : ordersError ? (
-                  <div className="text-center py-8">
-                    <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-2">Unable to load orders</p>
-                    <p className="text-sm text-gray-500">{ordersError}</p>
+                  <div className="text-center py-6">
+                    <BarChart3 className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400 text-sm mb-2">Unable to load orders</p>
+                    <p className="text-xs text-gray-500 mb-3">{ordersError}</p>
                     <Button
-                      className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                      className="bg-accent hover:bg-accent/80 text-white text-sm"
                       onClick={() => window.location.reload()}
                     >
                       Try Again
                     </Button>
                   </div>
                 ) : recentOrders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-2">No orders found</p>
-                    <p className="text-sm text-gray-500">
+                  <div className="text-center py-6">
+                    <BarChart3 className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400 text-sm mb-1">No orders yet</p>
+                    <p className="text-xs text-gray-500">
                       Your orders will appear here.
                     </p>
                   </div>
                 ) : (
-                  recentOrders.map((order, index) => (
+                  recentOrders.slice(0, 3).map((order, index) => (
                     <div
-                      key={index}
-                      className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg"
+                      key={order.id ?? index}
+                      className="flex items-center justify-between gap-3 p-3 bg-[#2a2a2a] rounded-lg hover:bg-[#2f2f2f] transition-colors border border-transparent hover:border-[#333]"
                     >
-                      <div>
-                        <p className="font-medium text-white">{order.id}</p>
-                        <p className="text-sm text-gray-400">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-white text-sm truncate" title={order.id}>
+                          {order.id}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate" title={order.customer}>
                           {order.customer}
                         </p>
-                        <p className="text-xs text-accent">{order.items}</p>
+                        <p className="text-xs text-accent truncate mt-0.5" title={order.items}>
+                          {order.items}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-white">{order.amount}</p>
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                        <p className="font-semibold text-white text-sm whitespace-nowrap">{order.amount}</p>
+                        <p className="text-[10px] text-gray-500">{order.date}</p>
                         <Badge
                           variant={
-                            order.status === "Delivered" ||
-                            order.status === "CONFIRMED"
+                            order.status === "DELIVERED" ||
+                            order.status === "ORDER_SUCCESS"
                               ? "default"
-                              : order.status === "Processing"
+                              : order.status === "PROCESSING"
                               ? "secondary"
                               : "outline"
                           }
-                          className={`mt-1 hover:bg-transparent ${
-                            order.status === "Delivered" ||
-                            order.status === "CONFIRMED"
+                          className={`text-[10px] px-1.5 py-0 hover:bg-transparent ${
+                            order.status === "DELIVERED" ||
+                            order.status === "ORDER_SUCCESS"
                               ? "bg-green-500/20 text-green-400 border-green-500/30"
-                              : order.status === "Processing"
+                              : order.status === "PROCESSING"
                               ? "bg-accent/20 text-accent border-accent/30"
                               : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
                           }`}
                         >
-                          {order.status === "CONFIRMED"
-                            ? "Confirmed"
-                            : order.status}
+                          {formatOrderStatus(order.status)}
                         </Badge>
                       </div>
                     </div>
                   ))
                 )}
               </div>
+              {!ordersLoading && !ordersError && recentOrders.length > 5 && (
+                <p className="text-xs text-gray-500 mt-3 text-center">
+                  Showing 3 of {recentOrders.length} orders ·{" "}
+                  <button
+                    type="button"
+                    className="text-accent hover:underline"
+                    onClick={() => setLocation("/orders")}
+                  >
+                    View all
+                  </button>
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -773,8 +943,9 @@ const DashboardPage = () => {
                           {
                             recentOrders.filter(
                               (order) =>
-                                order.status === "Processing" ||
-                                order.status === "Pending"
+                                order.status === "PROCESSING" ||
+                                order.status === "ORDER_REQUESTED" ||
+                                order.status === "PENDING_PAYMENT"
                             ).length
                           }
                         </span>
@@ -958,107 +1129,169 @@ const DashboardPage = () => {
         <div className="mt-8">
           <Card className="bg-[#1a1a1a] border-[#333]">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center text-accent">
                     <Heart className="w-5 h-5 mr-2" />
-                    Wishlist Management
+                    Wishlist
                   </CardTitle>
                   <CardDescription>
-                    Track items you want to order later
+                    {wishlistItems?.length
+                      ? `${wishlistItems.length} item${wishlistItems.length === 1 ? "" : "s"} saved for later`
+                      : "Save items you want to order later"}
                   </CardDescription>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
+                  className="border-accent text-accent hover:bg-accent/20 hover:text-accent shrink-0 w-full sm:w-auto"
                   onClick={() => setLocation("/products")}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Items
+                  Add items
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {wishlistLoading ? (
-                <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading wishlist...</p>
+                <div className="text-center py-10">
+                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">Loading wishlist...</p>
                 </div>
               ) : !wishlistItems || wishlistItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-2">Your wishlist is empty</p>
-                  <p className="text-sm text-gray-500">
-                    Browse our catalog and add items you'd like to order later
+                <div className="text-center py-10 px-4 rounded-xl bg-[#1f1f1f] border border-[#2a2a2a]">
+                  <div className="w-14 h-14 rounded-full bg-[#2a2a2a] flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-7 h-7 text-gray-500" />
+                  </div>
+                  <p className="text-white font-medium mb-1">Your wishlist is empty</p>
+                  <p className="text-sm text-gray-400 mb-5 max-w-sm mx-auto">
+                    Add products from the catalog and they’ll show up here so you can order later.
                   </p>
                   <Button
-                    className="mt-4 bg-accent hover:bg-accent/80 text-white"
+                    className="bg-accent hover:bg-accent/90 text-white"
                     onClick={() => setLocation("/products")}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Browse Products
+                    Browse products
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {(wishlistItems || []).map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-white">
-                            {item.name}
-                          </h4>
-                          <div className="flex items-center space-x-2">
-                            <Badge
-                              variant="outline"
-                              className={`hover:bg-transparent ${
-                                item.inStock
-                                  ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                  : "bg-red-500/20 text-red-400 border-red-500/30"
-                              }`}
-                            >
-                              {item.inStock ? "In Stock" : "Out of Stock"}
-                            </Badge>
+                <ScrollArea className="max-h-[400px] pr-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+                    {(wishlistItems || []).map((item) => {
+                      const productHref = `/product/${(item as { slug?: string }).slug || item.id}`;
+                      const displayPrice =
+                        typeof item.price === "string" && item.price.startsWith("₹")
+                          ? item.price
+                          : `₹${Number(String(item.price).replace(/[^\d.]/g, "") || 0).toLocaleString("en-IN")}`;
+                      return (
+                        <div
+                          key={item.id}
+                          className="group flex gap-4 p-4 bg-[#2a2a2a] rounded-xl border border-[#333] hover:border-accent/40 hover:bg-[#323232] transition-all duration-200"
+                        >
+                          <Link
+                            href={productHref}
+                            className="relative shrink-0 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-[#2a2a2a] rounded-lg"
+                            aria-label={`View ${item.name}`}
+                          >
+                            <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444]">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23333'/%3E%3Ctext x='32' y='32' text-anchor='middle' dy='.3em' fill='%23666' font-size='8'%3EImage%3C/text%3E%3C/svg%3E";
+                                }}
+                              />
+                            </div>
+                            {!item.inStock && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded">
+                                Out
+                              </div>
+                            )}
+                          </Link>
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              <Link
+                                href={productHref}
+                                className="block font-medium text-white text-sm leading-snug line-clamp-2 mb-1.5 hover:text-accent transition-colors focus:outline-none focus:text-accent"
+                              >
+                                {item.name}
+                              </Link>
+                              {item.category && (
+                                <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                                  <span className="px-2 py-0.5 rounded-full bg-[#1f1f1f] border border-[#333] text-gray-400">
+                                    {item.category}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-x-3 gap-y-1 mt-2 flex-wrap">
+                                <span className="font-semibold text-accent text-base tabular-nums">
+                                  {displayPrice}
+                                </span>
+                                {typeof item.inStock === "boolean" && (
+                                  <span
+                                    className={`inline-flex items-center gap-1 text-[11px] ${
+                                      item.inStock ? "text-green-400" : "text-red-400"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                        item.inStock ? "bg-green-400" : "bg-red-400"
+                                      }`}
+                                    />
+                                    {item.inStock ? "In stock" : "Out of stock"}
+                                  </span>
+                                )}
+                                {typeof item.rating === "number" && item.rating > 0 && (
+                                  <span className="flex items-center text-[10px] text-gray-400 gap-1">
+                                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400 shrink-0" />
+                                    {item.rating.toFixed(1)}
+                                    {typeof item.reviews === "number" && item.reviews > 0 && (
+                                      <span className="text-gray-500">({item.reviews})</span>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                              {item.addedDate && (
+                                <p className="text-[10px] text-gray-500 mt-1.5">
+                                  Saved on {item.addedDate}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-accent hover:bg-accent/90 text-white text-xs h-9"
+                                onClick={() => handleMoveToCart(item)}
+                                disabled={!item.inStock}
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                                Add to cart
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-[#555] text-gray-400 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 h-9 w-9 p-0 shrink-0"
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  try {
+                                    await removeFromWishlist(item.id);
+                                  } catch (error) {}
+                                }}
+                                aria-label="Remove from wishlist"
+                                title="Remove from wishlist"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-6 text-sm text-gray-400">
-                          <span>Series: {item.series}</span>
-                          <span>Price: {item.price}</span>
-                          <span>Quantity: {item.quantity}</span>
-                          <span>Added: {item.addedDate}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
-                          onClick={() => handleMoveToCart(item)}
-                          disabled={!item.inStock}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-1" />
-                          Order Now
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-accent text-accent bg-red-600 hover:bg-red-600/20 hover:text-accent"
-                          onClick={async () => {
-                            try {
-                              await removeFromWishlist(item.id);
-                            } catch (error) {}
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               )}
             </CardContent>
           </Card>
@@ -1138,7 +1371,7 @@ const DashboardPage = () => {
                       >
                         <div className="flex items-start space-x-4">
                           <div className="relative">
-                            <div className="w-16 h-16 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444]">
+                            <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden border border-[#444]">
                               <img
                                 src={product.image}
                                 alt={product.name}
@@ -1180,15 +1413,15 @@ const DashboardPage = () => {
                               </span>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <Badge
                                   variant="outline"
-                                  className="text-xs bg-[#1a1a1a] border-[#444] text-gray-300 hover:bg-transparent"
+                                  className="text-xs bg-[#1a1a1a] border-[#444] text-gray-300 hover:bg-transparent shrink-0 whitespace-nowrap"
                                 >
                                   {product.category}
                                 </Badge>
-                                <span className="text-xs text-accent font-medium">
+                                <span className="text-xs text-accent font-medium truncate">
                                   {product.reason}
                                 </span>
                               </div>
@@ -1214,6 +1447,8 @@ const DashboardPage = () => {
                                 variant="outline"
                                 className="border-accent text-accent hover:bg-accent/20 hover:text-accent"
                                 disabled={!product.inStock}
+                                onClick={() => handleAddRecommendationToCart(product)}
+                                aria-label={`Add ${product.name} to cart`}
                               >
                                 <ShoppingCart className="w-3 h-3" />
                               </Button>

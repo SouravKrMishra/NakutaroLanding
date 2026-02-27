@@ -1,5 +1,6 @@
 import { Settings } from "../../../shared/models/Settings.js";
 import { hasContropayCredentials } from "../config/contropay.js";
+import { hasRazorpayCredentials } from "../config/razorpay.js";
 
 // Cache the settings to avoid frequent database queries
 let phonepeEnabledCache: boolean | null = null;
@@ -128,4 +129,49 @@ export const isContropayEnabled = async (): Promise<boolean> => {
 export const clearContropayCache = () => {
   contropayEnabledCache = null;
   contropayCacheTimestamp = 0;
+};
+
+// Razorpay cache
+let razorpayEnabledCache: boolean | null = null;
+let razorpayCacheTimestamp: number = 0;
+
+/**
+ * Check if Razorpay payment gateway is enabled
+ * Uses caching to reduce database queries
+ * Also checks if credentials are configured
+ */
+export const isRazorpayEnabled = async (): Promise<boolean> => {
+  if (!hasRazorpayCredentials) {
+    return false;
+  }
+
+  const now = Date.now();
+
+  if (
+    razorpayEnabledCache !== null &&
+    now - razorpayCacheTimestamp < CACHE_DURATION
+  ) {
+    return razorpayEnabledCache;
+  }
+
+  try {
+    const setting = await Settings.findOne({ key: "razorpay_enabled" });
+    const isEnabled = setting ? setting.value : false;
+
+    razorpayEnabledCache = isEnabled;
+    razorpayCacheTimestamp = now;
+
+    return isEnabled;
+  } catch (error) {
+    console.error("Error checking Razorpay enabled status:", error);
+    return false;
+  }
+};
+
+/**
+ * Clear the Razorpay cache (useful when settings are updated)
+ */
+export const clearRazorpayCache = () => {
+  razorpayEnabledCache = null;
+  razorpayCacheTimestamp = 0;
 };

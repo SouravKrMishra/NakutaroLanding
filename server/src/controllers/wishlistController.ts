@@ -14,33 +14,47 @@ export const getWishlist = async (req: Request, res: Response) => {
       createdAt: -1,
     });
 
-    // Check if any products are deleted
     const productIds = wishlistItems.map((item) => item.productId);
     const products = await Product.find({
       _id: { $in: productIds },
-    }).select("_id isDeleted");
+    }).select("_id isDeleted inventoryType stock");
 
-    const deletedProductIds = new Set(
-      products.filter((p) => p.isDeleted).map((p) => p._id.toString())
+    const productMap = new Map(
+      products.map((p) => [p._id.toString(), p])
     );
 
-    // Transform to match frontend interface and mark deleted products
-    const formattedItems = wishlistItems.map((item) => ({
-      id: item.productId,
-      name: item.productName,
-      price: item.productPrice,
-      image: item.productImage,
-      category: item.productCategory,
-      rating: item.productRating,
-      reviews: item.productReviews,
-      series: item.series,
-      quantity: item.quantity,
-      addedDate: item.addedDate.toISOString().split("T")[0],
-      inStock:
-        item.inStock && !deletedProductIds.has(item.productId.toString()),
-      isDeleted: deletedProductIds.has(item.productId.toString()),
-      isAvailable: !deletedProductIds.has(item.productId.toString()),
-    }));
+    const isProductInStock = (product: any): boolean => {
+      if (!product || product.isDeleted) return false;
+      // T-shirts and other clothing use shared_stock – always considered in stock
+      if (product.inventoryType === "shared_stock") return true;
+      // individual_stock: use actual quantity/status
+      const stock = product.stock;
+      if (!stock) return true;
+      if (typeof stock.quantity === "number") return stock.quantity > 0;
+      if (stock.status === "out_of_stock") return false;
+      return true;
+    };
+
+    const formattedItems = wishlistItems.map((item) => {
+      const productIdStr = item.productId.toString();
+      const product = productMap.get(productIdStr);
+      const isDeleted = product ? !!product.isDeleted : false;
+      const inStock = !isDeleted && isProductInStock(product || null);
+      return {
+        id: item.productId,
+        name: item.productName,
+        price: item.productPrice,
+        image: item.productImage,
+        category: item.productCategory,
+        rating: item.productRating,
+        reviews: item.productReviews,
+        quantity: item.quantity,
+        addedDate: item.addedDate.toISOString().split("T")[0],
+        inStock,
+        isDeleted,
+        isAvailable: !isDeleted,
+      };
+    });
 
     res.json(formattedItems);
   } catch (error) {
@@ -68,7 +82,6 @@ export const addToWishlist = async (req: Request, res: Response) => {
       category,
       rating = 0,
       reviews = 0,
-      series = "General",
       quantity = 1,
       inStock = true,
     } = req.body;
@@ -103,7 +116,6 @@ export const addToWishlist = async (req: Request, res: Response) => {
       productCategory: category,
       productRating: rating,
       productReviews: reviews,
-      series,
       quantity,
       inStock,
     });

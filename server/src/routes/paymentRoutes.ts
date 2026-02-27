@@ -5,8 +5,6 @@ import {
   checkPhonepePaymentStatus,
   phonepeCallback,
   phonepeRedirect,
-  refundPhonepePayment,
-  checkRefundStatus,
 } from "../controllers/paymentController.js";
 import {
   initiateContropayPayment,
@@ -15,9 +13,15 @@ import {
   getContropayConfig,
 } from "../controllers/contropayController.js";
 import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  getRazorpayConfig,
+} from "../controllers/razorpayController.js";
+import {
   isPhonepeEnabled,
   isCODEnabled,
   isContropayEnabled,
+  isRazorpayEnabled,
 } from "../services/paymentSettingsService.js";
 
 const router = express.Router();
@@ -25,10 +29,11 @@ const router = express.Router();
 // Public endpoint to get payment gateway statuses
 router.get("/status", async (req, res) => {
   try {
-    const [phonepeEnabled, codEnabled, contropayEnabled] = await Promise.all([
+    const [phonepeEnabled, codEnabled, contropayEnabled, razorpayEnabled] = await Promise.all([
       isPhonepeEnabled(),
       isCODEnabled(),
       isContropayEnabled(),
+      isRazorpayEnabled(),
     ]);
 
     res.json({
@@ -36,6 +41,7 @@ router.get("/status", async (req, res) => {
       phonepe: { enabled: phonepeEnabled },
       cod: { enabled: codEnabled },
       contropay: { enabled: contropayEnabled },
+      razorpay: { enabled: razorpayEnabled },
     });
   } catch (error) {
     console.error("Error fetching payment gateway statuses:", error);
@@ -67,10 +73,6 @@ router.get(
   checkPhonepePaymentStatus
 );
 router.post("/phonepe/callback", phonepeCallback); // No auth required for callback
-router.post("/phonepe/refund", authenticateToken, refundPhonepePayment);
-
-// Check refund status endpoint
-router.get("/phonepe/refund/:refundId", authenticateToken, checkRefundStatus);
 
 // Contropay payment routes
 router.get("/contropay/config", getContropayConfig); // Public - get supported chains/tokens
@@ -81,5 +83,10 @@ router.get(
   authenticateToken,
   checkContropayPaymentStatus
 );
+
+// Razorpay payment routes
+router.get("/razorpay/config", getRazorpayConfig); // Public - get key_id
+router.post("/razorpay/create-order", authenticateToken, createRazorpayOrder);
+router.post("/razorpay/verify", authenticateToken, verifyRazorpayPayment);
 
 export default router;

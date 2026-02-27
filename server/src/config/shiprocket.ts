@@ -1,25 +1,36 @@
 // Shiprocket API Configuration
 // Documentation: https://apidocs.shiprocket.in/
+// Track AWB: GET https://apiv2.shiprocket.in/v1/external/courier/track/awb/{awb_code}
+// Uses getters so credentials are read at runtime (works when .env is loaded after this module).
+
+const SHIPROCKET_BASE = "https://apiv2.shiprocket.in/v1/external";
 
 export const shiprocketConfig = {
-  // API Base URL
-  baseUrl: "https://apiv2.shiprocket.in/v1/external",
+  get baseUrl(): string {
+    return process.env.SHIPROCKET_BASE_URL || SHIPROCKET_BASE;
+  },
 
-  // Credentials from environment variables
-  email: process.env.SHIPROCKET_EMAIL || "",
-  password: process.env.SHIPROCKET_PASSWORD || "",
+  get email(): string {
+    return process.env.SHIPROCKET_EMAIL || "";
+  },
+  get password(): string {
+    return process.env.SHIPROCKET_PASSWORD || "";
+  },
 
-  // Token validity is 10 days (240 hours), but we refresh after 9 days to be safe
   tokenRefreshInterval: 9 * 24 * 60 * 60 * 1000, // 9 days in milliseconds
 
-  // Default pickup pincode (your warehouse/store pincode)
-  defaultPickupPincode: process.env.SHIPROCKET_PICKUP_PINCODE || "110068",
+  get defaultPickupPincode(): string {
+    return process.env.SHIPROCKET_PICKUP_PINCODE || "110068";
+  },
+  /** Pickup location name - must exactly match a location in Shiprocket dashboard (Settings > Pickup Addresses) */
+  get pickupLocationName(): string {
+    return process.env.SHIPROCKET_PICKUP_LOCATION || "Primary";
+  },
+  get defaultWeight(): number {
+    return parseFloat(process.env.SHIPROCKET_DEFAULT_WEIGHT || "0.5");
+  },
 
-  // Default weight for serviceability check (in kg)
-  defaultWeight: parseFloat(process.env.SHIPROCKET_DEFAULT_WEIGHT || "0.5"),
-
-  // Check if Shiprocket is properly configured
   isConfigured(): boolean {
     return Boolean(this.email && this.password);
   },
-} as const;
+};

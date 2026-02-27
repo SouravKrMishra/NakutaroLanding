@@ -1593,7 +1593,7 @@ const ProductsPage = () => {
                   {products.map((product) => (
                         <div
                           key={product.id}
-                          className="relative bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
+                          className="relative bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
                         >
                           <Link href={`/product/${product.slug || product.id}`}>
                             <div className="w-full flex items-center justify-center">
@@ -2123,7 +2123,6 @@ const ProductsPage = () => {
       </div>
 
       <FAQSection />
-      <CTASection />
     </div>
   );
 };

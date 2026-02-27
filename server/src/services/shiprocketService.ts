@@ -3,6 +3,7 @@
 
 import axios, { AxiosError } from "axios";
 import { shiprocketConfig } from "../config/shiprocket.js";
+import Product from "../../../shared/models/Product.js";
 
 // Token cache for Shiprocket API
 interface TokenCache {
@@ -344,6 +345,33 @@ export function clearTokenCache(): void {
   tokenCache.expiresAt = 0;
 }
 
+/** Logout Shiprocket token on server shutdown: call logout API if we have a token, then clear cache */
+export async function logoutTokenOnShutdown(): Promise<void> {
+  const token = tokenCache.token;
+  if (!token || !shiprocketConfig.isConfigured()) {
+    clearTokenCache();
+    return;
+  }
+  try {
+    await axios.post(
+      `${shiprocketConfig.baseUrl}/auth/logout`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 3000,
+      }
+    );
+    console.log("[Shiprocket] Token logged out on shutdown");
+  } catch {
+    // Logout endpoint may not exist or may fail; clear cache anyway
+  } finally {
+    clearTokenCache();
+  }
+}
+
 /**
  * Check if Shiprocket service is properly configured
  */
@@ -351,8 +379,377 @@ export function isShiprocketConfigured(): boolean {
   return shiprocketConfig.isConfigured();
 }
 
+// Types for Shiprocket order creation
+interface ShiprocketOrderItem {
+  name: string;
+  sku: string;
+  units: number;
+  selling_price: number;
+  discount?: number;
+  tax?: number;
+  hsn?: string;
+}
+
+interface CreateOrderRequest {
+  order_id: string;
+  order_date: string;
+  pickup_location: string;
+  channel_id?: string;
+  comment?: string;
+  billing_customer_name: string;
+  billing_last_name: string;
+  billing_address: string;
+  billing_address_2?: string;
+  billing_city: string;
+  billing_pincode: string;
+  billing_state: string;
+  billing_country: string;
+  billing_email: string;
+  billing_phone: string;
+  shipping_is_billing: boolean;
+  shipping_customer_name?: string;
+  shipping_last_name?: string;
+  shipping_address?: string;
+  shipping_address_2?: string;
+  shipping_city?: string;
+  shipping_pincode?: string;
+  shipping_state?: string;
+  shipping_country?: string;
+  shipping_email?: string;
+  shipping_phone?: string;
+  order_items: ShiprocketOrderItem[];
+  payment_method: "COD" | "Prepaid";
+  shipping_charges?: number;
+  giftwrap_charges?: number;
+  transaction_charges?: number;
+  total_discount?: number;
+  sub_total: number;
+  length: number;
+  breadth: number;
+  height: number;
+  weight: number;
+}
+
+interface ShiprocketOrderResponse {
+  order_id: number;
+  shipment_id: number;
+  status: string;
+  status_code: number;
+  onboarding_completed_now: number;
+  awb_code: string;
+  courier_company_id: number;
+  courier_name: string;
+}
+
+export interface CreateShiprocketOrderResult {
+  success: boolean;
+  shiprocketOrderId: string;
+  shiprocketShipmentId: string;
+  awbCode: string | null;
+  courierName: string | null;
+  message: string;
+}
+
+/**
+ * Create an order on Shiprocket for shipping
+ * This is called when an order moves to PROCESSING status
+ */
+export async function createShiprocketOrder(order: any): Promise<CreateShiprocketOrderResult> {
+  if (!shiprocketConfig.isConfigured()) {
+    console.warn("[Shiprocket] API not configured, cannot create order");
+    return {
+      success: false,
+      shiprocketOrderId: "",
+      shiprocketShipmentId: "",
+      awbCode: null,
+      courierName: null,
+      message: "Shiprocket API not configured. Please set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD environment variables.",
+    };
+  }
+
+  try {
+    const token = await authenticate();
+
+    // Format order date
+    const orderDate = new Date(order.orderDate);
+    const formattedDate = orderDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+    // Fetch product SKUs (admin-set) for order items; fallback to productId if no sku
+    const productIds = order.items
+      .map((item: any) => item.productId)
+      .filter(Boolean);
+    const products =
+      productIds.length > 0
+        ? await Product.find({ _id: { $in: productIds } })
+            .select("_id sku")
+            .lean()
+        : [];
+    const productSkuMap = new Map<string, string>();
+    for (const p of products as any[]) {
+      const id = String(p._id);
+      if (p.sku && String(p.sku).trim()) {
+        productSkuMap.set(id, String(p.sku).trim().substring(0, 50));
+      }
+    }
+
+    // Prepare order items - use product SKU from admin if set, else productId.
+    // Shiprocket requires unique SKU per line; if same product appears multiple times, append suffix.
+    const usedSkus = new Set<string>();
+    const orderItems: ShiprocketOrderItem[] = order.items.map((item: any, index: number) => {
+      const productIdStr = String(item.productId);
+      let sku =
+        productSkuMap.get(productIdStr) || productIdStr.substring(0, 50);
+      // Ensure unique SKU per line (Shiprocket rejects "SKU cannot be repeated")
+      if (usedSkus.has(sku)) {
+        const maxSkuLen = 50;
+        const suffix = `-${index + 1}`;
+        sku = (sku.slice(0, maxSkuLen - suffix.length) + suffix).substring(0, maxSkuLen);
+      }
+      usedSkus.add(sku);
+      return {
+        name: item.name.substring(0, 100), // Shiprocket has 100 char limit
+        sku,
+        units: item.quantity || 1,
+        selling_price: parseFloat(item.price) || 0,
+      };
+    });
+
+    // Calculate total weight (default 0.5kg per item if not specified)
+    const totalWeight = Math.max(0.5, order.items.length * 0.3);
+
+    // Prepare request payload - pickup_location must exactly match a location name in Shiprocket dashboard
+    const payload: CreateOrderRequest = {
+      order_id: order.orderNumber,
+      order_date: formattedDate,
+      pickup_location: shiprocketConfig.pickupLocationName,
+      billing_customer_name: order.shippingInfo.firstName || "Customer",
+      billing_last_name: order.shippingInfo.lastName || "",
+      billing_address: order.shippingInfo.address.substring(0, 200),
+      billing_city: order.shippingInfo.city,
+      billing_pincode: order.shippingInfo.pincode,
+      billing_state: order.shippingInfo.state,
+      billing_country: order.shippingInfo.country || "India",
+      billing_email: order.shippingInfo.email,
+      billing_phone: order.shippingInfo.phone.replace(/\D/g, "").slice(-10), // Last 10 digits
+      shipping_is_billing: true,
+      order_items: orderItems,
+      payment_method: order.paymentMethod === "cod" ? "COD" : "Prepaid",
+      sub_total: order.total,
+      length: 20, // Default dimensions in cm
+      breadth: 15,
+      height: 10,
+      weight: totalWeight,
+    };
+
+    console.log(`[Shiprocket] Creating order for ${order.orderNumber}:`, {
+      items: orderItems.length,
+      total: order.total,
+      paymentMethod: payload.payment_method,
+    });
+
+    const response = await axios.post<ShiprocketOrderResponse & { message?: string; data?: any }>(
+      `${shiprocketConfig.baseUrl}/orders/create/adhoc`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = response.data as ShiprocketOrderResponse & { message?: string; data?: any; shipment?: { awb_code?: string; courier_name?: string } };
+
+    // Shiprocket can return 200 with an error message in body (e.g. "Wrong Pickup location entered")
+    if (data.message && (data.message.toLowerCase().includes("wrong") || data.message.toLowerCase().includes("error") || data.message.toLowerCase().includes("invalid"))) {
+      console.error("[Shiprocket] API returned error in response body:", data.message, data.data);
+      return {
+        success: false,
+        shiprocketOrderId: "",
+        shiprocketShipmentId: "",
+        awbCode: null,
+        courierName: null,
+        message: data.message + (data.data?.data ? " Check Shiprocket dashboard (Settings > Pickup Addresses) for valid pickup location names and set SHIPROCKET_PICKUP_LOCATION in .env to match exactly." : ""),
+      };
+    }
+    if (!data.order_id || !data.shipment_id) {
+      const errMsg = data.message || "Order creation did not return order_id/shipment_id";
+      console.error("[Shiprocket] Invalid success response:", data);
+      return {
+        success: false,
+        shiprocketOrderId: "",
+        shiprocketShipmentId: "",
+        awbCode: null,
+        courierName: null,
+        message: errMsg,
+      };
+    }
+
+    // AWB may be at root or nested (e.g. data.awb_code or data.data?.awb_code) – capture as soon as shipment is booked
+    const awbCode =
+      (typeof data.awb_code === "string" && data.awb_code.trim()) ||
+      (data.data && typeof data.data.awb_code === "string" && data.data.awb_code.trim()) ||
+      (data.shipment && typeof data.shipment.awb_code === "string" && data.shipment.awb_code.trim())
+        ? (data.awb_code || data.data?.awb_code || data.shipment?.awb_code || "").trim()
+        : null;
+    const courierNameRaw = data.courier_name ?? data.data?.courier_name ?? data.shipment?.courier_name;
+    const courierName = typeof courierNameRaw === "string" && courierNameRaw.trim() ? courierNameRaw.trim() : null;
+
+    console.log(`[Shiprocket] Order created successfully:`, { order_id: data.order_id, shipment_id: data.shipment_id, awbCode, courierName });
+
+    return {
+      success: true,
+      shiprocketOrderId: String(data.order_id),
+      shiprocketShipmentId: String(data.shipment_id),
+      awbCode: awbCode || null,
+      courierName: courierName || null,
+      message: "Order created successfully on Shiprocket",
+    };
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.error(
+      "[Shiprocket] Failed to create order:",
+      axiosError.response?.data || axiosError.message
+    );
+
+    // Handle specific error cases
+    const errorData = axiosError.response?.data as any;
+    let errorMessage = "Failed to create order on Shiprocket";
+    
+    if (errorData?.message) {
+      errorMessage = errorData.message;
+    } else if (errorData?.errors) {
+      errorMessage = Object.values(errorData.errors).flat().join(", ");
+    }
+
+    return {
+      success: false,
+      shiprocketOrderId: "",
+      shiprocketShipmentId: "",
+      awbCode: null,
+      courierName: null,
+      message: errorMessage,
+    };
+  }
+}
+
+/**
+ * Get tracking details for a shipment by AWB code
+ */
+export async function getShipmentTracking(awbCode: string): Promise<any> {
+  if (!shiprocketConfig.isConfigured()) {
+    throw new Error("Shiprocket API not configured");
+  }
+
+  try {
+    const token = await authenticate();
+
+    const response = await axios.get(
+      `${shiprocketConfig.baseUrl}/courier/track/awb/${awbCode}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.error(
+      "[Shiprocket] Failed to get tracking:",
+      axiosError.response?.data || axiosError.message
+    );
+    throw error;
+  }
+}
+
+/**
+ * Fetch order/shipment details from Shiprocket by order_id to get AWB when it was not set at create time
+ */
+export async function getOrderByShiprocketId(shiprocketOrderId: string): Promise<{ awb_code?: string } | null> {
+  if (!shiprocketConfig.isConfigured()) {
+    return null;
+  }
+
+  try {
+    const token = await authenticate();
+    const response = await axios.get(
+      `${shiprocketConfig.baseUrl}/orders/show/${shiprocketOrderId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = response.data;
+    if (!data || typeof data !== "object") return null;
+    // Response may have awb_code at root or under order/shipments (structure varies by API version)
+    const awb =
+      data.awb_code ??
+      data.order?.awb_code ??
+      data.shipment?.awb_code ??
+      (Array.isArray(data.shipments) && data.shipments[0]?.awb_code)
+        ? data.shipments[0].awb_code
+        : null;
+    if (typeof awb === "string" && awb.trim()) {
+      return { awb_code: awb.trim() };
+    }
+    return null;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.warn(
+      "[Shiprocket] Could not fetch order by id:",
+      axiosError.response?.data || axiosError.message
+    );
+    return null;
+  }
+}
+
+/**
+ * Cancel a Shiprocket order
+ */
+export async function cancelShiprocketOrder(shiprocketOrderId: string): Promise<boolean> {
+  if (!shiprocketConfig.isConfigured()) {
+    throw new Error("Shiprocket API not configured");
+  }
+
+  try {
+    const token = await authenticate();
+
+    await axios.post(
+      `${shiprocketConfig.baseUrl}/orders/cancel`,
+      { ids: [parseInt(shiprocketOrderId)] },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log(`[Shiprocket] Order ${shiprocketOrderId} cancelled`);
+    return true;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.error(
+      "[Shiprocket] Failed to cancel order:",
+      axiosError.response?.data || axiosError.message
+    );
+    return false;
+  }
+}
+
 export const shiprocketService = {
   checkServiceability,
   clearTokenCache,
+  logoutTokenOnShutdown,
   isConfigured: isShiprocketConfigured,
+  createOrder: createShiprocketOrder,
+  getTracking: getShipmentTracking,
+  getOrderByShiprocketId,
+  cancelOrder: cancelShiprocketOrder,
 };

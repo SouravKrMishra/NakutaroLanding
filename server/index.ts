@@ -86,6 +86,7 @@ import connectDB from "../shared/db.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { SchedulerService } from "./src/services/schedulerService.js";
+import { logoutTokenOnShutdown } from "./src/services/shiprocketService.js";
 // Import types to ensure global declarations are loaded
 import "./src/types/index.js";
 
@@ -230,21 +231,18 @@ app.use(errorHandler);
   });
 
   // Graceful shutdown
-  process.on("SIGTERM", () => {
-    console.log("SIGTERM received, shutting down gracefully");
+  const shutdown = (signal: string) => {
+    console.log(`${signal} received, shutting down gracefully`);
     SchedulerService.stopCleanupScheduler();
-    server.close(() => {
-      console.log("Process terminated");
-      process.exit(0);
-    });
-  });
+    logoutTokenOnShutdown()
+      .finally(() => {
+        server.close(() => {
+          console.log("Process terminated");
+          process.exit(0);
+        });
+      });
+  };
 
-  process.on("SIGINT", () => {
-    console.log("SIGINT received, shutting down gracefully");
-    SchedulerService.stopCleanupScheduler();
-    server.close(() => {
-      console.log("Process terminated");
-      process.exit(0);
-    });
-  });
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 })();

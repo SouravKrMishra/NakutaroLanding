@@ -5,7 +5,6 @@ import { Order } from "../../../shared/models/Order.js";
 import { Cart } from "../../../shared/models/Cart.js";
 import {
   StandardCheckoutPayRequest,
-  RefundRequest,
   PhonePeException,
 } from "pg-sdk-node";
 import { reduceStockForOrder } from "../services/stockService.js";
@@ -54,8 +53,25 @@ const updatePaymentStatus = async (
       const previousPaymentStatus = order.paymentStatus;
 
       if (status === "SUCCESS") {
+        // IMPORTANT: Handle case where order was previously cancelled due to timeout
+        // but PhonePe has now confirmed the payment as successful
+        const wasPreviouslyCancelled =
+          previousStatus === "CANCELLED" ||
+          previousStatus === "ORDER_FAILED" ||
+          previousPaymentStatus === "FAILED";
+
+        if (wasPreviouslyCancelled) {
+          console.log(
+            `Order ${order._id} was previously cancelled/failed but payment is now confirmed successful - RESTORING ORDER`
+          );
+        }
+
         order.paymentStatus = "COMPLETED";
-        order.status = "PAID";
+        order.status = "ORDER_SUCCESS"; // New unified status
+        // Add note about late payment confirmation if it was cancelled
+        if (wasPreviouslyCancelled) {
+          order.notes = `Payment confirmed via PhonePe webhook after previous cancellation. Original status: ${previousStatus}`;
+        }
 
         // Apply coupon if one was used (mark as used only after successful payment)
         if (order.couponCode) {
@@ -93,16 +109,29 @@ const updatePaymentStatus = async (
           console.error("Failed to clear cart:", err);
         }
 
-        // Reduce stock for successful payment
-        try {
-          await reduceStockForOrder(order._id);
-          console.log(`Stock reduced for order ${order._id}`);
-        } catch (err) {
-          console.error(`Failed to reduce stock for order ${order._id}:`, err);
+        // Reduce stock for successful payment (only if not already done)
+        // Check if stock was already reduced to avoid double reduction
+        if (!order.stockAdjusted) {
+          try {
+            await reduceStockForOrder(order._id);
+            order.stockAdjusted = true;
+            console.log(`Stock reduced for order ${order._id}`);
+          } catch (err) {
+            console.error(`Failed to reduce stock for order ${order._id}:`, err);
+          }
+        } else {
+          console.log(`Stock already reduced for order ${order._id}, skipping`);
         }
       } else if (status === "FAILED") {
-        order.paymentStatus = "FAILED";
-        order.status = "PAYMENT_FAILED";
+        // Only mark as failed if it wasn't already successfully paid
+        if (order.paymentStatus !== "COMPLETED" && order.status !== "ORDER_SUCCESS") {
+          order.paymentStatus = "FAILED";
+          order.status = "ORDER_FAILED"; // New unified status
+        } else {
+          console.log(
+            `Order ${order._id} is already paid, ignoring FAILED status update`
+          );
+        }
       }
 
       await order.save();
@@ -432,34 +461,3 @@ export const checkPhonepePaymentStatus = async (
   }
 };
 
-export const refundPhonepePayment = async (req: Request, res: Response) => {
-  try {
-    const { orderId, refundId, amount } = req.body;
-    if (!hasPhonepeCredentials || !phonepeClient)
-      throw new Error("Config missing");
-
-    const request = RefundRequest.builder()
-      .originalMerchantOrderId(orderId)
-      .merchantRefundId(refundId)
-      .amount(amount)
-      .build();
-
-    const response = await phonepeClient.refund(request);
-    return res.json({ success: true, data: response });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const checkRefundStatus = async (req: Request, res: Response) => {
-  try {
-    const { refundId } = req.params;
-    if (!hasPhonepeCredentials || !phonepeClient)
-      throw new Error("Config missing");
-
-    const status = await phonepeClient.getRefundStatus(refundId);
-    return res.json({ success: true, data: status });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};

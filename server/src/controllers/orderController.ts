@@ -7,6 +7,7 @@ import { Cart } from "../../../shared/models/Cart.js";
 import { createError } from "../middleware/errorHandler.js";
 import { reduceStockForOrder } from "../services/stockService.js";
 import { isCODEnabled } from "../services/paymentSettingsService.js";
+import { shiprocketService } from "../services/shiprocketService.js";
 
 type ShopperType = "business" | "individual";
 
@@ -158,8 +159,10 @@ export const createOrder = async (
     );
 
     // Determine initial status based on payment method
+    // COD orders start as ORDER_REQUESTED (waiting for sales call confirmation)
+    // Online payment orders start as PENDING_PAYMENT
     const initialStatus =
-      paymentMethod === "cod" ? "pending" : "PENDING_PAYMENT";
+      paymentMethod === "cod" ? "ORDER_REQUESTED" : "PENDING_PAYMENT";
     const initialPaymentStatus =
       paymentMethod === "cod" ? "PENDING" : "PENDING";
 
@@ -318,9 +321,10 @@ export const getOrders = async (
         products.filter((p) => p.isDeleted).map((p) => p._id.toString())
       );
 
-      // Mark items with deleted products
-      const ordersWithDeletedInfo = orders.map((order) => ({
+      // Mark items with deleted products; include id for client (e.g. tracking API)
+      const ordersWithDeletedInfo = orders.map((order: any) => ({
         ...order,
+        id: order._id?.toString?.() ?? order._id,
         items: order.items?.map((item: any) => ({
           ...item,
           isDeleted: deletedProductIds.has(item.productId?.toString()),
@@ -330,7 +334,11 @@ export const getOrders = async (
 
       res.json({ orders: ordersWithDeletedInfo });
     } else {
-      res.json({ orders });
+      const ordersWithId = orders.map((order: any) => ({
+        ...order,
+        id: order._id?.toString?.() ?? order._id,
+      }));
+      res.json({ orders: ordersWithId });
     }
   } catch (error) {
     console.error("Error in getOrders:", error);
@@ -440,25 +448,29 @@ export const updateOrderStatus = async (
     if (trackingNumber) order.trackingNumber = trackingNumber;
     if (notes) order.notes = notes;
 
-    // Determine whether to reduce stock for COD when moving to processing
+    // Determine whether to reduce stock for COD when moving to PROCESSING
     const shouldReduceStockForCOD =
       order.paymentMethod === "cod" &&
       statusChanged &&
-      status?.toLowerCase() === "processing" &&
-      previousStatus?.toLowerCase() !== "processing";
+      status === "PROCESSING" &&
+      previousStatus !== "PROCESSING";
 
     // For COD orders, mark coupon as used when order is confirmed/processing
-    // Check if order is moving from pending to a confirmed state (processing, confirmed, shipped, etc.)
     const isCODOrder = order.paymentMethod === "cod";
     const isMovingToConfirmedState =
       statusChanged &&
       status &&
-      ["processing", "confirmed", "shipped", "delivered"].includes(
-        status.toLowerCase()
-      ) &&
-      previousStatus?.toLowerCase() === "pending";
+      ["PROCESSING", "ORDER_SUCCESS", "SHIPPED", "DELIVERED"].includes(status) &&
+      previousStatus === "ORDER_REQUESTED";
     const shouldMarkCouponForCOD =
       isCODOrder && isMovingToConfirmedState && order.couponCode;
+
+    // Create Shiprocket order when moving to PROCESSING status
+    const shouldCreateShiprocketOrder =
+      statusChanged &&
+      status === "PROCESSING" &&
+      previousStatus !== "PROCESSING" &&
+      !order.shiprocketOrderId;
 
     await order.save();
 
@@ -503,6 +515,45 @@ export const updateOrderStatus = async (
       }
     }
 
+    // Create Shiprocket order when moving to PROCESSING status
+    let shiprocketResult = null;
+    if (shouldCreateShiprocketOrder) {
+      try {
+        console.log(`[Shiprocket] Creating order for ${order.orderNumber}...`);
+        shiprocketResult = await shiprocketService.createOrder(order);
+        
+        if (shiprocketResult.success) {
+          // Update order with Shiprocket details
+          await Order.updateOne(
+            { _id: order._id },
+            {
+              $set: {
+                shiprocketOrderId: shiprocketResult.shiprocketOrderId,
+                shiprocketShipmentId: shiprocketResult.shiprocketShipmentId,
+                awbCode: shiprocketResult.awbCode,
+                courierName: shiprocketResult.courierName,
+              },
+            }
+          );
+          console.log(
+            `[Shiprocket] Order ${order.orderNumber} created on Shiprocket:`,
+            shiprocketResult
+          );
+        } else {
+          console.error(
+            `[Shiprocket] Failed to create order ${order.orderNumber}:`,
+            shiprocketResult.message
+          );
+        }
+      } catch (error: any) {
+        console.error(
+          `[Shiprocket] Error creating order ${order.orderNumber}:`,
+          error.message
+        );
+        // Don't block status update if Shiprocket creation fails
+      }
+    }
+
     // Notifications removed
 
     res.json({
@@ -513,6 +564,14 @@ export const updateOrderStatus = async (
         status: order.status,
         trackingNumber: order.trackingNumber,
       },
+      shiprocket: shiprocketResult ? {
+        success: shiprocketResult.success,
+        shiprocketOrderId: shiprocketResult.shiprocketOrderId,
+        shiprocketShipmentId: shiprocketResult.shiprocketShipmentId,
+        awbCode: shiprocketResult.awbCode,
+        courierName: shiprocketResult.courierName,
+        message: shiprocketResult.message,
+      } : undefined,
     });
   } catch (error) {
     next(createError("Failed to update order", 500));
@@ -619,8 +678,13 @@ export const createOrderForPhonepe = async (
     const estimatedDelivery = new Date();
     estimatedDelivery.setDate(estimatedDelivery.getDate() + 4);
 
-    // Determine actual payment method (PHONEPE or CONTROPAY)
-    const actualPaymentMethod = paymentMethod === "CONTROPAY" ? "CONTROPAY" : "PHONEPE";
+    // Determine actual payment method
+    const actualPaymentMethod =
+      paymentMethod === "CONTROPAY"
+        ? "CONTROPAY"
+        : paymentMethod === "RAZORPAY"
+        ? "RAZORPAY"
+        : "PHONEPE";
 
     // Create order with appropriate status based on test mode
     const order = new Order({
@@ -635,7 +699,7 @@ export const createOrderForPhonepe = async (
       couponCode: couponCode || null,
       couponDiscount: computedCouponDiscount,
       total: finalTotal,
-      status: testMode ? "CONFIRMED" : "PENDING_PAYMENT",
+      status: testMode ? "ORDER_SUCCESS" : "PENDING_PAYMENT",
       paymentStatus: testMode ? "COMPLETED" : "PENDING",
       estimatedDelivery,
       testMode: testMode || false,
@@ -740,24 +804,22 @@ export const getOrderForSuccessPage = async (
       });
 
       if (order) {
-        // Check if order meets validation criteria
-        // For COD orders, allow "pending" status and "PENDING" payment status
         const isCODOrder = order.paymentMethod === "cod";
         const validStatuses = [
-          "PAID",
-          "CONFIRMED",
-          "processing",
-          "shipped",
-          "delivered",
-          ...(isCODOrder ? ["pending"] : []),
+          "ORDER_SUCCESS",
+          "PROCESSING",
+          "SHIPPED",
+          "DELIVERED",
+          ...(isCODOrder ? ["ORDER_REQUESTED"] : []),
         ];
         const hasValidStatus = validStatuses.includes(order.status);
         const hasValidPaymentStatus =
           order.paymentStatus === "COMPLETED" ||
-          (isCODOrder && order.paymentStatus === "PENDING");
+          (isCODOrder && order.paymentStatus === "PENDING") ||
+          order.paymentMethod === "RAZORPAY";
 
         if (!hasValidStatus || !hasValidPaymentStatus) {
-          order = null; // Reset order if it doesn't meet criteria
+          order = null;
         }
       }
     } else if (transactionId) {
@@ -773,7 +835,7 @@ export const getOrderForSuccessPage = async (
           _id: transaction.orderId,
           userId: userId,
           status: {
-            $in: ["PAID", "CONFIRMED", "processing", "shipped", "delivered"],
+            $in: ["ORDER_SUCCESS", "PROCESSING", "SHIPPED", "DELIVERED"],
           },
           paymentStatus: "COMPLETED",
           isDeleted: { $ne: true },

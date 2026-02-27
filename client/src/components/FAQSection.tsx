@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -7,82 +7,201 @@ import {
   HelpCircle,
   Mail,
   Share2,
+  Package,
+  Settings,
+  FolderOpen,
+  Loader2,
 } from "lucide-react";
+import { buildApiUrl } from "@/lib/api.ts";
 
-// Move FAQs outside component to prevent recreation on every render
-const faqs = [
-    {
-      question:
-        "Are the prices listed on IndiaMART and in your catalogue wholesale prices?",
-      answer:
-        "Yes, the prices listed on our IndiaMART profile and in our product catalogue represent our wholesale pricing structure, designed specifically for our B2B customers. These rates offer significant value for businesses purchasing in bulk.",
-      category: "products",
-    },
-    {
-      question:
-        "Do you deal only in action figures, or do you have other products?",
-      answer:
-        "While we're known for our premium anime action figures, our product range extends far beyond that. We offer a diverse collection including anime apparel (t-shirts, hoodies), accessories, manga, posters, keychains, and various collectibles to satisfy all anime enthusiasts.",
-      category: "products",
-    },
-    {
-      question:
-        "Is Cash on Delivery (COD) available? What is your payment structure?",
-      answer:
-        "Yes, we offer Cash on Delivery for qualifying orders. Our payment options include bank transfers, UPI, and major credit/debit cards. For B2B clients, we offer flexible payment terms depending on order volume and business relationship.",
-      category: "ordering",
-    },
-    {
-      question: "Do you offer a dropshipping facility?",
-      answer:
-        "Yes, we provide dropshipping services for business partners. This allows you to list our products on your platform while we handle storage, packaging, and shipping directly to your customers under your branding.",
-      category: "products",
-    },
-    {
-      question: "Do you have a WhatsApp group for updates or communication?",
-      answer:
-        "Yes, we maintain an exclusive WhatsApp group for our B2B clients where we share product updates, limited-time offers, and answer queries. To join, please contact our customer service team with your business details.",
-      category: "support",
-    },
-    {
-      question: "How do I track my order once it's been shipped?",
-      answer:
-        "After your order ships, you'll receive a tracking number via email and SMS. You can track your package in real-time through our website's 'Order Tracking' section or directly through our shipping partner's website using your provided tracking number.",
-      category: "ordering",
-    },
-    {
-      question: "What is your return and exchange policy?",
-      answer:
-        "We offer a 7-day return policy for unopened items in their original packaging. For damaged or defective products, please contact our support team within 48 hours of delivery with photos of the damaged items. Exchanges are processed after we receive the returned items.",
-      category: "support",
-    },
+// Icon mapping for categories
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  HelpCircle,
+  MessageCircleQuestion,
+  Phone,
+  Mail,
+  Share2,
+  Package,
+  Settings,
+  FolderOpen,
+};
+
+// Get icon component by name
+const getIconComponent = (iconName: string) => {
+  return ICON_MAP[iconName] || HelpCircle;
+};
+
+type FAQCategory = {
+  _id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  order: number;
+};
+
+type FAQItem = {
+  _id: string;
+  question: string;
+  answer: string;
+  category: string; // slug
+  categoryName: string;
+  order: number;
+};
+
+// Fallback FAQs in case API fails
+const fallbackFaqs: FAQItem[] = [
+  {
+    _id: "1",
+    question:
+      "Are the prices listed on IndiaMART and in your catalogue wholesale prices?",
+    answer:
+      "Yes, the prices listed on our IndiaMART profile and in our product catalogue represent our wholesale pricing structure, designed specifically for our B2B customers. These rates offer significant value for businesses purchasing in bulk.",
+    category: "products",
+    categoryName: "Products",
+    order: 0,
+  },
+  {
+    _id: "2",
+    question:
+      "Do you deal only in action figures, or do you have other products?",
+    answer:
+      "While we're known for our premium anime action figures, our product range extends far beyond that. We offer a diverse collection including anime apparel (t-shirts, hoodies), accessories, manga, posters, keychains, and various collectibles to satisfy all anime enthusiasts.",
+    category: "products",
+    categoryName: "Products",
+    order: 1,
+  },
+  {
+    _id: "3",
+    question:
+      "Is Cash on Delivery (COD) available? What is your payment structure?",
+    answer:
+      "Yes, we offer Cash on Delivery for qualifying orders. Our payment options include bank transfers, UPI, and major credit/debit cards. For B2B clients, we offer flexible payment terms depending on order volume and business relationship.",
+    category: "ordering",
+    categoryName: "Ordering",
+    order: 0,
+  },
+  {
+    _id: "4",
+    question: "Do you offer a dropshipping facility?",
+    answer:
+      "Yes, we provide dropshipping services for business partners. This allows you to list our products on your platform while we handle storage, packaging, and shipping directly to your customers under your branding.",
+    category: "products",
+    categoryName: "Products",
+    order: 2,
+  },
+  {
+    _id: "5",
+    question: "Do you have a WhatsApp group for updates or communication?",
+    answer:
+      "Yes, we maintain an exclusive WhatsApp group for our B2B clients where we share product updates, limited-time offers, and answer queries. To join, please contact our customer service team with your business details.",
+    category: "support",
+    categoryName: "Support",
+    order: 0,
+  },
+  {
+    _id: "6",
+    question: "How do I track my order once it's been shipped?",
+    answer:
+      "After your order ships, you'll receive a tracking number via email and SMS. You can track your package in real-time through our website's 'Order Tracking' section or directly through our shipping partner's website using your provided tracking number.",
+    category: "ordering",
+    categoryName: "Ordering",
+    order: 1,
+  },
+  {
+    _id: "7",
+    question: "What is your return and exchange policy?",
+    answer:
+      "We offer a 7-day return policy for unopened items in their original packaging. For damaged or defective products, please contact our support team within 48 hours of delivery with photos of the damaged items. Exchanges are processed after we receive the returned items.",
+    category: "support",
+    categoryName: "Support",
+    order: 1,
+  },
+];
+
+const fallbackCategories: FAQCategory[] = [
+  { _id: "1", name: "Products", slug: "products", icon: "Share2", order: 0 },
+  { _id: "2", name: "Ordering", slug: "ordering", icon: "Phone", order: 1 },
+  { _id: "3", name: "Support", slug: "support", icon: "Mail", order: 2 },
 ];
 
 const FAQSection = () => {
-  // Categories for FAQs with icons - memoized to prevent recreation on every render
-  const faqCategories = useMemo(() => [
-    {
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [categories, setCategories] = useState<FAQCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch FAQs from API
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch(buildApiUrl("/api/faqs"));
+        if (!response.ok) {
+          throw new Error("Failed to fetch FAQs");
+        }
+
+        const data = await response.json();
+        if (data.success && data.data) {
+          setCategories(data.data.categories || []);
+          setFaqs(data.data.faqs || []);
+        } else {
+          throw new Error("Invalid response format");
+        }
+      } catch (err) {
+        console.error("Error fetching FAQs:", err);
+        setError("Failed to load FAQs");
+        // Use fallback data
+        setFaqs(fallbackFaqs);
+        setCategories(fallbackCategories);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFAQs();
+  }, []);
+
+  // Build category list with "All Questions" option
+  const faqCategories = useMemo(() => {
+    const allCategory = {
       id: "all",
       name: "All Questions",
       icon: <MessageCircleQuestion className="h-5 w-5" />,
-    },
-    { id: "products", name: "Products", icon: <Share2 className="h-5 w-5" /> },
-    { id: "ordering", name: "Ordering", icon: <Phone className="h-5 w-5" /> },
-    { id: "support", name: "Support", icon: <Mail className="h-5 w-5" /> },
-  ], []);
+    };
 
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const dynamicCategories = categories.map((cat) => {
+      const IconComponent = getIconComponent(cat.icon);
+      return {
+        id: cat.slug,
+        name: cat.name,
+        icon: <IconComponent className="h-5 w-5" />,
+      };
+    });
+
+    return [allCategory, ...dynamicCategories];
+  }, [categories]);
 
   const toggleFAQ = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
-  // Filter FAQs based on active category - memoized to prevent recalculation
+  // Filter FAQs based on active category and sort by order
   const filteredFaqs = useMemo(() => {
-    return activeCategory === "all"
+    const filtered = activeCategory === "all"
       ? faqs
       : faqs.filter((faq) => faq.category === activeCategory);
+    
+    // Sort by order (ascending)
+    return filtered.sort((a, b) => a.order - b.order);
+  }, [activeCategory, faqs]);
+
+  // Reset active index when category changes
+  useEffect(() => {
+    setActiveIndex(null);
   }, [activeCategory]);
 
   return (
@@ -115,126 +234,138 @@ const FAQSection = () => {
           </p>
         </div>
 
-        {/* FAQ Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {faqCategories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={`flex items-center px-4 py-2 rounded-full transition-all duration-300 ${
-                category.id === activeCategory
-                  ? "bg-accent text-white"
-                  : "bg-[#1A1A1A] text-gray-300 hover:bg-[#222] border border-[#333]"
-              }`}
-            >
-              <span className="mr-2">{category.icon}</span>
-              {category.name}
-            </button>
-          ))}
-        </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-accent" />
+          </div>
+        )}
 
-        <div className="max-w-3xl mx-auto" key={activeCategory}>
-          <div className="space-y-4">
-            {filteredFaqs.length > 0 ? (
-              filteredFaqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className={`border border-[#333] rounded-xl overflow-hidden bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] shadow-lg transition-all duration-300 ${
-                    activeIndex === index
-                      ? "border-accent/30"
-                      : "hover:border-accent/20"
+        {/* Content */}
+        {!isLoading && (
+          <>
+            {/* FAQ Category Tabs */}
+            <div className="flex flex-wrap justify-center gap-2 mb-10">
+              {faqCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={`flex items-center px-4 py-2 rounded-full transition-all duration-300 ${
+                    category.id === activeCategory
+                      ? "bg-accent text-white"
+                      : "bg-[#1A1A1A] text-gray-300 hover:bg-[#222] border border-[#333]"
                   }`}
                 >
-                  <button
-                    className="flex justify-between items-center w-full p-5 text-left focus:outline-none group"
-                    onClick={() => toggleFAQ(index)}
-                  >
-                    <h3
-                      className={`font-semibold text-lg transition-colors duration-300 ${
+                  <span className="mr-2">{category.icon}</span>
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="max-w-3xl mx-auto" key={activeCategory}>
+              <div className="space-y-4">
+                {filteredFaqs.length > 0 ? (
+                  filteredFaqs.map((faq, index) => (
+                    <div
+                      key={faq._id}
+                      className={`border border-[#333] rounded-xl overflow-hidden bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] shadow-lg transition-all duration-300 ${
                         activeIndex === index
-                          ? "text-accent"
-                          : "group-hover:text-accent/80"
+                          ? "border-accent/30"
+                          : "hover:border-accent/20"
                       }`}
                     >
-                      {faq.question}
+                      <button
+                        className="flex justify-between items-center w-full p-5 text-left focus:outline-none group"
+                        onClick={() => toggleFAQ(index)}
+                      >
+                        <h3
+                          className={`font-semibold text-lg transition-colors duration-300 ${
+                            activeIndex === index
+                              ? "text-accent"
+                              : "group-hover:text-accent/80"
+                          }`}
+                        >
+                          {faq.question}
+                        </h3>
+                        <div
+                          className={`${
+                            activeIndex === index
+                              ? "bg-accent text-white"
+                              : "bg-[#222] text-accent group-hover:bg-accent/20"
+                          } p-2 rounded-full transition-colors duration-300`}
+                        >
+                          {activeIndex === index ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </button>
+                      <div
+                        className={`overflow-hidden transition-all duration-500 ${
+                          activeIndex === index ? "max-h-96" : "max-h-0"
+                        }`}
+                      >
+                        <div className="px-5 pb-5 border-t border-[#333] pt-4 text-gray-300 leading-relaxed">
+                          {faq.answer}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-[#1A1A1A] p-8 rounded-xl text-center border border-[#333]">
+                    <HelpCircle className="h-12 w-12 text-accent/50 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      No questions found
                     </h3>
-                    <div
-                      className={`${
-                        activeIndex === index
-                          ? "bg-accent text-white"
-                          : "bg-[#222] text-accent group-hover:bg-accent/20"
-                      } p-2 rounded-full transition-colors duration-300`}
-                    >
-                      {activeIndex === index ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </div>
-                  </button>
-                  <div
-                    className={`overflow-hidden transition-all duration-500 ${
-                      activeIndex === index ? "max-h-96" : "max-h-0"
-                    }`}
-                  >
-                    <div className="px-5 pb-5 border-t border-[#333] pt-4 text-gray-300 leading-relaxed">
-                      {faq.answer}
-                    </div>
+                    <p className="text-gray-400">
+                      There are no questions in this category yet. Try selecting a
+                      different category.
+                    </p>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-[#1A1A1A] p-8 rounded-xl text-center border border-[#333]">
-                <HelpCircle className="h-12 w-12 text-accent/50 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">
-                  No questions found
-                </h3>
-                <p className="text-gray-400">
-                  There are no questions in this category yet. Try selecting a
-                  different category.
-                </p>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Contact CTA */}
-          <div className="mt-12 p-6 rounded-xl bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/20 text-center">
-            <h3 className="text-xl font-semibold mb-3 text-white">
-              Still have questions?
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Our support team is here to help you with any queries you might
-              have
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <a
-                href="tel:+911149042581"
-                className="group relative inline-flex items-center overflow-hidden rounded-lg bg-[#181818] px-6 py-2.5 text-white transition-all duration-300 ease-out hover:scale-105 border border-[#333]"
-              >
-                <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
-                  <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
-                </span>
-                <span className="relative flex items-center">
-                  <Phone className="h-5 w-5 mr-2 text-accent" />
-                  (+91) 11 4904 2581
-                </span>
-              </a>
+              {/* Contact CTA */}
+              <div className="mt-12 p-6 rounded-xl bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/20 text-center">
+                <h3 className="text-xl font-semibold mb-3 text-white">
+                  Still have questions?
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  Our support team is here to help you with any queries you might
+                  have
+                </p>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <a
+                    href="tel:+911149042581"
+                    className="group relative inline-flex items-center overflow-hidden rounded-lg bg-[#181818] px-6 py-2.5 text-white transition-all duration-300 ease-out hover:scale-105 border border-[#333]"
+                  >
+                    <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                      <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+                    </span>
+                    <span className="relative flex items-center">
+                      <Phone className="h-5 w-5 mr-2 text-accent" />
+                      (+91) 11 4904 2581
+                    </span>
+                  </a>
 
-              <a
-                href="mailto:support@animeindia.org"
-                className="group relative inline-flex items-center overflow-hidden rounded-lg bg-[#181818] px-6 py-2.5 text-white transition-all duration-300 ease-out hover:scale-105 border border-[#333]"
-              >
-                <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
-                  <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
-                </span>
-                <span className="relative flex items-center">
-                  <Mail className="h-5 w-5 mr-2 text-accent" />
-                  support@animeindia.org
-                </span>
-              </a>
+                  <a
+                    href="mailto:support@animeindia.org"
+                    className="group relative inline-flex items-center overflow-hidden rounded-lg bg-[#181818] px-6 py-2.5 text-white transition-all duration-300 ease-out hover:scale-105 border border-[#333]"
+                  >
+                    <span className="absolute inset-0 translate-y-32 transition-transform duration-300 ease-out group-hover:translate-y-0">
+                      <span className="absolute inset-0 opacity-30 bg-gradient-to-b from-accent to-transparent"></span>
+                    </span>
+                    <span className="relative flex items-center">
+                      <Mail className="h-5 w-5 mr-2 text-accent" />
+                      support@animeindia.org
+                    </span>
+                  </a>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Accent glows - Static instead of animated for better performance */}

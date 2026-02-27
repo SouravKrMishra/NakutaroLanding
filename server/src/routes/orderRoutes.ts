@@ -59,21 +59,31 @@ const createOrderValidation = [
     .isLength({ min: 1 })
     .withMessage("Pincode is required"),
   body("paymentMethod")
-    .isIn(["card", "cod", "PHONEPE", "CONTROPAY"])
+    .isIn(["card", "cod", "PHONEPE", "CONTROPAY", "RAZORPAY"])
     .withMessage(
-      "Payment method must be either 'card', 'cod', 'PHONEPE', or 'CONTROPAY'"
+      "Payment method must be either 'card', 'cod', 'PHONEPE', 'CONTROPAY', or 'RAZORPAY'"
     ),
   body("total")
     .isFloat({ min: 0 })
     .withMessage("Total must be a non-negative number"),
 ];
 
-// Validation middleware for updating order status
+// Validation middleware for updating order status (unified statuses only)
+const validOrderStatuses = [
+  "ORDER_REQUESTED",
+  "PENDING_PAYMENT",
+  "ORDER_SUCCESS",
+  "ORDER_FAILED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+];
 const updateOrderValidation = [
   body("status")
     .optional()
-    .isIn(["pending", "processing", "shipped", "delivered", "cancelled"])
-    .withMessage("Invalid status"),
+    .isIn(validOrderStatuses)
+    .withMessage(`Invalid status; must be one of: ${validOrderStatuses.join(", ")}`),
   body("trackingNumber")
     .optional()
     .trim()

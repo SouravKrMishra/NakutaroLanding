@@ -26,8 +26,8 @@ export default defineConfig({
     headers: {
       "Content-Security-Policy":
         process.env.NODE_ENV === "development"
-          ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com;"
-          : "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com;",
+          ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://checkout.razorpay.com;"
+          : "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://checkout.razorpay.com;",
     },
   },
   resolve: {

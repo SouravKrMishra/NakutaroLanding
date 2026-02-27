@@ -69,7 +69,7 @@ const updatePaymentStatus = async (
 
       if (status === "SUCCESS") {
         order.paymentStatus = "COMPLETED";
-        order.status = "PAID";
+        order.status = "ORDER_SUCCESS"; // New unified status
 
         // Apply coupon if one was used (mark as used only after successful payment)
         if (order.couponCode) {
@@ -116,7 +116,7 @@ const updatePaymentStatus = async (
         }
       } else if (status === "FAILED") {
         order.paymentStatus = "FAILED";
-        order.status = "PAYMENT_FAILED";
+        order.status = "ORDER_FAILED"; // New unified status
       }
 
       await order.save();
@@ -274,12 +274,13 @@ export const initiateContropayPayment = async (req: Request, res: Response) => {
       `Transaction created: ${newTransaction._id}, orderId: ${newTransaction.orderId}`
     );
 
-    // Update order with payment link ID
+    // Update order with payment link ID and creation timestamp (for 11-min timeout tracking)
     if (orderId) {
       await Order.findByIdAndUpdate(orderId, {
         contropayPaymentLinkId: paymentData.id,
+        paymentLinkCreatedAt: new Date(),
       });
-      console.log(`Order ${orderId} updated with contropayPaymentLinkId: ${paymentData.id}`);
+      console.log(`Order ${orderId} updated with contropayPaymentLinkId: ${paymentData.id} and paymentLinkCreatedAt`);
     }
 
     return res.json({

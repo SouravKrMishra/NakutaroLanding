@@ -178,6 +178,13 @@ const RegisterPage = () => {
       return;
     }
 
+    // Validate pincode (6-digit number)
+    if (!/^\d{6}$/.test(formData.pincode.trim())) {
+      showError("Pincode must be a 6-digit number");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Validate phone number (Indian 10-digit, starts with 6-9)
       const phoneDigits = formData.phoneNumber.replace(/\D/g, "");
@@ -201,6 +208,7 @@ const RegisterPage = () => {
         ...rest,
         name: `${firstName} ${lastName}`.trim(),
         phoneNumber: phoneDigits,
+        pincode: formData.pincode.trim(),
         ...(recaptchaToken && { recaptchaToken }),
       };
 
@@ -562,10 +570,11 @@ const RegisterPage = () => {
                       id="pincode"
                       value={formData.pincode}
                       onChange={(e) =>
-                        handleInputChange("pincode", e.target.value)
+                        handleInputChange("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))
                       }
                       placeholder="Enter pincode"
                       className="bg-[#2a2a2a] border-[#444] text-white placeholder:text-gray-500 focus:border-accent"
+                      maxLength={6}
                       required
                     />
                     {isPincodeLoading && (

@@ -41,11 +41,6 @@ const addToWishlistValidation = [
     .optional()
     .isInt({ min: 0 })
     .withMessage("Reviews must be a non-negative integer"),
-  body("series")
-    .optional()
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("Series must not be empty"),
   body("quantity")
     .optional()
     .isInt({ min: 1 })

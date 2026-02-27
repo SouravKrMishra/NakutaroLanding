@@ -23,6 +23,7 @@ const buildUserResponse = (user: any) => {
     name: user.name,
     userType: user.userType,
     phoneNumber: user.phoneNumber,
+    addresses: user.addresses || [],
   };
 
   // Only include business fields for business users
@@ -33,10 +34,6 @@ const buildUserResponse = (user: any) => {
     response.companySize = user.companySize;
     response.website = user.website;
     response.description = user.description;
-    response.address = user.address;
-    response.city = user.city;
-    response.state = user.state;
-    response.pincode = user.pincode;
   }
 
   return response;
@@ -174,10 +171,16 @@ export const signup = async (req: Request, res: Response) => {
       companySize,
       website: website || "",
       description: description || "",
-      address,
-      city,
-      state,
-      pincode,
+      // Store address in addresses array as "Address 1"
+      addresses: address && city && state && pincode ? [
+        {
+          name: "Address 1",
+          address: address.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+        }
+      ] : [],
     });
 
     await user.save();
@@ -693,10 +696,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
       name: user.name,
       userType: user.userType || "business",
       phone: user.phoneNumber,
-      address: user.address,
-      city: user.city,
-      state: user.state,
-      pincode: user.pincode,
+      phoneNumber: user.phoneNumber,
       country: "India", // Default to India
       companyName: user.companyName,
       businessType: user.businessType,
@@ -704,6 +704,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
       companySize: user.companySize,
       website: user.website,
       description: user.description,
+      addresses: user.addresses || [],
     });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
@@ -732,10 +733,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       companySize,
       website,
       description,
-      address,
-      city,
-      state,
-      pincode,
     } = req.body;
 
     // Build update object based on user type
@@ -778,75 +775,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         const trimmed = description.trim();
         if (trimmed !== "") updateFields.description = trimmed;
       }
-      // Address fields - unset if empty, update if non-empty
-      if (address !== undefined && address !== null) {
-        const trimmed = address.trim();
-        if (trimmed !== "") {
-          updateFields.address = trimmed;
-        } else {
-          unsetFields.address = "";
-        }
-      }
-      if (city !== undefined && city !== null) {
-        const trimmed = city.trim();
-        if (trimmed !== "") {
-          updateFields.city = trimmed;
-        } else {
-          unsetFields.city = "";
-        }
-      }
-      if (state !== undefined && state !== null) {
-        const trimmed = state.trim();
-        if (trimmed !== "") {
-          updateFields.state = trimmed;
-        } else {
-          unsetFields.state = "";
-        }
-      }
-      if (pincode !== undefined && pincode !== null) {
-        const trimmed = pincode.trim();
-        if (trimmed !== "") {
-          updateFields.pincode = trimmed;
-        } else {
-          unsetFields.pincode = "";
-        }
-      }
     } else if (user.userType === "individual") {
-      // For individual users, allow shipping details (address, city, state, pincode)
-      // but unset business fields
-      if (address !== undefined && address !== null) {
-        const trimmed = address.trim();
-        if (trimmed !== "") {
-          updateFields.address = trimmed;
-        } else {
-          unsetFields.address = "";
-        }
-      }
-      if (city !== undefined && city !== null) {
-        const trimmed = city.trim();
-        if (trimmed !== "") {
-          updateFields.city = trimmed;
-        } else {
-          unsetFields.city = "";
-        }
-      }
-      if (state !== undefined && state !== null) {
-        const trimmed = state.trim();
-        if (trimmed !== "") {
-          updateFields.state = trimmed;
-        } else {
-          unsetFields.state = "";
-        }
-      }
-      if (pincode !== undefined && pincode !== null) {
-        const trimmed = pincode.trim();
-        if (trimmed !== "") {
-          updateFields.pincode = trimmed;
-        } else {
-          unsetFields.pincode = "";
-        }
-      }
-
       // Always unset business fields for individual users
       unsetFields.companyName = "";
       unsetFields.businessType = "";
@@ -1058,5 +987,186 @@ export const resendOTP = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error in resendOTP:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Add new address
+export const addAddress = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { name, address, city, state, pincode } = req.body;
+
+    // Validate required fields
+    if (!address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
+      return res.status(400).json({ 
+        message: "All address fields are required (address, city, state, pincode)" 
+      });
+    }
+
+    // Check address limit based on user type
+    const maxAddresses = user.userType === "business" ? 2 : 5;
+    const currentAddresses = user.addresses || [];
+    
+    if (currentAddresses.length >= maxAddresses) {
+      return res.status(400).json({ 
+        message: `Maximum ${maxAddresses} addresses allowed for ${user.userType} users` 
+      });
+    }
+
+    // Generate default name if not provided
+    const addressName = name?.trim() || `Address ${currentAddresses.length + 1}`;
+
+    const newAddress = {
+      name: addressName,
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      pincode: pincode.trim(),
+    };
+
+    // Add the new address
+    await User.updateOne(
+      { _id: userId },
+      { $push: { addresses: newAddress } }
+    );
+
+    // Reload user to get updated addresses
+    const updatedUser = await User.findById(userId).select("-password");
+
+    res.status(201).json({
+      message: "Address added successfully",
+      user: buildUserResponse(updatedUser),
+    });
+  } catch (error: any) {
+    console.error("Error adding address:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Update existing address
+export const updateAddress = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const addressId = req.params.addressId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    if (!addressId) {
+      return res.status(400).json({ message: "Address ID is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { name, address, city, state, pincode } = req.body;
+
+    // Validate required fields
+    if (!address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
+      return res.status(400).json({ 
+        message: "All address fields are required (address, city, state, pincode)" 
+      });
+    }
+
+    // Find the address to update
+    const addressIndex = (user.addresses || []).findIndex(
+      (addr: any) => addr._id.toString() === addressId
+    );
+
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    // Update the address
+    const updatePath = `addresses.${addressIndex}`;
+    await User.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          [`${updatePath}.name`]: name?.trim() || user.addresses[addressIndex].name,
+          [`${updatePath}.address`]: address.trim(),
+          [`${updatePath}.city`]: city.trim(),
+          [`${updatePath}.state`]: state.trim(),
+          [`${updatePath}.pincode`]: pincode.trim(),
+        },
+      }
+    );
+
+    // Reload user to get updated addresses
+    const updatedUser = await User.findById(userId).select("-password");
+
+    res.json({
+      message: "Address updated successfully",
+      user: buildUserResponse(updatedUser),
+    });
+  } catch (error: any) {
+    console.error("Error updating address:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Delete address
+export const deleteAddress = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const addressId = req.params.addressId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    if (!addressId) {
+      return res.status(400).json({ message: "Address ID is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the address to delete
+    const addressIndex = (user.addresses || []).findIndex(
+      (addr: any) => addr._id.toString() === addressId
+    );
+
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    // Business users cannot delete Address 1 (first address)
+    if (user.userType === "business" && addressIndex === 0) {
+      return res.status(400).json({ 
+        message: "Business users cannot delete their primary address (Address 1)" 
+      });
+    }
+
+    // Remove the address
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { addresses: { _id: addressId } } }
+    );
+
+    // Reload user to get updated addresses
+    const updatedUser = await User.findById(userId).select("-password");
+
+    res.json({
+      message: "Address deleted successfully",
+      user: buildUserResponse(updatedUser),
+    });
+  } catch (error: any) {
+    console.error("Error deleting address:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

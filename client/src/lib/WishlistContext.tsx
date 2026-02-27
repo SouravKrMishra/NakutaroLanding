@@ -18,7 +18,6 @@ export interface WishlistItem {
   category: string;
   rating: number;
   reviews: number;
-  series?: string;
   quantity?: number;
   addedDate?: string;
   inStock?: boolean;
@@ -113,7 +112,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
         addedDate: new Date().toISOString().split("T")[0],
         inStock: true,
         quantity: 1,
-        series: item.category || "General",
       };
       setWishlistItems((prev) => [...prev, newItem]);
     }
@@ -121,14 +119,13 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
     try {
       const token = getAuthToken();
       const payload = {
-        productId: String(item.id), // Keep as string
+        productId: String(item.id),
         name: item.name,
         price: item.price,
         image: item.image,
         category: item.category,
         rating: item.rating,
         reviews: item.reviews,
-        series: item.category || "General",
         quantity: 1,
         inStock: true,
       };
@@ -149,7 +146,6 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({
           addedDate: new Date().toISOString().split("T")[0],
           inStock: true,
           quantity: 1,
-          series: item.category || "General",
         };
         setWishlistItems((prev) => [...prev, newItem]);
       } else {

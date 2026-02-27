@@ -7,6 +7,15 @@ import React, {
 } from "react";
 import { useLocation } from "wouter";
 
+interface Address {
+  _id?: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
 interface User {
   id: string;
   email: string;
@@ -19,10 +28,7 @@ interface User {
   companySize?: string;
   website?: string;
   description?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  pincode?: string;
+  addresses?: Address[];
 }
 
 interface AuthContextType {

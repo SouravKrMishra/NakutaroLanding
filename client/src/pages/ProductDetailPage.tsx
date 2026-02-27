@@ -1077,6 +1077,8 @@ const ProductDetailPage = () => {
     );
   }
 
+  if (!product) return null;
+
   const {
     name,
     price,
@@ -2833,6 +2835,8 @@ const ProductDetailPage = () => {
                 {(() => {
                   // Determine if button should be disabled based on stock availability
                   let isOutOfStock = false;
+
+                  if (!product) return null;
 
                   if (product.attributes && product.attributes.length > 0) {
                     // For clothing items with variants, check stock for selected variant

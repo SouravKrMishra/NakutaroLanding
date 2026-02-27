@@ -31,6 +31,13 @@ import {
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
 
+// Declare Razorpay global loaded from CDN script
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 interface ShippingInfo {
   firstName: string;
   lastName: string;
@@ -41,6 +48,16 @@ interface ShippingInfo {
   state: string;
   pincode: string;
   country: string;
+}
+
+// Address interface for saved addresses
+interface SavedAddress {
+  _id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
 }
 
 const CheckoutPage = () => {
@@ -54,11 +71,12 @@ const CheckoutPage = () => {
   const [phonepePaymentUrl, setPhonepePaymentUrl] = useState("");
   const [showPhonepeRedirect, setShowPhonepeRedirect] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
-    "PHONEPE" | "cod" | "CONTROPAY"
+    "PHONEPE" | "cod" | "CONTROPAY" | "RAZORPAY"
   >("PHONEPE");
   const [codEnabled, setCodEnabled] = useState(true); // Default to true
   const [phonepeAvailable, setPhonepeAvailable] = useState(true); // Default to true
   const [contropayAvailable, setContropayAvailable] = useState(false);
+  const [razorpayAvailable, setRazorpayAvailable] = useState(false);
   const [paymentSettingsLoading, setPaymentSettingsLoading] = useState(true);
 
   // Contropay crypto payment state
@@ -108,6 +126,11 @@ const CheckoutPage = () => {
     country: "India",
   });
 
+  // Saved addresses state
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+
   // Scroll to top when component mounts
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -135,37 +158,18 @@ const CheckoutPage = () => {
           const phonepeEnabled = data.phonepe?.enabled ?? false;
           const codEnabledStatus = data.cod?.enabled ?? true;
           const contropayEnabled = data.contropay?.enabled ?? false;
+          const razorpayEnabled = data.razorpay?.enabled ?? false;
 
           setPhonepeAvailable(phonepeEnabled);
           setCodEnabled(codEnabledStatus);
           setContropayAvailable(contropayEnabled);
+          setRazorpayAvailable(razorpayEnabled);
 
-          // If current payment method is disabled, switch to an available one
-          if (paymentMethod === "cod" && !codEnabledStatus) {
-            if (phonepeEnabled) {
-              setPaymentMethod("PHONEPE");
-            } else if (contropayEnabled) {
-              setPaymentMethod("CONTROPAY");
-            }
-          } else if (paymentMethod === "PHONEPE" && !phonepeEnabled) {
-            if (codEnabledStatus) {
-              setPaymentMethod("cod");
-            } else if (contropayEnabled) {
-              setPaymentMethod("CONTROPAY");
-            }
-          } else if (paymentMethod === "CONTROPAY" && !contropayEnabled) {
-            if (phonepeEnabled) {
-              setPaymentMethod("PHONEPE");
-            } else if (codEnabledStatus) {
-              setPaymentMethod("cod");
-            }
-          }
-
-          // If no payment method is available, default to the first available one
-          if (!phonepeEnabled && !codEnabledStatus && !contropayEnabled) {
-            setPaymentMethod("PHONEPE");
+          // Default to first available method
+          if (razorpayEnabled) {
+            setPaymentMethod("RAZORPAY");
           } else if (phonepeEnabled) {
-            // Keep current or default to PhonePe
+            setPaymentMethod("PHONEPE");
           } else if (contropayEnabled) {
             setPaymentMethod("CONTROPAY");
           } else if (codEnabledStatus) {
@@ -209,6 +213,7 @@ const CheckoutPage = () => {
     const fetchUserDetails = async () => {
       if (!user) return;
 
+      setAddressesLoading(true);
       try {
         const token = localStorage.getItem("authToken");
         const response = await fetch(
@@ -224,18 +229,34 @@ const CheckoutPage = () => {
         if (response.ok) {
           const userData = await response.json();
 
-          // Pre-fill shipping information with user data
+          // Pre-fill basic shipping information with user data
           setShippingInfo({
             firstName: userData.name?.split(" ")[0] || "",
             lastName: userData.name?.split(" ").slice(1).join(" ") || "",
             email: userData.email || "",
             phone: userData.phone || "",
-            address: userData.address || "",
-            city: userData.city || "",
-            state: userData.state || "",
-            pincode: userData.pincode || "",
+            address: "",
+            city: "",
+            state: "",
+            pincode: "",
             country: userData.country || "India",
           });
+
+          // Set saved addresses
+          if (userData.addresses && Array.isArray(userData.addresses) && userData.addresses.length > 0) {
+            setSavedAddresses(userData.addresses);
+            // Auto-select the first address
+            const firstAddress = userData.addresses[0];
+            setSelectedAddressId(firstAddress._id);
+            setShippingInfo((prev) => ({
+              ...prev,
+              address: firstAddress.address,
+              city: firstAddress.city,
+              state: firstAddress.state,
+              pincode: firstAddress.pincode,
+            }));
+          }
+          // If no saved addresses, user must add one in Account Settings
         }
       } catch (error) {
         // Fallback to basic user info if API fails
@@ -245,6 +266,8 @@ const CheckoutPage = () => {
           lastName: user?.name?.split(" ").slice(1).join(" ") || "",
           email: user?.email || "",
         }));
+      } finally {
+        setAddressesLoading(false);
       }
     };
 
@@ -340,8 +363,11 @@ const CheckoutPage = () => {
     return "tshirt";
   };
 
-  // Helper function to get available stock for a size-color combination
-  const getAvailableStock = (item: any): number => {
+  // Helper function to get available stock for a size-color combination.
+  // Returns null when the item's variant structure is missing a size or color key
+  // (i.e. the combination is unrecognisable and must be treated as invalid).
+  // Returns a number (≥ 0) when the combination is resolvable.
+  const getAvailableStock = (item: any): number | null => {
     if (!stockData || !item.variants) return 0;
 
     const sizeKey = Object.keys(item.variants).find((key) =>
@@ -351,7 +377,8 @@ const CheckoutPage = () => {
       key.toLowerCase().includes("color")
     );
 
-    if (!sizeKey || !colorKey) return 0;
+    // Return null (not 0) so callers can distinguish "unknown combo" from "out of stock"
+    if (!sizeKey || !colorKey) return null;
 
     const size = item.variants[sizeKey];
     const color = item.variants[colorKey];
@@ -391,33 +418,41 @@ const CheckoutPage = () => {
 
         const availableStock = getAvailableStock(item);
 
-        if (availableStock === 0) {
-          const sizeKey = Object.keys(item.variants).find((key) =>
-            key.toLowerCase().includes("size")
-          );
-          const colorKey = Object.keys(item.variants).find((key) =>
-            key.toLowerCase().includes("color")
-          );
+        // Resolve display values once for reuse in all error branches below
+        const sizeKey = Object.keys(item.variants).find((key) =>
+          key.toLowerCase().includes("size")
+        );
+        const colorKey = Object.keys(item.variants).find((key) =>
+          key.toLowerCase().includes("color")
+        );
+        const displaySize = sizeKey ? item.variants[sizeKey] : "N/A";
+        const displayColor = colorKey ? item.variants[colorKey] : "N/A";
 
+        if (availableStock === null) {
+          // Variant structure is incomplete (missing size or color key).
+          // Block checkout — do not silently skip, as null compared with === or >
+          // would produce incorrect results (null === 0 is false; x > null coerces
+          // null to 0 and only catches quantities > 0 with a misleading available value).
           errors.push({
             itemName: item.name,
-            size: sizeKey ? item.variants[sizeKey] : "N/A",
-            color: colorKey ? item.variants[colorKey] : "N/A",
+            size: displaySize,
+            color: displayColor,
+            requested: item.quantity,
+            available: 0,
+          });
+        } else if (availableStock === 0) {
+          errors.push({
+            itemName: item.name,
+            size: displaySize,
+            color: displayColor,
             requested: item.quantity,
             available: 0,
           });
         } else if (item.quantity > availableStock) {
-          const sizeKey = Object.keys(item.variants).find((key) =>
-            key.toLowerCase().includes("size")
-          );
-          const colorKey = Object.keys(item.variants).find((key) =>
-            key.toLowerCase().includes("color")
-          );
-
           errors.push({
             itemName: item.name,
-            size: sizeKey ? item.variants[sizeKey] : "N/A",
-            color: colorKey ? item.variants[colorKey] : "N/A",
+            size: displaySize,
+            color: displayColor,
             requested: item.quantity,
             available: availableStock,
           });
@@ -468,7 +503,28 @@ const CheckoutPage = () => {
   );
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
+    // Enforce numeric 6-digit pincode on change
+    if (field === "pincode") {
+      const numeric = value.replace(/\D/g, "").slice(0, 6);
+      setShippingInfo((prev) => ({ ...prev, pincode: numeric }));
+      return;
+    }
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Handle saved address selection
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    const selectedAddress = savedAddresses.find((addr) => addr._id === addressId);
+    if (selectedAddress) {
+      setShippingInfo((prev) => ({
+        ...prev,
+        address: selectedAddress.address,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        pincode: selectedAddress.pincode,
+      }));
+    }
   };
 
   const validateShipping = (): boolean => {
@@ -482,9 +538,23 @@ const CheckoutPage = () => {
       "state",
       "pincode",
     ];
-    return required.every(
+    const allFilled = required.every(
       (field) => shippingInfo[field as keyof ShippingInfo].trim() !== ""
     );
+
+    if (!allFilled) return false;
+
+    // Pincode must be exactly 6 numeric digits
+    if (!/^\d{6}$/.test(shippingInfo.pincode.trim())) {
+      toast({
+        title: "Invalid Pincode",
+        description: "Pincode must be a 6-digit number.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
   };
 
   // Save shipping details to user profile for individual users
@@ -1007,6 +1077,284 @@ const CheckoutPage = () => {
     }
   };
 
+  // Load Razorpay checkout script dynamically
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Initialize Razorpay payment
+  const initializeRazorpayPayment = async () => {
+    // Check minimum cart value for business users
+    const cartValueAfterDiscount = subtotalAfterDiscount;
+    if (isBusinessUser && businessMinCartValue > 0 && cartValueAfterDiscount < businessMinCartValue) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Business users must have a minimum cart value of ₹${businessMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (
+      !isBusinessUser &&
+      hasPostersOrStickers &&
+      individualPostersStickersMinCartValue > 0 &&
+      cartValueAfterDiscount < individualPostersStickersMinCartValue
+    ) {
+      toast({
+        title: "Minimum Order Value Required",
+        description: `Your cart contains Posters or Stickers. Individual users must have a minimum cart value of ₹${individualPostersStickersMinCartValue.toLocaleString()} (after discount) to proceed with checkout.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!razorpayAvailable) {
+      toast({
+        title: "Razorpay Not Available",
+        description: "Razorpay payment gateway is currently disabled.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateShipping()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required shipping fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!verifyStock()) {
+      toast({
+        title: "Stock Verification Failed",
+        description:
+          "Some items in your cart are out of stock or have insufficient quantity. Please review and update your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to continue with payment.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in again to continue.",
+        variant: "destructive",
+      });
+      setLocation("/login?from=checkout");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Failed to load Razorpay checkout. Please check your internet connection.");
+      }
+
+      const merchantTransactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Map cart items
+      const orderItems = items.map((item) => {
+        let productId = item.id;
+        if (typeof item.id === "string" && item.id.includes("_")) {
+          productId = item.id.split("_")[0];
+        }
+        let size: string | null = null;
+        let color: string | null = null;
+        if (item.variants) {
+          const entries = Object.entries(item.variants);
+          const sizeEntry = entries.find(([key]) => key.toLowerCase() === "size");
+          if (sizeEntry) size = sizeEntry[1]?.toString().toUpperCase() || null;
+          const colorEntry = entries.find(([key]) => key.toLowerCase() === "color");
+          if (colorEntry)
+            color =
+              colorEntry[1]
+                ?.toString()
+                .split(" ")
+                .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+                .join(" ") || null;
+        }
+        return { productId, name: item.name, price: item.price, quantity: item.quantity, image: item.image, category: item.category, size, color };
+      });
+
+      // Step 1: Create internal order in DB
+      const orderData = {
+        items: orderItems,
+        shippingInfo,
+        paymentMethod: "RAZORPAY",
+        subtotal: total,
+        couponCode: appliedCoupon?.code || null,
+        couponDiscount: couponDiscount || 0,
+        shippingCost,
+        total: finalTotal,
+        merchantTransactionId,
+      };
+
+      const orderResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/orders`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          credentials: "include",
+          body: JSON.stringify(orderData),
+        }
+      );
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        let errorMessage = errorData.message || "Failed to create order";
+        if (errorData.errors?.length > 0) {
+          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const orderResult = await orderResponse.json();
+
+      // Save shipping details
+      await saveShippingDetailsToProfile();
+
+      // Step 2: Create Razorpay order on server
+      const razorpayOrderResponse = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/payments/razorpay/create-order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          credentials: "include",
+          body: JSON.stringify({
+            amount: finalTotal * 100, // convert to paise
+            currency: "INR",
+            receipt: orderResult.order.orderNumber,
+            merchantTransactionId,
+            orderId: orderResult.order.id,
+          }),
+        }
+      );
+
+      if (!razorpayOrderResponse.ok) {
+        const errorData = await razorpayOrderResponse.json();
+        if (errorData.demo_mode) {
+          toast({
+            title: "Razorpay Setup Required",
+            description: "Please configure your Razorpay API keys to enable payments.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(errorData.message || "Failed to create Razorpay order");
+      }
+
+      const rzpData = await razorpayOrderResponse.json();
+
+      if (!rzpData.success) {
+        throw new Error(rzpData.message || "Razorpay order creation failed");
+      }
+
+      // Step 3: Open Razorpay checkout modal
+      const options = {
+        key: rzpData.keyId,
+        amount: rzpData.amount,
+        currency: rzpData.currency,
+        name: "Nakutaro",
+        description: `Order #${orderResult.order.orderNumber}`,
+        order_id: rzpData.razorpayOrderId,
+        prefill: {
+          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          email: shippingInfo.email,
+          contact: shippingInfo.phone,
+        },
+        theme: { color: "#6366f1" },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You cancelled the payment. Your order is saved - you can retry.",
+              variant: "destructive",
+            });
+          },
+        },
+        handler: async (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) => {
+          // Step 4: Verify payment on server
+          try {
+            const verifyResponse = await fetch(
+              `${import.meta.env.VITE_API_BASE_URL || ""}/api/payments/razorpay/verify`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                credentials: "include",
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  merchantTransactionId,
+                  orderId: orderResult.order.id,
+                }),
+              }
+            );
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.success) {
+              clearCart();
+              setLocation(`/order-success?orderId=${verifyData.orderId}`);
+            } else {
+              throw new Error(verifyData.message || "Payment verification failed");
+            }
+          } catch (verifyError: any) {
+            toast({
+              title: "Payment Verification Failed",
+              description: verifyError.message || "Please contact support with your payment details.",
+              variant: "destructive",
+            });
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+      // Note: setIsProcessing(false) is handled in handler/ondismiss
+    } catch (error: any) {
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initialize Razorpay payment",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
+  };
+
   // Initialize Contropay crypto payment
   const initializeContropayPayment = async () => {
     // Check minimum cart value for business users (after coupon discount)
@@ -1440,72 +1788,172 @@ const CheckoutPage = () => {
                       className="bg-[#2a2a2a] border-[#444] text-white"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor="address" className="text-gray-300">
-                      Address *
-                    </Label>
-                    <Textarea
-                      id="address"
-                      value={shippingInfo.address}
-                      onChange={(e) =>
-                        handleShippingChange("address", e.target.value)
-                      }
-                      className="bg-[#2a2a2a] border-[#444] text-white"
-                      rows={3}
-                    />
+                </div>
+
+                {/* Delivery Address Section */}
+                <div className="mt-6 border-t border-[#333] pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-white flex items-center">
+                      <MapPin className="w-5 h-5 mr-2 text-accent" />
+                      Delivery Address
+                    </h3>
+                    {savedAddresses.length === 0 && !addressesLoading && (
+                      <a
+                        href="/account-settings"
+                        className="text-sm text-accent hover:text-accent/80 underline"
+                      >
+                        Add addresses in Account Settings
+                      </a>
+                    )}
                   </div>
-                  <div>
-                    <Label htmlFor="city" className="text-gray-300">
-                      City *
-                    </Label>
-                    <Input
-                      id="city"
-                      value={shippingInfo.city}
-                      onChange={(e) =>
-                        handleShippingChange("city", e.target.value)
-                      }
-                      className="bg-[#2a2a2a] border-[#444] text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state" className="text-gray-300">
-                      State *
-                    </Label>
-                    <Input
-                      id="state"
-                      value={shippingInfo.state}
-                      onChange={(e) =>
-                        handleShippingChange("state", e.target.value)
-                      }
-                      className="bg-[#2a2a2a] border-[#444] text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="pincode" className="text-gray-300">
-                      Pincode *
-                    </Label>
-                    <Input
-                      id="pincode"
-                      value={shippingInfo.pincode}
-                      onChange={(e) =>
-                        handleShippingChange("pincode", e.target.value)
-                      }
-                      className="bg-[#2a2a2a] border-[#444] text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="country" className="text-gray-300">
-                      Country
-                    </Label>
-                    <Input
-                      id="country"
-                      value={shippingInfo.country}
-                      onChange={(e) =>
-                        handleShippingChange("country", e.target.value)
-                      }
-                      className="bg-[#2a2a2a] border-[#444] text-white"
-                    />
-                  </div>
+
+                  {addressesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin mr-2"></div>
+                      <span className="text-gray-400">Loading addresses...</span>
+                    </div>
+                  ) : savedAddresses.length > 0 ? (
+                    // Show saved addresses selection
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-400 mb-3">
+                        Select a delivery address from your saved addresses:
+                      </p>
+                      {savedAddresses.map((addr) => (
+                        <div
+                          key={addr._id}
+                          onClick={() => handleAddressSelect(addr._id)}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedAddressId === addr._id
+                              ? "border-accent bg-accent/10"
+                              : "border-[#444] bg-[#2a2a2a] hover:border-accent/50"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3">
+                              <div
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                                  selectedAddressId === addr._id
+                                    ? "border-accent bg-accent"
+                                    : "border-gray-500"
+                                }`}
+                              >
+                                {selectedAddressId === addr._id && (
+                                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-white">
+                                  {addr.name}
+                                </h4>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  {addr.address}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  {addr.city}, {addr.state} - {addr.pincode}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Show selected address summary */}
+                      {selectedAddressId && (
+                        <div className="mt-4 p-3 bg-[#252525] rounded-lg border border-[#444]">
+                          <p className="text-xs text-gray-400 mb-1">Delivering to:</p>
+                          <p className="text-sm text-white">
+                            {shippingInfo.address}, {shippingInfo.city},{" "}
+                            {shippingInfo.state} - {shippingInfo.pincode}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // No saved addresses - show manual input fields
+                    <div className="space-y-4">
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-yellow-400">
+                          <AlertCircle className="w-4 h-4 inline mr-2" />
+                          You don't have any saved addresses.{" "}
+                          <a
+                            href="/account-settings"
+                            className="underline hover:text-yellow-300"
+                          >
+                            Add addresses in Account Settings
+                          </a>{" "}
+                          for faster checkout.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <Label htmlFor="address" className="text-gray-300">
+                            Address *
+                          </Label>
+                          <Textarea
+                            id="address"
+                            value={shippingInfo.address}
+                            onChange={(e) =>
+                              handleShippingChange("address", e.target.value)
+                            }
+                            className="bg-[#2a2a2a] border-[#444] text-white"
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="city" className="text-gray-300">
+                            City *
+                          </Label>
+                          <Input
+                            id="city"
+                            value={shippingInfo.city}
+                            onChange={(e) =>
+                              handleShippingChange("city", e.target.value)
+                            }
+                            className="bg-[#2a2a2a] border-[#444] text-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="state" className="text-gray-300">
+                            State *
+                          </Label>
+                          <Input
+                            id="state"
+                            value={shippingInfo.state}
+                            onChange={(e) =>
+                              handleShippingChange("state", e.target.value)
+                            }
+                            className="bg-[#2a2a2a] border-[#444] text-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="pincode" className="text-gray-300">
+                            Pincode *
+                          </Label>
+                          <Input
+                            id="pincode"
+                            value={shippingInfo.pincode}
+                            onChange={(e) =>
+                              handleShippingChange("pincode", e.target.value)
+                            }
+                            className="bg-[#2a2a2a] border-[#444] text-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="country" className="text-gray-300">
+                            Country
+                          </Label>
+                          <Input
+                            id="country"
+                            value={shippingInfo.country}
+                            onChange={(e) =>
+                              handleShippingChange("country", e.target.value)
+                            }
+                            className="bg-[#2a2a2a] border-[#444] text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1707,7 +2155,8 @@ const CheckoutPage = () => {
                       <>
                         {!phonepeAvailable &&
                         !codEnabled &&
-                        !contropayAvailable ? (
+                        !contropayAvailable &&
+                        !razorpayAvailable ? (
                           <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-6 text-center shadow-lg">
                             <div className="flex flex-col items-center space-y-3">
                               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50">
@@ -1738,6 +2187,60 @@ const CheckoutPage = () => {
                           </div>
                         ) : (
                           <>
+                            {/* Razorpay Option */}
+                            <div
+                              onClick={() => {
+                                if (razorpayAvailable) {
+                                  setPaymentMethod("RAZORPAY");
+                                }
+                              }}
+                              className={`p-4 rounded-lg border-2 transition-all ${
+                                !razorpayAvailable
+                                  ? "border-gray-600 bg-gray-800/50 cursor-not-allowed opacity-50"
+                                  : paymentMethod === "RAZORPAY"
+                                  ? "border-blue-500 bg-blue-500/10 cursor-pointer"
+                                  : "border-[#444] bg-[#2a2a2a] hover:border-blue-500/50 cursor-pointer"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                      paymentMethod === "RAZORPAY"
+                                        ? "border-blue-500 bg-blue-500"
+                                        : "border-gray-500"
+                                    }`}
+                                  >
+                                    {paymentMethod === "RAZORPAY" && (
+                                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                                    )}
+                                  </div>
+                                  <CreditCard
+                                    className={`w-5 h-5 ${
+                                      !razorpayAvailable ? "text-gray-500" : "text-blue-400"
+                                    }`}
+                                  />
+                                  <div>
+                                    <div
+                                      className={`font-medium ${
+                                        !razorpayAvailable ? "text-gray-500" : "text-white"
+                                      }`}
+                                    >
+                                      Razorpay
+                                      {!razorpayAvailable && (
+                                        <span className="ml-2 text-xs text-red-400">(Disabled)</span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {!razorpayAvailable
+                                        ? "This payment method is currently unavailable"
+                                        : "UPI, Cards, Net Banking, Wallets & more"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
                             {/* PhonePe Option */}
                             <div
                               onClick={() => {
@@ -2005,7 +2508,7 @@ const CheckoutPage = () => {
                       Secure Checkout
                     </div>
                     <p className="text-xs text-gray-400">
-                      {paymentMethod === "PHONEPE"
+                      {paymentMethod === "RAZORPAY" || paymentMethod === "PHONEPE"
                         ? "Your payment information is encrypted and secure. We never store your card details."
                         : "Your order will be confirmed once you receive the items. Payment is collected at delivery."}
                     </p>
@@ -2014,7 +2517,9 @@ const CheckoutPage = () => {
                   {/* Payment Button */}
                   <Button
                     onClick={
-                      paymentMethod === "PHONEPE"
+                      paymentMethod === "RAZORPAY"
+                        ? initializeRazorpayPayment
+                        : paymentMethod === "PHONEPE"
                         ? initializePhonepePayment
                         : paymentMethod === "CONTROPAY"
                         ? initializeContropayPayment
@@ -2023,6 +2528,7 @@ const CheckoutPage = () => {
                     disabled={
                       isProcessing ||
                       paymentSettingsLoading ||
+                      (paymentMethod === "RAZORPAY" && !razorpayAvailable) ||
                       (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
                       (paymentMethod === "cod" && !codEnabled) ||
                       (paymentMethod === "CONTROPAY" && !contropayAvailable) ||
@@ -2030,12 +2536,15 @@ const CheckoutPage = () => {
                       (!isBusinessUser && hasPostersOrStickers && individualPostersStickersMinCartValue > 0 && subtotalAfterDiscount < individualPostersStickersMinCartValue)
                     }
                     className={`w-full py-3 ${
-                      paymentMethod === "PHONEPE"
+                      paymentMethod === "RAZORPAY"
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : paymentMethod === "PHONEPE"
                         ? "bg-purple-600 hover:bg-purple-700"
                         : paymentMethod === "CONTROPAY"
                         ? "bg-orange-600 hover:bg-orange-700"
                         : "bg-green-600 hover:bg-green-700"
                     } text-white ${
+                      (paymentMethod === "RAZORPAY" && !razorpayAvailable) ||
                       (paymentMethod === "PHONEPE" && !phonepeAvailable) ||
                       (paymentMethod === "cod" && !codEnabled) ||
                       (paymentMethod === "CONTROPAY" && !contropayAvailable)
@@ -2047,6 +2556,11 @@ const CheckoutPage = () => {
                       <div className="flex items-center">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                         Processing...
+                      </div>
+                    ) : paymentMethod === "RAZORPAY" ? (
+                      <div className="flex items-center">
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        {!razorpayAvailable ? "Razorpay Unavailable" : "Pay with Razorpay"}
                       </div>
                     ) : paymentMethod === "PHONEPE" ? (
                       <div className="flex items-center">
@@ -2074,6 +2588,7 @@ const CheckoutPage = () => {
                   {!phonepeAvailable &&
                     !codEnabled &&
                     !contropayAvailable &&
+                    !razorpayAvailable &&
                     !paymentSettingsLoading && (
                       <div className="bg-gradient-to-br from-red-500/20 via-orange-500/10 to-red-500/20 border-2 border-red-500/50 rounded-xl p-5 text-center shadow-lg">
                         <div className="flex items-center justify-center space-x-3 mb-2">
@@ -2097,6 +2612,19 @@ const CheckoutPage = () => {
                         </p>
                       </div>
                     )}
+
+                  {paymentMethod === "RAZORPAY" && (
+                    <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">
+                      <div className="flex items-center text-blue-400 mb-2">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Razorpay Payment
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        <strong>Supported:</strong> UPI, Credit/Debit Cards, Net
+                        Banking, Wallets, EMI & more
+                      </p>
+                    </div>
+                  )}
 
                   {paymentMethod === "PHONEPE" && (
                     <div className="bg-[#2a2a2a] p-3 rounded-lg border border-[#444]">

@@ -59,7 +59,7 @@ const HeroSection = () => {
     }
 
     const updateBackgroundPosition = () => {
-      setBackgroundPosition(window.innerWidth < 768 ? "74% center" : "center");
+      setBackgroundPosition(window.innerWidth < 768 ? "45% center" : "center");
     };
 
     // Set initial position

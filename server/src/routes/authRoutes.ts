@@ -10,6 +10,9 @@ import {
   updateUserProfile,
   verifyOTP,
   resendOTP,
+  addAddress,
+  updateAddress,
+  deleteAddress,
 } from "../controllers/authController.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { body } from "express-validator";
@@ -34,7 +37,11 @@ router.post(
     body("address").notEmpty().withMessage("Address is required"),
     body("city").notEmpty().withMessage("City is required"),
     body("state").notEmpty().withMessage("State is required"),
-    body("pincode").notEmpty().withMessage("Pincode is required"),
+    body("pincode")
+      .notEmpty()
+      .withMessage("Pincode is required")
+      .matches(/^\d{6}$/)
+      .withMessage("Pincode must be a 6-digit number"),
   ],
   handleValidationErrors,
   signup
@@ -94,6 +101,43 @@ router.get("/user/profile", authenticateToken, getUserProfile);
 
 // Update user profile route
 router.put("/user/profile", authenticateToken, updateUserProfile);
+
+// Address management routes
+router.post(
+  "/user/addresses",
+  authenticateToken,
+  [
+    body("address").notEmpty().withMessage("Address is required"),
+    body("city").notEmpty().withMessage("City is required"),
+    body("state").notEmpty().withMessage("State is required"),
+    body("pincode")
+      .notEmpty()
+      .withMessage("Pincode is required")
+      .matches(/^\d{6}$/)
+      .withMessage("Pincode must be a 6-digit number"),
+  ],
+  handleValidationErrors,
+  addAddress
+);
+
+router.put(
+  "/user/addresses/:addressId",
+  authenticateToken,
+  [
+    body("address").notEmpty().withMessage("Address is required"),
+    body("city").notEmpty().withMessage("City is required"),
+    body("state").notEmpty().withMessage("State is required"),
+    body("pincode")
+      .notEmpty()
+      .withMessage("Pincode is required")
+      .matches(/^\d{6}$/)
+      .withMessage("Pincode must be a 6-digit number"),
+  ],
+  handleValidationErrors,
+  updateAddress
+);
+
+router.delete("/user/addresses/:addressId", authenticateToken, deleteAddress);
 
 // OTP Verification route
 router.post(

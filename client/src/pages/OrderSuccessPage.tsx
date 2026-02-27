@@ -364,10 +364,9 @@ const OrderSuccessPage = () => {
                 <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">
                   <span className="text-gray-400 text-sm">Status</span>
                   <span className="text-green-400 font-medium text-sm bg-green-400/10 px-2 py-1 rounded">
-                    {orderData.status === "PAID" ||
-                    orderData.status === "CONFIRMED"
+                    {orderData.status === "ORDER_SUCCESS"
                       ? "Confirmed"
-                      : orderData.status}
+                      : orderData.status?.replace(/_/g, " ") || orderData.status}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-[#2a2a2a]/50 rounded-lg border border-[#333]">

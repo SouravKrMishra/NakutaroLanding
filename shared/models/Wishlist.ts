@@ -35,10 +35,6 @@ const wishlistSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    series: {
-      type: String,
-      default: "General",
-    },
     quantity: {
       type: Number,
       default: 1,

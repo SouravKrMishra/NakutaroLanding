@@ -88,7 +88,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["card", "cod", "PHONEPE", "CONTROPAY"],
+    enum: ["card", "cod", "PHONEPE", "CONTROPAY", "RAZORPAY"],
     required: true,
   },
   // Crypto payment details (for CONTROPAY)
@@ -102,6 +102,11 @@ const orderSchema = new mongoose.Schema({
   },
   contropayPaymentLinkId: {
     type: String,
+    default: null,
+  },
+  // Timestamp when crypto payment link was created (for 11-min timeout)
+  paymentLinkCreatedAt: {
+    type: Date,
     default: null,
   },
   subtotal: {
@@ -136,17 +141,16 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: [
-      "pending",
-      "processing",
-      "shipped",
-      "delivered",
-      "cancelled",
-      "PENDING_PAYMENT",
-      "PAID",
-      "PAYMENT_FAILED",
-      "CONFIRMED",
+      "ORDER_REQUESTED",   // COD initial - awaiting sales call confirmation
+      "PENDING_PAYMENT",  // Online payment in progress (PhonePe/Crypto)
+      "ORDER_SUCCESS",    // Payment confirmed / COD confirmed by admin
+      "ORDER_FAILED",     // Payment failed / Order rejected by admin
+      "PROCESSING",       // Order being prepared for shipping
+      "SHIPPED",          // Order picked up by courier
+      "DELIVERED",        // Order delivered to customer
+      "CANCELLED",        // Order cancelled by admin
     ],
-    default: "pending",
+    default: "PENDING_PAYMENT",
   },
   orderDate: {
     type: Date,
@@ -180,6 +184,23 @@ const orderSchema = new mongoose.Schema({
   stockAdjusted: {
     type: Boolean,
     default: false,
+  },
+  // Shiprocket integration fields
+  shiprocketOrderId: {
+    type: String,
+    default: null,
+  },
+  shiprocketShipmentId: {
+    type: String,
+    default: null,
+  },
+  awbCode: {
+    type: String,
+    default: null,  // Airway bill for tracking
+  },
+  courierName: {
+    type: String,
+    default: null,
   },
   // Soft delete fields
   isDeleted: {
@@ -216,5 +237,8 @@ orderSchema.pre("save", async function (next) {
 orderSchema.index({ userId: 1, orderDate: -1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ isDeleted: 1 });
+orderSchema.index({ paymentMethod: 1, status: 1 }); // For cleanup service queries
+orderSchema.index({ awbCode: 1 }); // For Shiprocket webhook lookups
+orderSchema.index({ shiprocketOrderId: 1 }); // For Shiprocket order lookups
 
 export const Order = mongoose.model("Order", orderSchema);

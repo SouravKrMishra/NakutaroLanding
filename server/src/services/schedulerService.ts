@@ -58,21 +58,11 @@ export class SchedulerService {
 
   /**
    * Run the order cleanup task
+   * Runs both PhonePe (24h expired pending) and Crypto/Contropay (11min expired) cleanup
    */
   private static async runOrderCleanupTask(): Promise<void> {
     try {
-      const stats = await OrderCleanupService.getPendingOrderStats();
-
-      if (stats.expiredPending > 0) {
-        const result = await OrderCleanupService.cancelExpiredPendingOrders();
-
-        // Log details of cancelled orders
-        if (result.cancelledOrders.length > 0) {
-          console.log(
-            `🧹 Order cleanup: Cancelled ${result.cancelledCount} expired pending orders`
-          );
-        }
-      }
+      await OrderCleanupService.runAllCleanupTasks();
     } catch (error) {
       console.error("Error in order cleanup task:", error);
     }

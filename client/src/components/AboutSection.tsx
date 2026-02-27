@@ -22,13 +22,13 @@ const AboutSection = () => {
 
   const stats = [
     { value: "2.7K+", label: "Users", icon: <Users className="h-6 w-6" /> },
-    { value: "1.8K+", label: "Deliveries", icon: <Tag className="h-6 w-6" /> },
+    { value: "4.5K+", label: "Deliveries", icon: <Tag className="h-6 w-6" /> },
     {
       value: "112+",
       label: "Daily Orders",
       icon: <BarChart4 className="h-6 w-6" />,
     },
-    { value: "15+", label: "Events", icon: <Calendar className="h-6 w-6" /> },
+    { value: "7", label: "Events", icon: <Calendar className="h-6 w-6" /> },
   ];
 
   return (

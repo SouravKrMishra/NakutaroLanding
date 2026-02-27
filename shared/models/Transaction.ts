@@ -17,8 +17,8 @@ export interface ITransaction extends Document {
   phonepeCode?: string;
   phonepeMessage?: string;
   callbackData?: any;
-  redirectUrl: string;
-  callbackUrl: string;
+  redirectUrl?: string;
+  callbackUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,7 +70,7 @@ const transactionSchema = new Schema<ITransaction>(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ["PHONEPE", "CARD", "COD", "CONTROPAY"],
+      enum: ["PHONEPE", "CARD", "COD", "CONTROPAY", "RAZORPAY"],
     },
     status: {
       type: String,
@@ -90,11 +90,11 @@ const transactionSchema = new Schema<ITransaction>(
     },
     redirectUrl: {
       type: String,
-      required: true,
+      default: "",
     },
     callbackUrl: {
       type: String,
-      required: true,
+      default: "",
     },
   },
   {

@@ -1,11 +1,14 @@
 // Shiprocket Routes
-// API routes for delivery serviceability checks
+// API routes for delivery serviceability checks and shipping webhooks
 
 import { Router } from "express";
 import {
   checkServiceability,
   getServiceStatus,
+  handleShiprocketWebhook,
+  getOrderTracking,
 } from "../controllers/shiprocketController.js";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -57,5 +60,21 @@ router.post("/check-serviceability", checkServiceability);
  * }
  */
 router.get("/status", getServiceStatus);
+
+/**
+ * POST /api/shiprocket/webhook
+ * Webhook endpoint for Shiprocket shipping status updates
+ * This is called by Shiprocket when shipment status changes
+ * 
+ * Note: This endpoint is public (no auth) as Shiprocket needs to call it
+ */
+router.post("/webhook", handleShiprocketWebhook);
+
+/**
+ * GET /api/shiprocket/tracking/:shipmentId
+ * Get tracking by AWB code (shipmentId param is actually the AWB code)
+ * Requires authentication
+ */
+router.get("/tracking/:shipmentId", authenticateToken, getOrderTracking);
 
 export default router;

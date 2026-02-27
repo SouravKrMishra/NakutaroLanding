@@ -124,8 +124,9 @@ const CartPage = () => {
   };
 
   // Helper function to get available stock for a size-color combination
-  const getAvailableStockWithData = (item: any, data: any): number => {
-    if (!data || !item.variants) return 0;
+  // Returns null if data is not loaded yet, number otherwise
+  const getAvailableStockWithData = (item: any, data: any): number | null => {
+    if (!data || !item.variants) return null;
 
     const sizeKey = Object.keys(item.variants).find((key) =>
       key.toLowerCase().includes("size")
@@ -134,7 +135,7 @@ const CartPage = () => {
       key.toLowerCase().includes("color")
     );
 
-    if (!sizeKey || !colorKey) return 0;
+    if (!sizeKey || !colorKey) return null;
 
     const size = item.variants[sizeKey];
     const color = item.variants[colorKey];
@@ -155,7 +156,9 @@ const CartPage = () => {
   };
 
   // Legacy wrapper for existing calls
-  const getAvailableStock = (item: any): number => {
+  // Returns null if stock data is not loaded yet
+  const getAvailableStock = (item: any): number | null => {
+    if (!stockData) return null;
     return getAvailableStockWithData(item, stockData);
   };
 
@@ -251,24 +254,27 @@ const CartPage = () => {
         // For clothing items with variants, check Stock collection
         const availableStock = getAvailableStock(cartItem);
 
-        if (availableStock === 0) {
-          toast({
-            title: "Out of Stock",
-            description:
-              "This item is currently out of stock. Please remove it from your cart.",
-            variant: "destructive",
-          });
-          return;
-        }
+        // Only check stock if data is loaded (not null)
+        if (availableStock !== null) {
+          if (availableStock === 0) {
+            toast({
+              title: "Out of Stock",
+              description:
+                "This item is currently out of stock. Please remove it from your cart.",
+              variant: "destructive",
+            });
+            return;
+          }
 
-        if (newQuantity > availableStock) {
-          toast({
-            title: "Limited Stock Available",
-            description: `Only ${availableStock} available in stock. Maximum quantity set to ${availableStock}.`,
-            variant: "destructive",
-          });
-          // Set quantity to available stock instead of rejecting
-          newQuantity = availableStock;
+          if (newQuantity > availableStock) {
+            toast({
+              title: "Limited Stock Available",
+              description: `Only ${availableStock} available in stock. Maximum quantity set to ${availableStock}.`,
+              variant: "destructive",
+            });
+            // Set quantity to available stock instead of rejecting
+            newQuantity = availableStock;
+          }
         }
       } else {
         // For non-clothing items (Action Figures, Wigs, etc.), check inStock flag
@@ -434,7 +440,8 @@ const CartPage = () => {
       if (item.variants && Object.keys(item.variants).length > 0) {
         // For clothing items with variants, check Stock collection
         const availableStock = getAvailableStockWithData(item, freshStockData);
-        if (availableStock === 0 || item.quantity > availableStock) {
+        // Only check if stock data is available (not null)
+        if (availableStock !== null && (availableStock === 0 || item.quantity > availableStock)) {
           hasStockIssues = true;
           outOfStockItems.push(item.name);
         }
