@@ -687,14 +687,31 @@ export async function getOrderByShiprocketId(shiprocketOrderId: string): Promise
 
     const data = response.data;
     if (!data || typeof data !== "object") return null;
-    // Response may have awb_code at root or under order/shipments (structure varies by API version)
-    const awb =
-      data.awb_code ??
-      data.order?.awb_code ??
-      data.shipment?.awb_code ??
-      (Array.isArray(data.shipments) && data.shipments[0]?.awb_code)
-        ? data.shipments[0].awb_code
+    // Shiprocket wraps payload in { data: { ... } }; unwrap so we read from the actual order payload
+    const payload = (data as any).data && typeof (data as any).data === "object" ? (data as any).data : data;
+    // Response may have awb at root (last_mile_awb, awb_data), order/shipments, or legacy paths
+    const awbFromOrderShipments = (payload as any).order?.shipments?.[0]?.awb_code ?? null;
+    const firstShipmentObj = (payload as any).shipment ?? (Array.isArray((payload as any).shipments) && (payload as any).shipments[0]) ?? (payload as any).order?.shipments?.[0];
+    const awbFromFirstShipment = firstShipmentObj && typeof firstShipmentObj === "object"
+      ? (firstShipmentObj.awb_code ?? firstShipmentObj.awb ?? null)
+      : null;
+    const awbData = (payload as any).awb_data;
+    const awbFromAwbData = awbData && typeof awbData === "object"
+      ? (awbData.awb_code ?? awbData.awb ?? (Array.isArray(awbData) && awbData[0] ? (awbData[0]?.awb_code ?? awbData[0]?.awb) : null))
+      : typeof awbData === "string" && (awbData as string).trim()
+        ? (awbData as string).trim()
         : null;
+    const awb =
+      (payload as any).last_mile_awb ??
+      (payload as any).awb_code ??
+      (payload as any).awb ??
+      awbFromAwbData ??
+      (payload as any).order?.awb_code ??
+      (payload as any).shipment?.awb_code ??
+      (payload as any).shipment?.awb ??
+      (Array.isArray((payload as any).shipments) && (payload as any).shipments[0]?.awb_code)
+        ? (payload as any).shipments[0].awb_code
+        : awbFromOrderShipments ?? awbFromFirstShipment;
     if (typeof awb === "string" && awb.trim()) {
       return { awb_code: awb.trim() };
     }
@@ -703,6 +720,43 @@ export async function getOrderByShiprocketId(shiprocketOrderId: string): Promise
     const axiosError = error as AxiosError;
     console.warn(
       "[Shiprocket] Could not fetch order by id:",
+      axiosError.response?.data || axiosError.message
+    );
+    return null;
+  }
+}
+
+/**
+ * Fetch shipment by shipment_id (GET /v1/external/shipments/{id}).
+ * Returns AWB from response.data.awb - use this when order has shiprocketShipmentId.
+ */
+export async function getShipmentByShipmentId(shipmentId: string): Promise<{ awb_code: string } | null> {
+  if (!shiprocketConfig.isConfigured()) {
+    return null;
+  }
+  try {
+    const token = await authenticate();
+    const response = await axios.get(
+      `${shiprocketConfig.baseUrl}/shipments/${shipmentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = response.data;
+    if (!data || typeof data !== "object") return null;
+    const payload = (data as any).data && typeof (data as any).data === "object" ? (data as any).data : data;
+    const awb = (payload as any).awb;
+    if (typeof awb === "string" && awb.trim()) {
+      return { awb_code: awb.trim() };
+    }
+    return null;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.warn(
+      "[Shiprocket] Could not fetch shipment by id:",
       axiosError.response?.data || axiosError.message
     );
     return null;
@@ -751,5 +805,6 @@ export const shiprocketService = {
   createOrder: createShiprocketOrder,
   getTracking: getShipmentTracking,
   getOrderByShiprocketId,
+  getShipmentByShipmentId,
   cancelOrder: cancelShiprocketOrder,
 };

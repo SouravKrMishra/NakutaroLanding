@@ -129,6 +129,7 @@ const CheckoutPage = () => {
   // Saved addresses state
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useDifferentAddress, setUseDifferentAddress] = useState(false);
   const [addressesLoading, setAddressesLoading] = useState(true);
 
   // Scroll to top when component mounts
@@ -514,6 +515,7 @@ const CheckoutPage = () => {
 
   // Handle saved address selection
   const handleAddressSelect = (addressId: string) => {
+    setUseDifferentAddress(false);
     setSelectedAddressId(addressId);
     const selectedAddress = savedAddresses.find((addr) => addr._id === addressId);
     if (selectedAddress) {
@@ -557,53 +559,74 @@ const CheckoutPage = () => {
     return true;
   };
 
-  // Save shipping details to user profile for individual users
+  // Save shipping details to user profile and save filled address to addresses list if new
   const saveShippingDetailsToProfile = async () => {
     if (!user) return;
 
-    // Check if user is individual
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const hasAddressFilled =
+      shippingInfo.address?.trim() &&
+      shippingInfo.city?.trim() &&
+      shippingInfo.state?.trim() &&
+      shippingInfo.pincode?.trim();
+
+    if (!hasAddressFilled) return;
+
+    // Update user profile (phone, etc.) for individual users
     const userType = (user?.userType || "").toLowerCase();
     const isIndividualUser =
       userType === "individual" ||
       (!userType && !user.companyName && !user.businessType);
-
-    // Only save for individual users
-    if (!isIndividualUser) return;
-
-    // Only save if shipping details are filled
-    if (
-      !shippingInfo.address?.trim() ||
-      !shippingInfo.city?.trim() ||
-      !shippingInfo.state?.trim() ||
-      !shippingInfo.pincode?.trim()
-    ) {
-      return;
+    if (isIndividualUser) {
+      try {
+        await axios.put(
+          buildApiUrl("/api/auth/user/profile"),
+          {
+            phoneNumber: shippingInfo.phone.trim(),
+            address: shippingInfo.address.trim(),
+            city: shippingInfo.city.trim(),
+            state: shippingInfo.state.trim(),
+            pincode: shippingInfo.pincode.trim(),
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          }
+        );
+      } catch {
+        // Don't block order flow
+      }
     }
 
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) return;
-
-      // Update user profile with shipping details
-      await axios.put(
-        buildApiUrl("/api/auth/user/profile"),
-        {
-          phoneNumber: shippingInfo.phone.trim(),
-          address: shippingInfo.address.trim(),
-          city: shippingInfo.city.trim(),
-          state: shippingInfo.state.trim(),
-          pincode: shippingInfo.pincode.trim(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+    // If user filled the address form (not selected from saved), add it to saved addresses if not already present
+    const isAlreadySaved = savedAddresses.some(
+      (addr) =>
+        addr.address.trim() === shippingInfo.address.trim() &&
+        addr.city.trim() === shippingInfo.city.trim() &&
+        addr.state.trim() === shippingInfo.state.trim() &&
+        addr.pincode.trim() === shippingInfo.pincode.trim()
+    );
+    if (!isAlreadySaved) {
+      try {
+        await axios.post(
+          buildApiUrl("/api/auth/user/addresses"),
+          {
+            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`.trim() || "Saved address",
+            address: shippingInfo.address.trim(),
+            city: shippingInfo.city.trim(),
+            state: shippingInfo.state.trim(),
+            pincode: shippingInfo.pincode.trim(),
           },
-          withCredentials: true,
-        }
-      );
-    } catch (error) {
-      // Silently fail - don't interrupt order flow if profile update fails
-      // Profile update failure shouldn't block order creation
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          }
+        );
+      } catch {
+        // Don't block order flow (e.g. max addresses reached)
+      }
     }
   };
 
@@ -1812,7 +1835,7 @@ const CheckoutPage = () => {
                       <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin mr-2"></div>
                       <span className="text-gray-400">Loading addresses...</span>
                     </div>
-                  ) : savedAddresses.length > 0 ? (
+                  ) : savedAddresses.length > 0 && !useDifferentAddress ? (
                     // Show saved addresses selection
                     <div className="space-y-3">
                       <p className="text-sm text-gray-400 mb-3">
@@ -1867,23 +1890,42 @@ const CheckoutPage = () => {
                           </p>
                         </div>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => setUseDifferentAddress(true)}
+                        className="text-sm text-accent hover:text-accent/80 underline mt-2"
+                      >
+                        Or use a different address
+                      </button>
                     </div>
                   ) : (
-                    // No saved addresses - show manual input fields
+                    // Manual address form: no saved addresses, or user chose "use different address"
                     <div className="space-y-4">
-                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-yellow-400">
-                          <AlertCircle className="w-4 h-4 inline mr-2" />
-                          You don't have any saved addresses.{" "}
-                          <a
-                            href="/account-settings"
-                            className="underline hover:text-yellow-300"
-                          >
-                            Add addresses in Account Settings
-                          </a>{" "}
-                          for faster checkout.
-                        </p>
-                      </div>
+                      {savedAddresses.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setUseDifferentAddress(false)}
+                          className="text-sm text-accent hover:text-accent/80 underline"
+                        >
+                          ← Use a saved address
+                        </button>
+                      )}
+                      {savedAddresses.length === 0 && (
+                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                          <p className="text-sm text-yellow-400">
+                            <AlertCircle className="w-4 h-4 inline mr-2" />
+                            You don't have any saved addresses.{" "}
+                            <a
+                              href="/account-settings"
+                              className="underline hover:text-yellow-300"
+                            >
+                              Add addresses in Account Settings
+                            </a>{" "}
+                            for faster checkout, or fill below. This address will be saved for next time.
+                          </p>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                           <Label htmlFor="address" className="text-gray-300">

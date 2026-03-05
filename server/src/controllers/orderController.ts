@@ -11,6 +11,36 @@ import { shiprocketService } from "../services/shiprocketService.js";
 
 type ShopperType = "business" | "individual";
 
+/**
+ * If order has Shiprocket ids but no awbCode, fetch AWB from Shiprocket API and update the order.
+ * Prefers GET /shipments/{id} (returns data.awb), then orders/show/{orderId}.
+ */
+async function ensureOrderAwbFromShiprocket(order: any): Promise<any> {
+  if (order.awbCode) return order;
+  if (!order?.shiprocketShipmentId && !order?.shiprocketOrderId) return order;
+  try {
+    let awbCode: string | null = null;
+    if (order.shiprocketShipmentId) {
+      const shipment = await shiprocketService.getShipmentByShipmentId(order.shiprocketShipmentId);
+      awbCode = shipment?.awb_code ?? null;
+    }
+    if (!awbCode && order.shiprocketOrderId) {
+      const result = await shiprocketService.getOrderByShiprocketId(order.shiprocketOrderId);
+      awbCode = result?.awb_code ?? null;
+    }
+    if (awbCode) {
+      await Order.updateOne(
+        { _id: order._id },
+        { $set: { awbCode } }
+      );
+      return { ...order, awbCode };
+    }
+  } catch (e) {
+    console.warn(`[Order] Could not fetch AWB from Shiprocket for order ${order.orderNumber}:`, (e as Error).message);
+  }
+  return order;
+}
+
 const getEffectiveUnitPrice = (product: any, userType: ShopperType): number => {
   const isBusiness = userType === "business";
   const regularPrice = isBusiness
@@ -285,10 +315,15 @@ export const getOrders = async (
     }
 
     // Exclude soft-deleted orders from customer history
-    const orders = await Order.find({ userId, isDeleted: { $ne: true } })
+    let orders = await Order.find({ userId, isDeleted: { $ne: true } })
       .sort({ orderDate: -1 })
       .select("-__v")
       .lean();
+
+    // Ensure AWB is populated from Shiprocket for orders that have shiprocketOrderId but no awbCode
+    orders = await Promise.all(
+      orders.map((o: any) => ensureOrderAwbFromShiprocket(o))
+    );
 
     // Check which products are deleted and mark them in orders
     const allProductIds = new Set<string>();
@@ -303,7 +338,7 @@ export const getOrders = async (
     if (allProductIds.size > 0) {
       // Convert productId strings to ObjectIds for the query
       const objectIds = Array.from(allProductIds)
-        .map((id) => {
+        .map((id: string) => {
           try {
             return new mongoose.Types.ObjectId(id);
           } catch (error) {
@@ -370,14 +405,17 @@ export const getOrderById = async (
       return next(createError("Order not found", 404));
     }
 
+    // Ensure AWB is populated from Shiprocket if missing
+    const orderWithAwb = await ensureOrderAwbFromShiprocket(order);
+
     // Check which products are deleted
     const productIds =
-      order.items?.map((item: any) => item.productId).filter(Boolean) || [];
+      orderWithAwb.items?.map((item: any) => item.productId).filter(Boolean) || [];
 
     if (productIds.length > 0) {
       // Convert productId strings to ObjectIds for the query
       const objectIds = productIds
-        .map((id) => {
+        .map((id: string) => {
           try {
             return new mongoose.Types.ObjectId(id);
           } catch (error) {
@@ -397,8 +435,8 @@ export const getOrderById = async (
 
       // Mark items with deleted products
       const orderWithDeletedInfo = {
-        ...order,
-        items: order.items?.map((item: any) => ({
+        ...orderWithAwb,
+        items: orderWithAwb.items?.map((item: any) => ({
           ...item,
           isDeleted: deletedProductIds.has(item.productId?.toString()),
           isAvailable: !deletedProductIds.has(item.productId?.toString()),
@@ -407,7 +445,7 @@ export const getOrderById = async (
 
       res.json({ order: orderWithDeletedInfo });
     } else {
-      res.json({ order });
+      res.json({ order: orderWithAwb });
     }
   } catch (error) {
     console.error("Error in getOrderById:", error);
@@ -428,7 +466,11 @@ export const updateOrderStatus = async (
     }
 
     const { orderId } = req.params;
-    const { status, trackingNumber, notes } = req.body;
+    let { status, trackingNumber, notes } = req.body || {};
+    // Some clients send status in query for PATCH /orders/:id/status
+    if ((status === undefined || status === null) && typeof req.query?.status === "string") {
+      status = req.query.status;
+    }
 
     const isAdmin = (userType || "").toLowerCase() === "admin";
     const orderQuery = isAdmin
@@ -473,6 +515,14 @@ export const updateOrderStatus = async (
       !order.shiprocketOrderId;
 
     await order.save();
+
+    // When order is SHIPPED or DELIVERED and has Shiprocket but no AWB, fetch AWB from Shiprocket and save to DB
+    // Use body status as fallback so we run when client sends status: "SHIPPED" even if order.status wasn't updated
+    const effectiveStatus = status === "SHIPPED" || status === "DELIVERED" ? status : order.status;
+    const shouldFetchAwbForShipped =
+      (effectiveStatus === "SHIPPED" || effectiveStatus === "DELIVERED") &&
+      !!order.shiprocketOrderId &&
+      !order.awbCode;
 
     // Mark coupon as used for COD orders when they are confirmed
     if (shouldMarkCouponForCOD) {
@@ -551,6 +601,28 @@ export const updateOrderStatus = async (
           error.message
         );
         // Don't block status update if Shiprocket creation fails
+      }
+    }
+
+    // When status is set to SHIPPED, assign AWB from Shiprocket API to DB
+    if (shouldFetchAwbForShipped) {
+      try {
+        const shiprocketOrder = await shiprocketService.getOrderByShiprocketId(order.shiprocketOrderId!);
+        if (shiprocketOrder?.awb_code) {
+          await Order.updateOne(
+            { _id: order._id },
+            { $set: { awbCode: shiprocketOrder.awb_code } }
+          );
+          console.log(`[Shiprocket] AWB assigned for order ${order.orderNumber}: ${shiprocketOrder.awb_code}`);
+        } else {
+          console.warn(`[Shiprocket] No AWB yet for order ${order.orderNumber} (shiprocketOrderId: ${order.shiprocketOrderId})`);
+        }
+      } catch (error: any) {
+        console.error(
+          `[Shiprocket] Error fetching AWB for order ${order.orderNumber}:`,
+          error.message
+        );
+        // Don't block status update
       }
     }
 

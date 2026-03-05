@@ -54,16 +54,7 @@ interface Order {
 }
 
 /** API response from GET /api/shiprocket/tracking/:shipmentId */
-interface TrackingResponse {
-  success: boolean;
-  tracking: any;
-  trackUrl?: string | null;
-  awbCode?: string | null;
-  courierName?: string | null;
-  message?: string;
-}
-
-/** Official Shiprocket tracking page (fallback when API does not return track_url) */
+/** Official Shiprocket tracking page */
 const SHIPROCKET_TRACK_BASE = "https://shiprocket.co/tracking/";
 
 const OrdersPage = () => {
@@ -181,66 +172,20 @@ const OrdersPage = () => {
 
   const getOrderId = (order: Order) => order.id || order._id || "";
 
-  /** AWB or Shiprocket shipment id – backend can resolve and fetch tracking for both */
-  const getShipmentId = (order: Order) =>
-    order.awbCode || order.shiprocketShipmentId || "";
-
   const handleTrackShipment = React.useCallback(
-    async (order: Order) => {
-      const shipmentId = getShipmentId(order);
+    (order: Order) => {
       const orderId = getOrderId(order);
+      const awbCode = order.awbCode;
 
-      if (!shipmentId) {
+      if (!awbCode) {
         window.alert("Tracking link is not available yet for this shipment.");
         return;
       }
 
       setTrackingOrderId(orderId);
       try {
-        const token = localStorage.getItem("authToken");
-        console.log(`[OrdersPage] Fetching tracking for shipment: ${shipmentId}`);
-        
-        const res = await axios.get<TrackingResponse>(
-          buildApiUrl(`/api/shiprocket/tracking/${encodeURIComponent(shipmentId)}`),
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
-          }
-        );
-
-        console.log("[OrdersPage] Tracking response:", res.data);
-
-        // Use trackUrl from backend (extracted from Shiprocket track/awb API response)
-        let url: string | null =
-          res.data.trackUrl && typeof res.data.trackUrl === "string"
-            ? res.data.trackUrl.trim()
-            : null;
-        
-        console.log(`[OrdersPage] Extracted trackUrl: ${url || "null"}`);
-        
-        // Fallback to AWB-based tracking URL if no track_url provided
-        if (!url && res.data.awbCode) {
-          url = `${SHIPROCKET_TRACK_BASE}/?awb=${encodeURIComponent(res.data.awbCode)}`;
-          console.log(`[OrdersPage] Using AWB fallback URL: ${url}`);
-        }
-        
-        if (url) {
-          console.log(`[OrdersPage] Opening tracking URL: ${url}`);
-          window.open(url, "_blank", "noopener,noreferrer");
-        } else if (res.data.message) {
-          console.warn(`[OrdersPage] No URL, showing message: ${res.data.message}`);
-          window.alert(res.data.message);
-        } else {
-          console.warn("[OrdersPage] No tracking URL or message available");
-          window.alert("Tracking link is not available yet for this shipment.");
-        }
-      } catch (err: unknown) {
-        console.error("[OrdersPage] Error fetching tracking:", err);
-        const message =
-          axios.isAxiosError(err) && err.response?.data?.message
-            ? String(err.response.data.message)
-            : "Failed to load tracking link";
-        window.alert(message);
+        const url = `${SHIPROCKET_TRACK_BASE}${encodeURIComponent(awbCode)}`;
+        window.open(url, "_blank", "noopener,noreferrer");
       } finally {
         setTrackingOrderId(null);
       }
@@ -249,10 +194,7 @@ const OrdersPage = () => {
   );
 
   const canTrackOrder = (order: Order) =>
-    (order.status === "PROCESSING" ||
-      order.status === "SHIPPED" ||
-      order.status === "DELIVERED") &&
-    !!(order.awbCode || order.shiprocketShipmentId);
+    order.status === "SHIPPED" || order.status === "DELIVERED";
 
   if (!user) {
     return (
