@@ -18,13 +18,10 @@ import { GalleryPopup } from "@/components/ui/gallery-popup.tsx";
 import { EventPopup } from "@/components/ui/event-popup.tsx";
 import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
+import axios from "axios";
+import { buildApiUrl } from "@/lib/api.ts";
 
-// Import event images
-import ncrWinner from "@assets/ncrwinner.jpg";
-import iitDelhi from "@assets/iit-delhi.jpg";
-import pennywise from "@assets/Pennywise.jpg";
-
-// Import gallery images for organized event
+// Static gallery imports for Nakutaro Cosplay Royale (bundled assets fallback)
 import cosplay1 from "@assets/Newfolder/cosplay-royale (1)1.JPG";
 import cosplay2 from "@assets/Newfolder/cosplay-royale (2)2.JPG";
 import cosplay3 from "@assets/Newfolder/cosplay-royale (3)3.JPG";
@@ -56,39 +53,13 @@ import cosplay28 from "@assets/Newfolder/cosplay-royale (28)28.JPG";
 import cosplay29 from "@assets/Newfolder/cosplay-royale (29)29.JPG";
 import cosplay30 from "@assets/Newfolder/cosplay-royale (30)30.JPG";
 
-// Gallery images array - created lazily when needed
 const createGalleryImages = () => {
   const images = [
-    cosplay1,
-    cosplay2,
-    cosplay3,
-    cosplay4,
-    cosplay5,
-    cosplay6,
-    cosplay7,
-    cosplay8,
-    cosplay9,
-    cosplay10,
-    cosplay11,
-    cosplay12,
-    cosplay13,
-    cosplay14,
-    cosplay15,
-    cosplay16,
-    cosplay17,
-    cosplay18,
-    cosplay19,
-    cosplay20,
-    cosplay21,
-    cosplay22,
-    cosplay23,
-    cosplay24,
-    cosplay25,
-    cosplay26,
-    cosplay27,
-    cosplay28,
-    cosplay29,
-    cosplay30,
+    cosplay1, cosplay2, cosplay3, cosplay4, cosplay5, cosplay6, cosplay7,
+    cosplay8, cosplay9, cosplay10, cosplay11, cosplay12, cosplay13, cosplay14,
+    cosplay15, cosplay16, cosplay17, cosplay18, cosplay19, cosplay20,
+    cosplay21, cosplay22, cosplay23, cosplay24, cosplay25, cosplay26,
+    cosplay27, cosplay28, cosplay29, cosplay30,
   ];
 
   const config = [
@@ -130,6 +101,26 @@ const createGalleryImages = () => {
   }));
 };
 
+interface ApiEvent {
+  _id: string;
+  title: string;
+  category: "organized" | "sponsored" | "upcoming";
+  eventDate: string;
+  eventEndDate?: string;
+  time: string;
+  location: string;
+  description: string;
+  image: string;
+  featuredImage?: string;
+  featured: boolean;
+  tags: string[];
+  prizePool: string;
+  attendees: string;
+  galleryImages: { src: string; alt: string }[];
+  isActive: boolean;
+  order: number;
+}
+
 interface Event {
   id: string;
   title: string;
@@ -143,114 +134,82 @@ interface Event {
   prizePool?: string;
   attendees?: string;
   featured_image?: string;
+  galleryImages?: { src: string; alt: string }[];
+}
+
+function formatEventDate(iso: string, endIso?: string): string {
+  const d = new Date(iso);
+  const opts: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  if (endIso) {
+    const e = new Date(endIso);
+    if (d.getMonth() === e.getMonth() && d.getFullYear() === e.getFullYear()) {
+      return `${d.toLocaleDateString("en-IN", { month: "long" })} ${d.getDate()}-${e.getDate()}, ${d.getFullYear()}`;
+    }
+    return `${d.toLocaleDateString("en-IN", opts)} – ${e.toLocaleDateString("en-IN", opts)}`;
+  }
+  return d.toLocaleDateString("en-IN", opts);
+}
+
+function apiToEvent(ev: ApiEvent): Event {
+  return {
+    id: ev._id,
+    title: ev.title,
+    date: formatEventDate(ev.eventDate, ev.eventEndDate),
+    location: ev.location,
+    time: ev.time,
+    description: ev.description,
+    image: ev.image,
+    type: ev.category,
+    featured: ev.featured,
+    prizePool: ev.prizePool,
+    attendees: ev.attendees,
+    featured_image: ev.featuredImage || ev.image,
+    galleryImages: ev.galleryImages,
+  };
 }
 
 const AllEventsPage = () => {
   const [, setLocation] = useLocation();
-  
-  // Reset scroll position when page loads
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "organized" | "sponsored" | "upcoming">("all");
+  const [filterType, setFilterType] = useState<
+    "all" | "organized" | "sponsored" | "upcoming"
+  >("all");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[] | null>(null);
+  const [galleryTitle, setGalleryTitle] = useState("");
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handleGoBack = () => {
     setLocation("/events");
   };
 
-  // All events data
-  const allEvents: Event[] = useMemo(
-    () => [
-      {
-        id: "1",
-        title: "Nakutaro Cosplay Royale",
-        date: "September 28, 2024",
-        location: "NCUI Auditorium, Hauz Khas, New Delhi",
-        time: "10:00 AM - 6:00 PM",
-        description:
-          "Self-organized premier cosplay event featuring a prize pool of ₹50,000, attracting numerous cosplay enthusiasts to showcase their talents.",
-        image: ncrWinner,
-        featured_image: ncrWinner,
-        type: "organized",
-        featured: true,
-        prizePool: "₹50,000",
-        attendees: "500+",
-      },
-      {
-        id: "2",
-        title: "Masquerade Cosplay Event at IIT Delhi",
-        date: "October 5-8, 2024",
-        location: "IIT Delhi Campus",
-        time: "All Day",
-        description:
-          "Nakutaro served as an associate sponsor for the Masquerade Cosplay Event during IIT Delhi's annual cultural fest, Rendezvous. The event offered a revamped prize pool of ₹30,000, contributed by Nakutaro, encouraging participants to display their creativity.",
-        image: iitDelhi,
-        type: "sponsored",
-        prizePool: "₹30,000",
-        attendees: "500+",
-      },
-      {
-        id: "3",
-        title: "Khooni Monday Horrorcon",
-        date: "October 26, 2024",
-        location: "Siri Fort Auditorium, New Delhi",
-        time: "11:00 AM - 9:00 PM",
-        description:
-          "Nakutaro partnered as a sponsor for this horror-themed convention featuring a cosplay competition with a prize pool of ₹60,000, providing a platform for fans to immerse themselves in the genre.",
-        image: pennywise,
-        type: "sponsored",
-        prizePool: "₹60,000",
-        attendees: "600+",
-      },
-      {
-        id: "4",
-        title: "Anime India Winter Fest 2024",
-        date: "December 18-20, 2024",
-        location: "NSIC Exhibition Ground, New Delhi",
-        time: "10:00 AM - 8:00 PM",
-        description:
-          "Cosplay competitions, Anime screenings, Merchandise stalls, Artist alley",
-        image:
-          "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-        type: "upcoming",
-        attendees: "Expected 5,000+",
-      },
-      {
-        id: "5",
-        title: "Manga Masters Competition",
-        date: "November 12, 2024",
-        location: "Bombay Exhibition Centre, Mumbai",
-        time: "9:00 AM - 6:00 PM",
-        description:
-          "Manga drawing competition, Professional workshops, Publishing opportunities",
-        image:
-          "https://images.unsplash.com/photo-1578632767115-351597cf2477?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-        type: "upcoming",
-        attendees: "Expected 2,000+",
-      },
-      {
-        id: "6",
-        title: "Voice Actor Meet & Greet",
-        date: "January 15, 2025",
-        location: "Phoenix MarketCity, Bangalore",
-        time: "2:00 PM - 8:00 PM",
-        description:
-          "Meet famous anime voice actors, Autograph sessions, Live dubbing demonstrations",
-        image:
-          "https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
-        type: "upcoming",
-        attendees: "Limited to 500 attendees",
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await axios.get(buildApiUrl("/api/event-timeline"));
+        if (res.data.success && res.data.events) {
+          setAllEvents(res.data.events.map(apiToEvent));
+        }
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
-  // Filtered events
   const filteredEvents = useMemo(() => {
     return allEvents.filter((event) => {
       const matchesSearch =
@@ -259,17 +218,28 @@ const AllEventsPage = () => {
         event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesFilter =
-        filterType === "all" || event.type === filterType;
+      const matchesFilter = filterType === "all" || event.type === filterType;
 
       return matchesSearch && matchesFilter;
     });
   }, [allEvents, searchQuery, filterType]);
 
-  const openGallery = () => {
-    // Lazy create gallery images only when gallery opens
-    if (galleryImages === null) {
-      setGalleryImages(createGalleryImages());
+  const openGallery = (event: Event) => {
+    if (event.galleryImages && event.galleryImages.length > 0) {
+      setGalleryImages(
+        event.galleryImages.map((g, i) => ({
+          src: g.src,
+          alt: g.alt || `Gallery image ${i + 1}`,
+          width: 1000,
+          height: 800,
+        })),
+      );
+      setGalleryTitle(`${event.title} Gallery`);
+    } else {
+      if (galleryImages === null) {
+        setGalleryImages(createGalleryImages());
+      }
+      setGalleryTitle("Nakutaro Cosplay Royale Gallery");
     }
     setGalleryOpen(true);
   };
@@ -319,7 +289,6 @@ const AllEventsPage = () => {
       {/* Search and Filter Section */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8">
         <div className="max-w-6xl mx-auto">
-          {/* Search Bar */}
           <div className="relative mb-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -331,7 +300,6 @@ const AllEventsPage = () => {
             />
           </div>
 
-          {/* Filter Buttons */}
           <div className="flex flex-wrap gap-3 justify-center">
             {[
               { label: "All Events", value: "all" },
@@ -353,7 +321,6 @@ const AllEventsPage = () => {
             ))}
           </div>
 
-          {/* Results Count */}
           <div className="mt-4 text-center text-gray-400 text-sm">
             Showing {filteredEvents.length} of {allEvents.length} events
           </div>
@@ -363,7 +330,17 @@ const AllEventsPage = () => {
       {/* Events Grid */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <AnimatePresence mode="wait">
-          {filteredEvents.length === 0 ? (
+          {loading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-20"
+            >
+              <div className="w-10 h-10 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-500">Loading events...</p>
+            </motion.div>
+          ) : filteredEvents.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -397,14 +374,18 @@ const AllEventsPage = () => {
                 >
                   {/* Image */}
                   <div className="h-56 relative overflow-hidden">
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="absolute w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
-                      style={{ willChange: "transform" }}
-                    />
+                    {event.image ? (
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="absolute w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
+                        style={{ willChange: "transform" }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#222]" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] to-transparent"></div>
 
                     {/* Event Type Badge */}
@@ -484,15 +465,16 @@ const AllEventsPage = () => {
                       >
                         View Details
                       </button>
-                      {event.type === "organized" && event.id === "1" && (
+                      {(event.galleryImages && event.galleryImages.length > 0) ||
+                      (event.type === "organized" && event.title === "Nakutaro Cosplay Royale") ? (
                         <button
-                          onClick={openGallery}
+                          onClick={() => openGallery(event)}
                           className="px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#333] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                         >
                           <Camera className="h-4 w-4 mr-1" />
                           Gallery
                         </button>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </motion.div>
@@ -520,7 +502,7 @@ const AllEventsPage = () => {
           isOpen={galleryOpen}
           onClose={() => setGalleryOpen(false)}
           images={galleryImages}
-          title="Nakutaro Cosplay Royale Gallery"
+          title={galleryTitle}
         />
       )}
     </div>

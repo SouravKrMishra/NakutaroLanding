@@ -11,6 +11,8 @@ import couponRoutes from "./couponRoutes.js";
 import settingsRoutes from "./settingsRoutes.js";
 import shiprocketRoutes from "./shiprocketRoutes.js";
 import faqRoutes from "./faqRoutes.js";
+import zohoInvoiceRoutes from "./zohoInvoiceRoutes.js";
+import eventTimelineRoutes from "./eventTimelineRoutes.js";
 
 const router = Router();
 
@@ -29,6 +31,8 @@ router.use("/wishlist", wishlistRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/shiprocket", shiprocketRoutes);
 router.use("/faqs", faqRoutes);
+router.use("/zoho-invoice", zohoInvoiceRoutes);
+router.use("/event-timeline", eventTimelineRoutes);
 // Mount catch-all routes last
 router.use("/", productRoutes);
 router.use("/", recommendationRoutes);

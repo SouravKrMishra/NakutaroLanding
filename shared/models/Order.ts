@@ -202,6 +202,11 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  // Zoho Invoice integration (created when order is successfully paid)
+  zohoInvoiceId: {
+    type: String,
+    default: null,
+  },
   // Soft delete fields
   isDeleted: {
     type: Boolean,

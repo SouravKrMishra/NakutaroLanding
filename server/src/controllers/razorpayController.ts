@@ -5,6 +5,7 @@ import Transaction from "../../../shared/models/Transaction.js";
 import { Order } from "../../../shared/models/Order.js";
 import { Cart } from "../../../shared/models/Cart.js";
 import { reduceStockForOrder } from "../services/stockService.js";
+import { createZohoInvoiceForOrderIfNeeded } from "../services/zohoInvoiceService.js";
 import { isRazorpayEnabled } from "../services/paymentSettingsService.js";
 
 /**
@@ -203,6 +204,10 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
           console.error("Failed to reduce stock for Razorpay order:", e);
         }
       }
+
+      createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+        console.error("[Zoho Invoice] Post-payment create failed:", err)
+      );
     }
 
     return res.json({

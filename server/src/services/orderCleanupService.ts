@@ -3,6 +3,7 @@ import Transaction from "../../../shared/models/Transaction.js";
 import { phonepeClient, hasPhonepeCredentials } from "../config/phonepe.js";
 import { hasContropayCredentials, CONTROPAY_API_URL, CONTROPAY_API_KEY } from "../config/contropay.js";
 import { reduceStockForOrder } from "./stockService.js";
+import { createZohoInvoiceForOrderIfNeeded } from "./zohoInvoiceService.js";
 import { createError } from "../middleware/errorHandler.js";
 import axios from "axios";
 
@@ -131,6 +132,9 @@ export class OrderCleanupService {
               );
               transaction.status = "SUCCESS";
               await transaction.save();
+              createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+                console.error("[Zoho Invoice] Cleanup create failed:", err)
+              );
               completedCount++;
             } else if (phonepeStatus === "FAILED") {
               // Payment definitively failed - mark as ORDER_FAILED
@@ -324,6 +328,9 @@ export class OrderCleanupService {
                 await transaction.save();
               }
 
+              createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+                console.error("[Zoho Invoice] Cleanup create failed:", err)
+              );
               completedCount++;
             } else if (contropayStatus === "EXPIRED" || contropayStatus === "FAILED") {
               // Payment expired or failed - mark as ORDER_FAILED

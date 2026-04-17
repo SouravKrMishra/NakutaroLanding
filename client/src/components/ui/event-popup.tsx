@@ -1,5 +1,6 @@
-import { X, Calendar, MapPin, Clock, Trophy } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect } from "react";
+import { X, Calendar, MapPin, Clock, Trophy } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface EventPopupProps {
   isOpen: boolean;
@@ -16,15 +17,19 @@ interface EventPopupProps {
 }
 
 export function EventPopup({ isOpen, onClose, event }: EventPopupProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  // Lock scroll when popup is open
-  if (isOpen) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-  
   return (
     <AnimatePresence>
       {isOpen && (

@@ -38,6 +38,8 @@ declare global {
   }
 }
 
+import { StateSelect, INDIAN_STATES } from "@/components/StateSelect.tsx";
+
 interface ShippingInfo {
   firstName: string;
   lastName: string;
@@ -546,6 +548,20 @@ const CheckoutPage = () => {
 
     if (!allFilled) return false;
 
+    // State must be one of the predefined Indian states
+    if (
+      !INDIAN_STATES.includes(
+        (shippingInfo.state || "").trim() as (typeof INDIAN_STATES)[number]
+      )
+    ) {
+      toast({
+        title: "Invalid State",
+        description: "Please select a valid state from the list.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     // Pincode must be exactly 6 numeric digits
     if (!/^\d{6}$/.test(shippingInfo.pincode.trim())) {
       toast({
@@ -796,8 +812,11 @@ const CheckoutPage = () => {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        // Extract validation errors if available
-        let errorMessage = errorData.message || "Failed to create order";
+        // Extract validation errors if available, including wrapped error.message from backend
+        let errorMessage =
+          errorData.message ||
+          errorData.error?.message ||
+          "Failed to create order";
         if (
           errorData.errors &&
           Array.isArray(errorData.errors) &&
@@ -824,11 +843,23 @@ const CheckoutPage = () => {
         }`
       );
     } catch (error: any) {
+      const msg = error?.message || "Failed to create order";
+      const isZohoAddressTooLong = msg.toLowerCase().includes("shipping address is too long for invoice");
       toast({
-        title: "Order Error",
-        description: error.message || "Failed to create order",
+        title: isZohoAddressTooLong ? "Shipping Address Too Long" : "Order Error",
+        description: msg,
         variant: "destructive",
       });
+      if (isZohoAddressTooLong) {
+        // Focus the main address field so the user can correct it quickly
+        const addressInput = document.getElementById("shipping-address-input") as HTMLInputElement | null;
+        if (addressInput) {
+          addressInput.focus();
+          addressInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -1008,8 +1039,11 @@ const CheckoutPage = () => {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        // Extract validation errors if available
-        let errorMessage = errorData.message || "Failed to create order";
+        // Extract validation errors if available, including wrapped error.message from backend
+        let errorMessage =
+          errorData.message ||
+          errorData.error?.message ||
+          "Failed to create order";
         if (
           errorData.errors &&
           Array.isArray(errorData.errors) &&
@@ -1250,9 +1284,15 @@ const CheckoutPage = () => {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        let errorMessage = errorData.message || "Failed to create order";
+        let errorMessage =
+          errorData.message ||
+          errorData.error?.message ||
+          "Failed to create order";
         if (errorData.errors?.length > 0) {
-          errorMessage = errorData.errors[0].msg || errorData.errors[0].message || errorMessage;
+          errorMessage =
+            errorData.errors[0].msg ||
+            errorData.errors[0].message ||
+            errorMessage;
         }
         throw new Error(errorMessage);
       }
@@ -1546,7 +1586,10 @@ const CheckoutPage = () => {
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
-        let errorMessage = errorData.message || "Failed to create order";
+        let errorMessage =
+          errorData.message ||
+          errorData.error?.message ||
+          "Failed to create order";
         if (
           errorData.errors &&
           Array.isArray(errorData.errors) &&
@@ -1628,11 +1671,26 @@ const CheckoutPage = () => {
         throw new Error(data.message || "Payment initialization failed");
       }
     } catch (error: any) {
+      const msg = error?.message || "Failed to initialize crypto payment";
+      const isZohoAddressTooLong = msg
+        .toLowerCase()
+        .includes("shipping address is too long for invoice");
       toast({
-        title: "Payment Error",
-        description: error.message || "Failed to initialize crypto payment",
+        title: isZohoAddressTooLong ? "Shipping Address Too Long" : "Payment Error",
+        description: msg,
         variant: "destructive",
       });
+      if (isZohoAddressTooLong) {
+        const addressInput = document.getElementById(
+          "shipping-address-input"
+        ) as HTMLTextAreaElement | null;
+        if (addressInput) {
+          addressInput.focus();
+          addressInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -1932,7 +1990,7 @@ const CheckoutPage = () => {
                             Address *
                           </Label>
                           <Textarea
-                            id="address"
+                            id="shipping-address-input"
                             value={shippingInfo.address}
                             onChange={(e) =>
                               handleShippingChange("address", e.target.value)
@@ -1958,13 +2016,11 @@ const CheckoutPage = () => {
                           <Label htmlFor="state" className="text-gray-300">
                             State *
                           </Label>
-                          <Input
-                            id="state"
+                          <StateSelect
                             value={shippingInfo.state}
-                            onChange={(e) =>
-                              handleShippingChange("state", e.target.value)
+                            onChange={(value) =>
+                              handleShippingChange("state", value)
                             }
-                            className="bg-[#2a2a2a] border-[#444] text-white"
                           />
                         </div>
                         <div>

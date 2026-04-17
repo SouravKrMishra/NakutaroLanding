@@ -31,7 +31,7 @@ if (!envPath) {
   envPath = possibleEnvPaths[0];
   console.warn(
     "⚠️  Warning: .env file not found. Tried:",
-    possibleEnvPaths.join(", ")
+    possibleEnvPaths.join(", "),
   );
   console.warn("⚠️  Will attempt to load from:", envPath);
 } else {
@@ -52,7 +52,7 @@ if (result.error) {
   if (nodeEnv !== "production" && !process.env.NODE_ENV) {
     console.warn("⚠️  Warning: NODE_ENV not set. Defaulting to 'development'.");
     console.warn(
-      "⚠️  For production, ensure NODE_ENV=production is set in your environment or .env file"
+      "⚠️  For production, ensure NODE_ENV=production is set in your environment or .env file",
     );
   }
 
@@ -89,6 +89,8 @@ import { SchedulerService } from "./src/services/schedulerService.js";
 import { logoutTokenOnShutdown } from "./src/services/shiprocketService.js";
 // Import types to ensure global declarations are loaded
 import "./src/types/index.js";
+// Register Event model with Mongoose
+import "../shared/models/Event.js";
 
 // Helper function to get CORS origins from process.env (before config is loaded)
 function getCorsOrigins(): string | string[] {
@@ -100,7 +102,7 @@ function getCorsOrigins(): string | string[] {
 
   if (process.env.CORS_ORIGIN) {
     const origins = process.env.CORS_ORIGIN.split(",").map((origin) =>
-      origin.trim()
+      origin.trim(),
     );
     // In production, ensure https://animeindia.org is always included
     if (
@@ -152,7 +154,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     exposedHeaders: ["Content-Range", "X-Content-Range"],
-  })
+  }),
 );
 
 // Middleware
@@ -234,13 +236,12 @@ app.use(errorHandler);
   const shutdown = (signal: string) => {
     console.log(`${signal} received, shutting down gracefully`);
     SchedulerService.stopCleanupScheduler();
-    logoutTokenOnShutdown()
-      .finally(() => {
-        server.close(() => {
-          console.log("Process terminated");
-          process.exit(0);
-        });
+    logoutTokenOnShutdown().finally(() => {
+      server.close(() => {
+        console.log("Process terminated");
+        process.exit(0);
       });
+    });
   };
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));

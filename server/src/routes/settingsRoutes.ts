@@ -37,7 +37,6 @@ router.get("/events/images", async (req, res) => {
     // Default events images if not set
     const defaultImages = {
       images: [],
-      autoScrollEnabled: true,
     };
 
     const imagesData = setting ? setting.value : defaultImages;

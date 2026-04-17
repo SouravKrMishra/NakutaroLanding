@@ -8,6 +8,8 @@ import { createError } from "../middleware/errorHandler.js";
 import { reduceStockForOrder } from "../services/stockService.js";
 import { isCODEnabled } from "../services/paymentSettingsService.js";
 import { shiprocketService } from "../services/shiprocketService.js";
+import { createZohoInvoiceForOrderIfNeeded } from "../services/zohoInvoiceService.js";
+import { zohoInvoiceConfig } from "../config/zohoInvoice.js";
 
 type ShopperType = "business" | "individual";
 
@@ -133,6 +135,33 @@ export const createOrder = async (
           400
         )
       );
+    }
+
+    // Guard: ensure shipping address will be acceptable to Zoho Invoice BEFORE payment starts.
+    // Zoho counts the entire JSON for billing_address, so our service limits the address
+    // string to 84 chars (to keep total < 100). If the combined line is longer, ask the user
+    // to shorten it instead of silently truncating after payment.
+    if (zohoInvoiceConfig.isConfigured()) {
+      const addressParts = [
+        shippingInfo.address,
+        shippingInfo.city,
+        shippingInfo.state,
+        shippingInfo.pincode,
+        shippingInfo.country,
+      ];
+      const combinedAddress = addressParts
+        .filter(Boolean)
+        .map((v) => String(v).trim())
+        .join(", ");
+      const MAX_ZOHO_ADDR_LEN = 84;
+      if (combinedAddress.length > MAX_ZOHO_ADDR_LEN) {
+        return next(
+          createError(
+            `Shipping address is too long for invoice. Please shorten the address so it is under ${MAX_ZOHO_ADDR_LEN} characters.`,
+            400
+          )
+        );
+      }
     }
 
     // Check if COD is enabled when COD payment method is selected
@@ -604,6 +633,17 @@ export const updateOrderStatus = async (
       }
     }
 
+    // Create Zoho Invoice when order becomes successfully confirmed (ORDER_SUCCESS or COD confirmed)
+    const isOrderSuccess =
+      order.status === "ORDER_SUCCESS" ||
+      (order.paymentMethod === "cod" &&
+        ["PROCESSING", "ORDER_SUCCESS", "SHIPPED", "DELIVERED"].includes(order.status));
+    if (statusChanged && isOrderSuccess) {
+      createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+        console.error("[Zoho Invoice] Post-status update create failed:", err)
+      );
+    }
+
     // When status is set to SHIPPED, assign AWB from Shiprocket API to DB
     if (shouldFetchAwbForShipped) {
       try {
@@ -689,6 +729,31 @@ export const createOrderForPhonepe = async (
       !merchantTransactionId
     ) {
       return next(createError("Missing required fields", 400));
+    }
+
+    // Guard: ensure shipping address will be acceptable to Zoho Invoice BEFORE payment starts
+    // for PhonePe / Contropay / Razorpay flows that use this endpoint.
+    if (zohoInvoiceConfig.isConfigured()) {
+      const addressParts = [
+        shippingInfo.address,
+        shippingInfo.city,
+        shippingInfo.state,
+        shippingInfo.pincode,
+        shippingInfo.country,
+      ];
+      const combinedAddress = addressParts
+        .filter(Boolean)
+        .map((v) => String(v).trim())
+        .join(", ");
+      const MAX_ZOHO_ADDR_LEN = 84;
+      if (combinedAddress.length > MAX_ZOHO_ADDR_LEN) {
+        return next(
+          createError(
+            `Shipping address is too long for invoice. Please shorten the address so it is under ${MAX_ZOHO_ADDR_LEN} characters.`,
+            400
+          )
+        );
+      }
     }
 
     // No processing fee - removed as requested

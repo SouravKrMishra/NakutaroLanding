@@ -9,6 +9,7 @@ import {
 } from "pg-sdk-node";
 import { reduceStockForOrder } from "../services/stockService.js";
 import { isPhonepeEnabled } from "../services/paymentSettingsService.js";
+import { createZohoInvoiceForOrderIfNeeded } from "../services/zohoInvoiceService.js";
 
 // Helper to update order and transaction status
 const updatePaymentStatus = async (
@@ -141,6 +142,11 @@ const updatePaymentStatus = async (
       console.log(
         `Order ${order._id} paymentStatus updated: ${previousPaymentStatus} -> ${order.paymentStatus}`
       );
+      if (status === "SUCCESS") {
+        createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+          console.error("[Zoho Invoice] Post-payment create failed:", err)
+        );
+      }
     } else {
       console.error(
         `Order not found for transaction ${merchantTransactionId}, orderId: ${transaction.orderId}`

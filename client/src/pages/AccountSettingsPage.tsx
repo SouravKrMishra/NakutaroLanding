@@ -22,13 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog.tsx";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.tsx";
+import { StateSelect, INDIAN_STATES } from "@/components/StateSelect.tsx";
 import {
   ArrowLeft,
   Building2,
@@ -294,6 +288,19 @@ const AccountSettingsPage = () => {
       return;
     }
 
+    if (
+      !INDIAN_STATES.includes(
+        newAddress.state.trim() as (typeof INDIAN_STATES)[number]
+      )
+    ) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a valid state from the list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!/^\d{6}$/.test(newAddress.pincode.trim())) {
       toast({
         title: "Validation Error",
@@ -389,6 +396,19 @@ const AccountSettingsPage = () => {
       toast({
         title: "Validation Error",
         description: "All address fields are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (
+      !INDIAN_STATES.includes(
+        editAddress.state.trim() as (typeof INDIAN_STATES)[number]
+      )
+    ) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a valid state from the list.",
         variant: "destructive",
       });
       return;
@@ -855,13 +875,11 @@ const AccountSettingsPage = () => {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-gray-300">State *</Label>
-                          <Input
+                          <StateSelect
                             value={newAddress.state}
-                            onChange={(e) =>
-                              handleNewAddressChange("state", e.target.value)
+                            onChange={(value) =>
+                              handleNewAddressChange("state", value)
                             }
-                            className="bg-[#1a1a1a] border-[#555] text-white"
-                            placeholder="Enter state"
                           />
                         </div>
                         <div className="space-y-2">
@@ -977,13 +995,11 @@ const AccountSettingsPage = () => {
                               </div>
                               <div className="space-y-2">
                                 <Label className="text-gray-300">State *</Label>
-                                <Input
+                                <StateSelect
                                   value={editAddress.state}
-                                  onChange={(e) =>
-                                    handleEditAddressChange("state", e.target.value)
+                                  onChange={(value) =>
+                                    handleEditAddressChange("state", value)
                                   }
-                                  className="bg-[#1a1a1a] border-[#555] text-white"
-                                  placeholder="Enter state"
                                 />
                               </div>
                               <div className="space-y-2">

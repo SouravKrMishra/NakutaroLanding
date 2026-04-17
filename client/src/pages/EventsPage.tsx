@@ -1,271 +1,376 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fadeIn, staggerContainer, slideIn } from "@/lib/animations.ts";
+import { fadeIn, staggerContainer } from "@/lib/animations.ts";
 import EventsSection from "@/components/EventsSection.tsx";
 import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
-import {
-  Calendar,
-  Calendar as CalendarIcon,
-  MapPin,
-  Users,
-  Star,
-  Trophy,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Calendar, Star, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import ncrWinner from "@assets/ncrwinner.jpg";
+import iitDelhi from "@assets/iit-delhi.jpg";
+import pennywise from "@assets/Pennywise.jpg";
+
+type HeroMediaItem = {
+  id?: string;
+  url: string;
+  filename?: string;
+  autoScrollDelay?: number;
+};
+
+const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v", ".ogg"];
+
+const isVideoMedia = (url?: string) => {
+  if (!url) return false;
+  const normalizedUrl = url.split("?")[0].toLowerCase();
+  return VIDEO_EXTENSIONS.some((ext) => normalizedUrl.endsWith(ext));
+};
+
+const getSafeDelay = (delay?: number) => {
+  if (typeof delay !== "number" || Number.isNaN(delay)) return 5000;
+  return Math.max(1000, delay);
+};
+
+function MediaThumb({
+  item,
+  className,
+}: {
+  item: HeroMediaItem;
+  className?: string;
+}) {
+  if (isVideoMedia(item.url)) {
+    return (
+      <video
+        src={`${item.url}#t=0.5`}
+        className={className}
+        muted
+        playsInline
+        preload="metadata"
+      />
+    );
+  }
+  return <img src={item.url} alt="" className={className} />;
+}
 
 const EventsPage = () => {
-  // Reset scroll position when page loads
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   const [activeSlide, setActiveSlide] = useState(0);
-  const [eventImages, setEventImages] = useState<any[]>([]);
+  const [eventMedia, setEventMedia] = useState<HeroMediaItem[]>([]);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
 
-  // Fetch event images from API
   useEffect(() => {
     const fetchEventImages = async () => {
       try {
         const response = await axios.get(
-          buildApiUrl("/api/settings/events/images")
+          buildApiUrl("/api/settings/events/images"),
         );
         if (response.data.success && response.data.images) {
-          // Store full image objects
-          const images = response.data.images.filter((img: any) => img.url);
-          setEventImages(images);
-          // Reset activeSlide if it's out of bounds
-          setActiveSlide((prev) => {
-            if (images.length === 0) return 0;
-            return prev >= images.length ? 0 : prev;
-          });
-          // Set global auto-scroll enabled setting
+          const media = response.data.images.filter(
+            (item: HeroMediaItem) => item.url,
+          );
+          setEventMedia(media);
           setAutoScrollEnabled(
             response.data.autoScrollEnabled !== undefined
               ? response.data.autoScrollEnabled
-              : true
+              : true,
           );
+          setActiveSlide((prev) => {
+            if (media.length === 0) return 0;
+            return prev >= media.length ? 0 : prev;
+          });
         }
       } catch (error) {
         console.error("Failed to fetch event images:", error);
-        // Continue with empty array if fetch fails
-        setEventImages([]);
+        setEventMedia([]);
         setActiveSlide(0);
       }
     };
-
     fetchEventImages();
   }, []);
 
-  // Auto-rotate carousel with per-image delay settings
+  const heroRef = useRef<HTMLDivElement>(null);
+  const scrollCooldown = useRef(false);
   useEffect(() => {
-    if (
-      eventImages.length === 0 ||
-      !autoScrollEnabled ||
-      eventImages.length <= 1
-    )
-      return;
+    const mediaCount = eventMedia.length;
+    if (mediaCount <= 1) return;
+    const el = heroRef.current;
+    if (!el) return;
 
-    const currentImage = eventImages[activeSlide];
-    if (!currentImage) return;
+    const onWheel = (e: WheelEvent) => {
+      const threshold = 30;
+      if (Math.abs(e.deltaY) < threshold) return;
 
-    // Get delay for current image (default to 5 seconds if not set)
-    const delay =
-      currentImage.autoScrollDelay !== undefined
-        ? currentImage.autoScrollDelay
-        : 5000;
+      e.preventDefault();
 
-    // Ensure delay is valid (at least 1 second)
-    const validDelay = Math.max(1000, delay);
+      if (scrollCooldown.current) return;
+      scrollCooldown.current = true;
 
-    const interval = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % eventImages.length);
-    }, validDelay);
+      if (e.deltaY > 0) {
+        setActiveSlide((prev) => (prev + 1) % mediaCount);
+      } else {
+        setActiveSlide((prev) => (prev - 1 + mediaCount) % mediaCount);
+      }
+      setTimeout(() => {
+        scrollCooldown.current = false;
+      }, 700);
+    };
 
-    return () => clearInterval(interval);
-  }, [eventImages, activeSlide, autoScrollEnabled]);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [eventMedia]);
 
-  const upcomingEvents = [
-    {
-      title: "Anime India Winter Fest 2024",
-      date: "December 18-20, 2024",
-      location: "NSIC Exhibition Ground, New Delhi",
-      attendees: "Expected 5,000+",
-      highlights:
-        "Cosplay competitions, Anime screenings, Merchandise stalls, Artist alley",
-    },
-    {
-      title: "Manga Masters Competition",
-      date: "November 12, 2024",
-      location: "Bombay Exhibition Centre, Mumbai",
-      attendees: "Expected 2,000+",
-      highlights:
-        "Manga drawing competition, Professional workshops, Publishing opportunities",
-    },
-    {
-      title: "Voice Actor Meet & Greet",
-      date: "January 15, 2025",
-      location: "Phoenix MarketCity, Bangalore",
-      attendees: "Limited to 500 attendees",
-      highlights:
-        "Meet famous anime voice actors, Autograph sessions, Live dubbing demonstrations",
-    },
-  ];
+  useEffect(() => {
+    if (!autoScrollEnabled || eventMedia.length <= 1) return;
 
-  const handlePreviousSlide = () => {
-    if (eventImages.length === 0) return;
-    setActiveSlide(
-      (prev) => (prev - 1 + eventImages.length) % eventImages.length
-    );
+    const delay = getSafeDelay(eventMedia[activeSlide]?.autoScrollDelay);
+    const timeoutId = window.setTimeout(() => {
+      setActiveSlide((prev) => (prev + 1) % eventMedia.length);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeSlide, eventMedia, autoScrollEnabled]);
+
+  const springTransition = {
+    type: "spring" as const,
+    stiffness: 260,
+    damping: 28,
+    mass: 0.9,
   };
 
-  const handleNextSlide = () => {
-    if (eventImages.length === 0) return;
-    setActiveSlide((prev) => (prev + 1) % eventImages.length);
-  };
-
-  // Event timeline data - focusing on 2023-2025 only
   const timelineEvents = [
     {
-      year: "2023",
-      title: "International Guests Program",
+      year: "2024",
+      title: "Nakutaro Cosplay Royale",
       description:
-        "Featured voice actors and animators from Japan for the first time",
-      date: "August 2023",
-      highlight: "5,000+ attendees",
-      image:
-        "https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
+        "Self-organized cosplay event with a ₹50,000 prize pool, bringing together passionate cosplayers and anime fans.",
+      date: "September 28, 2024",
+      highlight: "500+ attendees",
+      image: ncrWinner,
     },
     {
       year: "2024",
-      title: "Summer Anime Expo",
+      title: "Masquerade Cosplay Event at IIT Delhi",
       description:
-        "Our Summer Convention broke records with massive attendance and exhibitor participation",
-      date: "June 2024",
-      highlight: "15,000+ attendees",
-      image:
-        "https://images.unsplash.com/photo-1578632767115-351597cf2477?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
+        "Associate sponsorship during IIT Delhi Rendezvous with a revamped ₹30,000 prize pool for participants.",
+      date: "October 5-8, 2024",
+      highlight: "5000+ attendees",
+      image: iitDelhi,
     },
     {
-      year: "2025",
-      title: "Global Anime Summit",
+      year: "2024",
+      title: "Khooni Monday Horrorcon",
       description:
-        "Planned international expansion with partner events in Japan, USA and Europe",
-      date: "March 2025",
-      highlight: "Coming soon",
-      image:
-        "https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600&q=80",
+        "Sponsored horror convention cosplay competition with a ₹60,000 prize pool and strong fan participation.",
+      date: "October 26, 2024",
+      highlight: "3000+ attendees",
+      image: pennywise,
     },
   ];
 
+  const prevIdx =
+    eventMedia.length > 0
+      ? (activeSlide - 1 + eventMedia.length) % eventMedia.length
+      : 0;
+  const nextIdx =
+    eventMedia.length > 0 ? (activeSlide + 1) % eventMedia.length : 0;
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+
+  const setVideoRef = useCallback(
+    (idx: number) => (el: HTMLVideoElement | null) => {
+      if (el) videoRefs.current.set(idx, el);
+      else videoRefs.current.delete(idx);
+    },
+    [],
+  );
+
+  const togglePlay = useCallback(() => {
+    const vid = videoRefs.current.get(activeSlide);
+    if (!vid) return;
+    if (vid.paused) {
+      vid.play();
+      setIsPlaying(true);
+    } else {
+      vid.pause();
+      setIsPlaying(false);
+    }
+  }, [activeSlide]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      videoRefs.current.forEach((vid) => {
+        vid.muted = next;
+      });
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    videoRefs.current.forEach((vid, idx) => {
+      if (idx === activeSlide) return;
+      vid.pause();
+      vid.currentTime = 0;
+    });
+    setIsPlaying(false);
+  }, [activeSlide]);
+
   return (
-    <div className="events-page pt-28 pb-16 overflow-hidden">
-      {/* Title Section */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-          className="text-center max-w-4xl mx-auto"
-        >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 leading-tight">
-            <div className="inline-block">
-              <span style={{ color: "var(--theme-color-hex)" }}>
-                Anime India Events
-              </span>
-              <div
-                className="block h-1 rounded-full mt-1"
-                style={{
-                  backgroundColor: "var(--theme-color-hex)",
-                  opacity: 0.3,
-                }}
-              />
-            </div>
-          </h1>
-        </motion.div>
-      </div>
-
-      {/* Hero Section with Animated Background */}
-      <div className="relative h-[60vh] sm:h-[65vh] md:h-[70vh] min-h-[400px] sm:min-h-[450px] md:min-h-[500px] mb-12 sm:mb-16 md:mb-20 overflow-hidden bg-[#121212]">
-        {/* Carousel Images */}
-        {eventImages.length > 0 && (
-          <div className="absolute inset-0 z-0">
-            <AnimatePresence mode="wait" initial={false}>
-              {eventImages[activeSlide] && (
-                <motion.img
-                  key={activeSlide}
-                  src={eventImages[activeSlide].url}
-                  alt={`Event carousel image ${activeSlide + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                />
-              )}
-            </AnimatePresence>
-            {/* Overlay for better text readability */}
-            <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none"></div>
-          </div>
-        )}
-        <div className="absolute inset-0 opacity-20 z-0">
-          {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
-        </div>
-
-        {/* Navigation arrows - placed outside carousel container to ensure they're on top */}
-        {eventImages.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handlePreviousSlide();
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all cursor-pointer"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleNextSlide();
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all cursor-pointer"
-              aria-label="Next image"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-            {/* Dots indicator */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2">
-              {eventImages.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveSlide(index);
+    <div className="events-page pt-24 pb-16 overflow-hidden">
+      {/* Hero Section — stacked card deck */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-16 md:mb-20">
+        <div ref={heroRef} className="relative max-w-7xl mx-auto">
+          {eventMedia.length > 0 ? (
+            <div className="relative" style={{ perspective: "1200px" }}>
+              {/* Back layer 2 (deeper) — peeks out wider like a book page */}
+              {eventMedia.length > 2 && (
+                <motion.div
+                  key="back-layer-2"
+                  animate={{ scaleY: 0.97, opacity: 0.32 }}
+                  transition={springTransition}
+                  className="hidden sm:block absolute aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-lg z-0"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    top: "1.5%",
+                    left: "-2.8%",
+                    right: "-2.8%",
                   }}
-                  className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
-                    index === activeSlide
-                      ? "bg-white w-8"
-                      : "bg-white/50 hover:bg-white/75"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
+                >
+                  <div className="absolute inset-0 bg-black/60 z-10" />
+                </motion.div>
+              )}
+
+              {/* Back layer 1 (just behind main) — peeks out like a book page */}
+              {eventMedia.length > 1 && (
+                <motion.div
+                  key="back-layer-1"
+                  animate={{ scaleY: 0.99, opacity: 0.52 }}
+                  transition={springTransition}
+                  className="hidden sm:block absolute aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-lg z-[1]"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    top: "0.8%",
+                    left: "-1.8%",
+                    right: "-1.8%",
+                  }}
+                >
+                  <AnimatePresence mode="popLayout">
+                    <motion.div
+                      key={`back1-inner-${nextIdx}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="absolute inset-0"
+                    >
+                      <MediaThumb
+                        item={eventMedia[nextIdx]}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                  <div className="absolute inset-0 bg-black/40 z-10" />
+                </motion.div>
+              )}
+
+              {/* Front card (active) — main focus */}
+              <motion.div
+                key="center-card"
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                transition={springTransition}
+                className="relative w-full z-10"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-black">
+                  {/* All media rendered once, only active one visible */}
+                  {eventMedia.map((item, idx) => (
+                    <div
+                      key={item.id || idx}
+                      className="absolute inset-0 transition-all duration-500"
+                      style={{
+                        opacity: idx === activeSlide ? 1 : 0,
+                        scale: idx === activeSlide ? "1" : "1.04",
+                        filter: idx === activeSlide ? "blur(0px)" : "blur(6px)",
+                        zIndex: idx === activeSlide ? 2 : 1,
+                        pointerEvents: idx === activeSlide ? "auto" : "none",
+                        transitionTimingFunction:
+                          "cubic-bezier(0.33, 1, 0.68, 1)",
+                      }}
+                    >
+                      {isVideoMedia(item.url) ? (
+                        <video
+                          ref={setVideoRef(idx)}
+                          src={item.url}
+                          className="w-full h-full object-cover cursor-pointer"
+                          muted={isMuted}
+                          loop
+                          playsInline
+                          preload={idx <= 2 ? "auto" : "metadata"}
+                          onClick={togglePlay}
+                        />
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={`Event carousel media ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Video controls overlay */}
+                  {isVideoMedia(eventMedia[activeSlide]?.url) && (
+                    <>
+                      <div
+                        className={`absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-300 cursor-pointer ${
+                          isPlaying
+                            ? "opacity-0 hover:opacity-100"
+                            : "opacity-100"
+                        }`}
+                        onClick={togglePlay}
+                      >
+                        <div className="bg-black/50 backdrop-blur-sm rounded-full w-14 h-14 sm:w-18 sm:h-18 flex items-center justify-center">
+                          {isPlaying ? (
+                            <Pause className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white" />
+                          ) : (
+                            <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white fill-white ml-0.5" />
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMute();
+                        }}
+                        className="absolute bottom-3 right-3 z-30 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white transition-all cursor-pointer"
+                        aria-label={isMuted ? "Unmute" : "Mute"}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />
+                        ) : (
+                          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </motion.div>
             </div>
-          </>
-        )}
+          ) : (
+            <div className="flex items-center justify-center h-[320px] sm:h-[400px] rounded-3xl bg-[#1A1A1A] border border-[#333]">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 border border-[#333]" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Timeline Section */}
@@ -307,7 +412,6 @@ const EventsPage = () => {
               transition={{ duration: 0.6, delay: index * 0.2 }}
               className="relative z-10 bg-[#1A1A1A] rounded-xl overflow-hidden border border-[#333] shadow-xl group"
             >
-              {/* Image */}
               <div className="h-48 relative overflow-hidden">
                 <img
                   src={event.image}
@@ -315,39 +419,42 @@ const EventsPage = () => {
                   className="w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#121212] to-transparent opacity-60"></div>
-
-                {/* Year badge */}
                 <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full font-bold shadow-lg">
                   {event.year}
                 </div>
               </div>
 
-              {/* Content */}
               <div className="p-6 relative">
-                {/* Date ribbon */}
                 <div className="absolute -top-4 left-6 bg-[#222] px-4 py-1 rounded-full text-sm font-medium text-gray-300 border border-[#333]">
                   {event.date}
                 </div>
-
                 <h3 className="text-xl font-bold mb-3 mt-3">{event.title}</h3>
                 <p className="text-gray-400 mb-4">{event.description}</p>
-
                 <div className="flex items-center mt-auto">
                   <div className="flex items-center text-accent/80 bg-accent/5 px-3 py-1 rounded-full text-sm">
-                    <Trophy className="w-4 h-4 mr-2" />
+                    <Star className="w-4 h-4 mr-2" />
                     <span>{event.highlight}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Decorative elements */}
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/50 to-transparent"></div>
             </motion.div>
           ))}
         </div>
+
+        <div className="mt-12 text-center">
+          <a
+            href="/events/all"
+            className="inline-flex items-center justify-center rounded-lg border border-accent/40 bg-[#181818] px-8 py-3 text-lg font-bold text-white transition-colors duration-200 hover:bg-accent/10 hover:border-accent/60"
+          >
+            <Calendar className="h-5 w-5 mr-2 text-accent" />
+            View All Events
+          </a>
+        </div>
       </div>
 
-      <EventsSection />
+      <EventsSection hideViewAllCta />
       <FAQSection />
       <CTASection />
     </div>

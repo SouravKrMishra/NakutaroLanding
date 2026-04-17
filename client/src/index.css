@@ -118,17 +118,13 @@
 body {
   @apply bg-[#121212] text-gray-200 font-sans antialiased overflow-x-hidden;
   font-family: "Inter", sans-serif;
-  scroll-behavior: smooth;
   position: relative;
 }
 
 /* Custom utility classes */
 .bg-grid-pattern {
-  background-image: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0.05) 1px,
-      transparent 1px
-    ),
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
 }
@@ -238,11 +234,8 @@ body::before {
 /* Background patterns */
 .bg-grid-pattern {
   background-size: 20px 20px;
-  background-image: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 1px
-    ),
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 

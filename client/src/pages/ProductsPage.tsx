@@ -101,14 +101,14 @@ const getDefaultColorPrimaryImage = (item: any): string => {
     if (item.defaultColor) {
       const primaryForDefaultColor = item.images.find(
         (img: any) =>
-          img.color === item.defaultColor && img.isPrimaryForColor === true
+          img.color === item.defaultColor && img.isPrimaryForColor === true,
       );
       if (primaryForDefaultColor)
         return primaryForDefaultColor.src || primaryForDefaultColor.url || "";
 
       // If no primary image for default color, get the first image of that color
       const firstOfDefaultColor = item.images.find(
-        (img: any) => img.color === item.defaultColor
+        (img: any) => img.color === item.defaultColor,
       );
       if (firstOfDefaultColor)
         return firstOfDefaultColor.src || firstOfDefaultColor.url || "";
@@ -118,7 +118,7 @@ const getDefaultColorPrimaryImage = (item: any): string => {
   // Fallback to any primary image for color (check regardless of whether colors exist)
   // This preserves the original fallback behavior for edge cases
   const anyPrimaryForColor = item.images.find(
-    (img: any) => img.isPrimaryForColor === true
+    (img: any) => img.isPrimaryForColor === true,
   );
   if (anyPrimaryForColor)
     return anyPrimaryForColor.src || anyPrimaryForColor.url || "";
@@ -136,7 +136,7 @@ const getAvailableColors = (item: any): string[] => {
   // First, try to get colors from the colors array (this contains actual available colors)
   if (item.colors && Array.isArray(item.colors) && item.colors.length > 0) {
     const filteredColors = item.colors.filter(
-      (color: string) => color && color.trim() !== ""
+      (color: string) => color && color.trim() !== "",
     );
     if (filteredColors.length > 0) {
       return filteredColors;
@@ -169,13 +169,13 @@ const getAvailableColors = (item: any): string[] => {
 
 const orderColorsByDefault = (
   colors: string[],
-  defaultColor?: string
+  defaultColor?: string,
 ): string[] => {
   if (!defaultColor) return colors;
 
   const normalizedDefault = defaultColor.toLowerCase().trim();
   const index = colors.findIndex(
-    (color) => color?.toLowerCase().trim() === normalizedDefault
+    (color) => color?.toLowerCase().trim() === normalizedDefault,
   );
 
   if (index <= 0) return colors;
@@ -423,7 +423,7 @@ const ProductsPage = () => {
 
     // Check if this is a clothing item (T-Shirts, Hoodies, or Sweatshirt) that requires size selection
     const isClothingItem = ["T-Shirts", "Hoodies", "Sweatshirt"].includes(
-      product.category
+      product.category,
     );
 
     if (isClothingItem) {
@@ -443,7 +443,7 @@ const ProductsPage = () => {
         (attr) =>
           attr.name.toLowerCase().includes("size") ||
           attr.name.toLowerCase().includes("color") ||
-          attr.name.toLowerCase().includes("variant")
+          attr.name.toLowerCase().includes("variant"),
       ) || [];
 
     if (requiredAttributes.length > 0) {
@@ -482,7 +482,7 @@ const ProductsPage = () => {
   const handleAttributeSelect = (
     productId: string,
     attributeName: string,
-    value: string
+    value: string,
   ) => {
     setSelectedAttributes((prev) => ({
       ...prev,
@@ -519,13 +519,13 @@ const ProductsPage = () => {
         (attr) =>
           attr.name.toLowerCase().includes("size") ||
           attr.name.toLowerCase().includes("color") ||
-          attr.name.toLowerCase().includes("variant")
+          attr.name.toLowerCase().includes("variant"),
       ) || [];
 
     // Check if all required attributes are selected
     const productAttributes = selectedAttributes[product.id] || {};
     const missingAttributes = requiredAttributes.filter(
-      (attr) => !productAttributes[attr.name]
+      (attr) => !productAttributes[attr.name],
     );
 
     if (missingAttributes.length > 0) {
@@ -584,7 +584,7 @@ const ProductsPage = () => {
   const handleColorClick = (
     productId: string,
     color: string,
-    event: React.MouseEvent
+    event: React.MouseEvent,
   ) => {
     event.preventDefault();
     event.stopPropagation();
@@ -717,7 +717,7 @@ const ProductsPage = () => {
           attributes: item.attributes || [],
           colors: orderColorsByDefault(
             getAvailableColors(item),
-            item.defaultColor
+            item.defaultColor,
           ),
           defaultColor: item.defaultColor,
           images: item.images || [],
@@ -894,7 +894,7 @@ const ProductsPage = () => {
             attributes: item.attributes || [],
             colors: orderColorsByDefault(
               getAvailableColors(item),
-              item.defaultColor
+              item.defaultColor,
             ),
             defaultColor: item.defaultColor,
             images: item.images || [],
@@ -928,7 +928,7 @@ const ProductsPage = () => {
     setActiveCategory((prev) =>
       prev.includes(categoryName)
         ? prev.filter((name) => name !== categoryName)
-        : [...prev, categoryName]
+        : [...prev, categoryName],
     );
     setCurrentPage(1);
   };
@@ -1281,9 +1281,9 @@ const ProductsPage = () => {
                       />
                     </div>
                     {/* Category Dropdown */}
-                    <DropdownMenu 
-                      modal={false} 
-                      open={categoryDropdownOpen} 
+                    <DropdownMenu
+                      modal={false}
+                      open={categoryDropdownOpen}
                       onOpenChange={setCategoryDropdownOpen}
                     >
                       <DropdownMenuTrigger asChild>
@@ -1591,268 +1591,21 @@ const ProductsPage = () => {
               {!loading && products.length > 0 && view === "grid" && (
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   {products.map((product) => (
-                        <div
-                          key={product.id}
-                          className="relative bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
-                        >
-                          <Link href={`/product/${product.slug || product.id}`}>
-                            <div className="w-full flex items-center justify-center">
-                              <div className="relative inline-block overflow-hidden">
-                                <img
-                                  src={getProductImage(product)}
-                                  alt={product.name}
-                                  loading="lazy"
-                                  className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
-                                />
-                                {product.isNew && (
-                                  <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
-                                    NEW
-                                  </div>
-                                )}
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleWishlistToggle(product);
-                                  }}
-                                  className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${
-                                    isInWishlist(product.id)
-                                      ? "opacity-100 bg-red-500 text-white"
-                                      : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
-                                  }`}
-                                >
-                                  <Heart
-                                    className={`h-4 w-4 ${
-                                      isInWishlist(product.id)
-                                        ? "fill-current"
-                                        : ""
-                                    }`}
-                                  />
-                                </button>
-                                {/* Color Palette */}
-                                {product.colors &&
-                                  product.colors.length > 1 && (
-                                    <div
-                                      className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300 z-10"
-                                      onMouseEnter={() =>
-                                        preloadProductColorImages(product)
-                                      }
-                                    >
-                                      {product.colors
-                                        .slice(0, 4)
-                                        .map((color: string, idx: number) => (
-                                          <div
-                                            key={`${color}-${idx}`}
-                                            onClick={(e) =>
-                                              handleColorClick(
-                                                product.id,
-                                                color,
-                                                e
-                                              )
-                                            }
-                                            className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
-                                              selectedProductColors[
-                                                product.id
-                                              ] === color
-                                                ? "border-white border-2 shadow-lg scale-110"
-                                                : "border-white/30 shadow-sm hover:scale-110"
-                                            }`}
-                                            style={{
-                                              backgroundColor:
-                                                getColorHex(color),
-                                            }}
-                                            title={color}
-                                          />
-                                        ))}
-                                      {product.colors.length > 4 && (
-                                        <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
-                                          +{product.colors.length - 4}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                              </div>
-                            </div>
-                          </Link>
-                          <div className="p-3 sm:p-4 flex flex-col flex-grow">
-                            <div className="flex-grow">
-                              <Link
-                                href={`/product/${product.slug || product.id}`}
-                              >
-                                <div className="flex flex-col items-start mb-2">
-                                  <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
-                                    {product.name}
-                                  </h3>
-                                  <span className="font-bold text-accent">
-                                    ₹{product.price}
-                                  </span>
-                                </div>
-                              </Link>
-                              <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
-                                <div className="flex items-center">
-                                  <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
-                                  <span>{product.rating}</span>
-                                </div>
-                                <span className="mx-2">•</span>
-                                <span>{product.reviews} reviews</span>
-                              </div>
-                            </div>
-
-                            <div className="relative">
-                              {showAttributeSelection[product.id] ? (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0, y: -10 }}
-                                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                                  exit={{ opacity: 0, height: 0, y: -10 }}
-                                  transition={{
-                                    duration: 0.4,
-                                    ease: [0.4, 0, 0.2, 1],
-                                  }}
-                                  className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                                      Select Options
-                                    </h4>
-                                    <button
-                                      onClick={() =>
-                                        handleCancelAttributeSelection(
-                                          product.id
-                                        )
-                                      }
-                                      className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                  {product.attributes
-                                    ?.filter(
-                                      (attr) =>
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("size") ||
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("color") ||
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("variant")
-                                    )
-                                    .map((attr) => (
-                                      <div
-                                        key={attr.name}
-                                        className="space-y-2"
-                                      >
-                                        <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
-                                          {attr.name
-                                            .toLowerCase()
-                                            .includes("size") && (
-                                            <svg
-                                              className="w-4 h-4 text-accent"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                              />
-                                            </svg>
-                                          )}
-                                          {attr.name
-                                            .toLowerCase()
-                                            .includes("color") && (
-                                            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
-                                          )}
-                                          {attr.name}
-                                        </label>
-                                        <div className="flex flex-wrap gap-2">
-                                          {attr.options.map((option) => (
-                                            <button
-                                              key={option}
-                                              onClick={() =>
-                                                handleAttributeSelect(
-                                                  product.id,
-                                                  attr.name,
-                                                  option
-                                                )
-                                              }
-                                              className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
-                                                selectedAttributes[
-                                                  product.id
-                                                ]?.[attr.name] === option
-                                                  ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
-                                                  : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
-                                              }`}
-                                            >
-                                              {option}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  <div className="flex gap-3 pt-3 border-t border-accent/20">
-                                    <button
-                                      onClick={() =>
-                                        handleAddToCartWithAttributes(product)
-                                      }
-                                      className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
-                                    >
-                                      <ShoppingBag className="w-4 h-4" />
-                                      Add to Cart
-                                    </button>
-                                  </div>
-                                </motion.div>
-                              ) : (
-                                <button
-                                  onClick={() => handleAddToCart(product)}
-                                  className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base"
-                                >
-                                  <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                  Add to Cart
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                </div>
-              )}
-
-              {/* List View */}
-              {!loading && products.length > 0 && view === "list" && (
-                <div className="space-y-4 sm:space-y-6">
-                  {products.map((product) => (
-                        <div
-                          key={product.id}
-                          className="relative flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
-                        >
-                          <Link
-                            href={`/product/${product.slug || product.id}`}
-                            className="md:w-48 aspect-[3/4] md:aspect-auto md:h-48 overflow-hidden relative cursor-pointer bg-[#1E1E1E] flex items-center justify-center"
-                          >
+                    <div
+                      key={product.id}
+                      className="relative bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group flex flex-col"
+                    >
+                      <Link href={`/product/${product.slug || product.id}`}>
+                        <div className="w-full flex items-center justify-center">
+                          <div className="relative inline-block overflow-hidden">
                             <img
                               src={getProductImage(product)}
                               alt={product.name}
                               loading="lazy"
-                              className="w-full h-full object-contain group-hover:scale-110 transition-all duration-500"
+                              className="w-auto h-auto max-h-80 md:max-h-none max-w-full object-contain group-hover:scale-110 transition-all duration-500"
                             />
                             {product.isNew && (
-                              <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                              <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded z-10">
                                 NEW
                               </div>
                             )}
@@ -1861,7 +1614,7 @@ const ProductsPage = () => {
                                 e.preventDefault();
                                 handleWishlistToggle(product);
                               }}
-                              className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 ${
+                              className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${
                                 isInWishlist(product.id)
                                   ? "opacity-100 bg-red-500 text-white"
                                   : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
@@ -1876,7 +1629,7 @@ const ProductsPage = () => {
                             {/* Color Palette */}
                             {product.colors && product.colors.length > 1 && (
                               <div
-                                className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300"
+                                className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300 z-10"
                                 onMouseEnter={() =>
                                   preloadProductColorImages(product)
                                 }
@@ -1908,215 +1661,426 @@ const ProductsPage = () => {
                                 )}
                               </div>
                             )}
-                          </Link>
-                          <div className="md:w-3/4 p-6 flex flex-col">
+                          </div>
+                        </div>
+                      </Link>
+                      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+                        <div className="flex-grow">
+                          <Link href={`/product/${product.slug || product.id}`}>
                             <div className="flex flex-col items-start mb-2">
-                              <h3 className="text-xl font-semibold text-white group-hover:text-accent transition-colors duration-300 mb-1">
+                              <h3 className="font-semibold text-sm sm:text-base text-white group-hover:text-accent transition-colors duration-300 mb-1">
                                 {product.name}
                               </h3>
-                              <span className="font-bold text-xl text-accent">
+                              <span className="font-bold text-accent">
                                 ₹{product.price}
                               </span>
                             </div>
-                            <div className="flex items-center text-sm text-gray-400 mb-4">
-                              <div className="flex items-center">
-                                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
-                                <span>{product.rating}</span>
-                              </div>
-                              <span className="mx-2">•</span>
-                              <span>{product.reviews} reviews</span>
-                              <span className="mx-2">•</span>
-                              <span className="text-gray-500">
-                                {product.category}
-                              </span>
+                          </Link>
+                          <div className="flex items-center text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
+                              <span>{product.rating}</span>
                             </div>
-                            <p className="text-gray-400 mb-4 flex-grow line-clamp-3">
-                              {stripHtml(product.description) ||
-                                `Premium quality ${product.category.toLowerCase()} featuring your favorite anime characters. Officially licensed merchandise with the best quality and authentic designs.`}
-                            </p>
-                            <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                              {showAttributeSelection[product.id] ? (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0, y: -10 }}
-                                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                                  exit={{ opacity: 0, height: 0, y: -10 }}
-                                  transition={{
-                                    duration: 0.4,
-                                    ease: [0.4, 0, 0.2, 1],
-                                  }}
-                                  className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                                      Select Options
-                                    </h4>
-                                    <button
-                                      onClick={() =>
-                                        handleCancelAttributeSelection(
-                                          product.id
-                                        )
-                                      }
-                                      className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
-                                    >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                  {product.attributes
-                                    ?.filter(
-                                      (attr) =>
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("size") ||
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("color") ||
-                                        attr.name
-                                          .toLowerCase()
-                                          .includes("variant")
-                                    )
-                                    .map((attr) => (
-                                      <div
-                                        key={attr.name}
-                                        className="space-y-2"
-                                      >
-                                        <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
-                                          {attr.name
-                                            .toLowerCase()
-                                            .includes("size") && (
-                                            <svg
-                                              className="w-4 h-4 text-accent"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                              />
-                                            </svg>
-                                          )}
-                                          {attr.name
-                                            .toLowerCase()
-                                            .includes("color") && (
-                                            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
-                                          )}
-                                          {attr.name}
-                                        </label>
-                                        <div className="flex flex-wrap gap-2">
-                                          {attr.options.map((option) => (
-                                            <button
-                                              key={option}
-                                              onClick={() =>
-                                                handleAttributeSelect(
-                                                  product.id,
-                                                  attr.name,
-                                                  option
-                                                )
-                                              }
-                                              className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
-                                                selectedAttributes[
-                                                  product.id
-                                                ]?.[attr.name] === option
-                                                  ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
-                                                  : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
-                                              }`}
-                                            >
-                                              {option}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  <div className="flex gap-3 pt-3 border-t border-accent/20">
-                                    <button
-                                      onClick={() =>
-                                        handleAddToCartWithAttributes(product)
-                                      }
-                                      className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
-                                    >
-                                      <ShoppingBag className="w-4 h-4" />
-                                      Add to Cart
-                                    </button>
-                                  </div>
-                                </motion.div>
-                              ) : (
-                                <button
-                                  onClick={() => handleAddToCart(product)}
-                                  className="bg-[#2D2D2D] hover:bg-accent text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300"
-                                >
-                                  <ShoppingBag className="h-4 w-4 mr-2" />
-                                  Add to Cart
-                                </button>
-                              )}
-                            </div>
+                            <span className="mx-2">•</span>
+                            <span>{product.reviews} reviews</span>
                           </div>
                         </div>
-                      ))}
+
+                        <div className="relative">
+                          {showAttributeSelection[product.id] ? (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -10 }}
+                              animate={{ opacity: 1, height: "auto", y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -10 }}
+                              transition={{
+                                duration: 0.4,
+                                ease: [0.4, 0, 0.2, 1],
+                              }}
+                              className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                                  Select Options
+                                </h4>
+                                <button
+                                  onClick={() =>
+                                    handleCancelAttributeSelection(product.id)
+                                  }
+                                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                              {product.attributes
+                                ?.filter(
+                                  (attr) =>
+                                    attr.name.toLowerCase().includes("size") ||
+                                    attr.name.toLowerCase().includes("color") ||
+                                    attr.name.toLowerCase().includes("variant"),
+                                )
+                                .map((attr) => (
+                                  <div key={attr.name} className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                                      {attr.name
+                                        .toLowerCase()
+                                        .includes("size") && (
+                                        <svg
+                                          className="w-4 h-4 text-accent"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                      )}
+                                      {attr.name
+                                        .toLowerCase()
+                                        .includes("color") && (
+                                        <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
+                                      )}
+                                      {attr.name}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {attr.options.map((option) => (
+                                        <button
+                                          key={option}
+                                          onClick={() =>
+                                            handleAttributeSelect(
+                                              product.id,
+                                              attr.name,
+                                              option,
+                                            )
+                                          }
+                                          className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
+                                            selectedAttributes[product.id]?.[
+                                              attr.name
+                                            ] === option
+                                              ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
+                                              : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
+                                          }`}
+                                        >
+                                          {option}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              <div className="flex gap-3 pt-3 border-t border-accent/20">
+                                <button
+                                  onClick={() =>
+                                    handleAddToCartWithAttributes(product)
+                                  }
+                                  className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                >
+                                  <ShoppingBag className="w-4 h-4" />
+                                  Add to Cart
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="w-full bg-[#2D2D2D] hover:bg-accent text-white py-1.5 sm:py-2 rounded flex items-center justify-center transition-colors duration-300 text-sm sm:text-base"
+                            >
+                              <ShoppingBag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                              Add to Cart
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* List View */}
+              {!loading && products.length > 0 && view === "list" && (
+                <div className="space-y-4 sm:space-y-6">
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="relative flex flex-col md:flex-row bg-[#1E1E1E] rounded-lg overflow-visible border border-[#2D2D2D] hover:border-accent/30 transition-all duration-300 group"
+                    >
+                      <Link
+                        href={`/product/${product.slug || product.id}`}
+                        className="md:w-48 aspect-[3/4] md:aspect-auto md:h-48 overflow-hidden relative cursor-pointer bg-[#1E1E1E] flex items-center justify-center"
+                      >
+                        <img
+                          src={getProductImage(product)}
+                          alt={product.name}
+                          loading="lazy"
+                          className="w-full h-full object-contain group-hover:scale-110 transition-all duration-500"
+                        />
+                        {product.isNew && (
+                          <div className="absolute top-2 left-2 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                            NEW
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleWishlistToggle(product);
+                          }}
+                          className={`absolute top-2 right-2 p-2 rounded-full transition-all duration-300 ${
+                            isInWishlist(product.id)
+                              ? "opacity-100 bg-red-500 text-white"
+                              : "opacity-0 group-hover:opacity-100 bg-black/50 text-white hover:bg-red-500"
+                          }`}
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${
+                              isInWishlist(product.id) ? "fill-current" : ""
+                            }`}
+                          />
+                        </button>
+                        {/* Color Palette */}
+                        {product.colors && product.colors.length > 1 && (
+                          <div
+                            className="absolute bottom-2 right-2 flex gap-1.5 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1.5 transition-opacity duration-300"
+                            onMouseEnter={() =>
+                              preloadProductColorImages(product)
+                            }
+                          >
+                            {product.colors
+                              .slice(0, 4)
+                              .map((color: string, idx: number) => (
+                                <div
+                                  key={`${color}-${idx}`}
+                                  onClick={(e) =>
+                                    handleColorClick(product.id, color, e)
+                                  }
+                                  className={`w-4 h-4 rounded-full border cursor-pointer transition-transform duration-200 ${
+                                    selectedProductColors[product.id] === color
+                                      ? "border-white border-2 shadow-lg scale-110"
+                                      : "border-white/30 shadow-sm hover:scale-110"
+                                  }`}
+                                  style={{
+                                    backgroundColor: getColorHex(color),
+                                  }}
+                                  title={color}
+                                />
+                              ))}
+                            {product.colors.length > 4 && (
+                              <div className="w-4 h-4 rounded-full bg-[#2D2D2D] border border-white/30 flex items-center justify-center text-[10px] text-white font-semibold">
+                                +{product.colors.length - 4}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Link>
+                      <div className="md:w-3/4 p-6 flex flex-col">
+                        <div className="flex flex-col items-start mb-2">
+                          <h3 className="text-xl font-semibold text-white group-hover:text-accent transition-colors duration-300 mb-1">
+                            {product.name}
+                          </h3>
+                          <span className="font-bold text-xl text-accent">
+                            ₹{product.price}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-400 mb-4">
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
+                            <span>{product.rating}</span>
+                          </div>
+                          <span className="mx-2">•</span>
+                          <span>{product.reviews} reviews</span>
+                          <span className="mx-2">•</span>
+                          <span className="text-gray-500">
+                            {product.category}
+                          </span>
+                        </div>
+                        <p className="text-gray-400 mb-4 flex-grow line-clamp-3">
+                          {stripHtml(product.description) ||
+                            `Premium quality ${product.category.toLowerCase()} featuring your favorite anime characters. Officially licensed merchandise with the best quality and authentic designs.`}
+                        </p>
+                        <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                          {showAttributeSelection[product.id] ? (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -10 }}
+                              animate={{ opacity: 1, height: "auto", y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -10 }}
+                              transition={{
+                                duration: 0.4,
+                                ease: [0.4, 0, 0.2, 1],
+                              }}
+                              className="absolute top-full left-0 right-0 z-30 bg-gradient-to-br from-[#0F0F0F] to-[#1A1A1A] border border-accent/60 rounded-xl shadow-2xl backdrop-blur-sm p-5 space-y-4 mt-2"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                                  Select Options
+                                </h4>
+                                <button
+                                  onClick={() =>
+                                    handleCancelAttributeSelection(product.id)
+                                  }
+                                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-accent/20"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                              {product.attributes
+                                ?.filter(
+                                  (attr) =>
+                                    attr.name.toLowerCase().includes("size") ||
+                                    attr.name.toLowerCase().includes("color") ||
+                                    attr.name.toLowerCase().includes("variant"),
+                                )
+                                .map((attr) => (
+                                  <div key={attr.name} className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                                      {attr.name
+                                        .toLowerCase()
+                                        .includes("size") && (
+                                        <svg
+                                          className="w-4 h-4 text-accent"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                      )}
+                                      {attr.name
+                                        .toLowerCase()
+                                        .includes("color") && (
+                                        <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500"></div>
+                                      )}
+                                      {attr.name}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {attr.options.map((option) => (
+                                        <button
+                                          key={option}
+                                          onClick={() =>
+                                            handleAttributeSelect(
+                                              product.id,
+                                              attr.name,
+                                              option,
+                                            )
+                                          }
+                                          className={`px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
+                                            selectedAttributes[product.id]?.[
+                                              attr.name
+                                            ] === option
+                                              ? "bg-gradient-to-r from-accent to-accent/80 text-white border-accent shadow-lg shadow-accent/30 scale-105 ring-2 ring-accent/20"
+                                              : "bg-[#1A1A1A] text-gray-200 border-[#333] hover:border-accent/60 hover:bg-[#2A2A2A] hover:text-white hover:scale-105 hover:shadow-md hover:shadow-accent/10"
+                                          }`}
+                                        >
+                                          {option}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              <div className="flex gap-3 pt-3 border-t border-accent/20">
+                                <button
+                                  onClick={() =>
+                                    handleAddToCartWithAttributes(product)
+                                  }
+                                  className="flex-1 bg-gradient-to-r from-accent via-accent/90 to-accent/80 hover:from-accent/95 hover:via-accent/85 hover:to-accent/75 text-white py-3 rounded-lg text-sm font-semibold transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-accent/50 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                >
+                                  <ShoppingBag className="w-4 h-4" />
+                                  Add to Cart
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="bg-[#2D2D2D] hover:bg-accent text-white px-6 py-2 rounded flex items-center justify-center transition-colors duration-300"
+                            >
+                              <ShoppingBag className="h-4 w-4 mr-2" />
+                              Add to Cart
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
             {/* Pagination - Only show if there are products */}
             {!loading && products.length > 0 && totalPages > 0 && (
-            <div className="flex justify-center mt-8 mb-8">
-              <div className="flex space-x-1">
-                <button
+              <div className="flex justify-center mt-8 mb-8">
+                <div className="flex space-x-1">
+                  <button
                     onClick={() =>
                       handlePageChange(Math.max(currentPage - 1, 1))
                     }
-                  disabled={currentPage === 1 || totalPages === 0}
+                    disabled={currentPage === 1 || totalPages === 0}
                     className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Previous page"
-                >
-                  <ChevronRight className="h-4 w-4 transform rotate-180" />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`w-8 h-8 rounded ${
-                        page === currentPage
-                          ? "bg-accent text-white"
-                          : "bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D]"
-                      } flex items-center justify-center transition-colors`}
-                      aria-label={`Page ${page}`}
-                        aria-current={
-                          page === currentPage ? "page" : undefined
-                        }
-                      disabled={totalPages === 0}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
-                <button
-                  onClick={() =>
-                    handlePageChange(Math.min(currentPage + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages || totalPages === 0}
+                    aria-label="Previous page"
+                  >
+                    <ChevronRight className="h-4 w-4 transform rotate-180" />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`w-8 h-8 rounded ${
+                          page === currentPage
+                            ? "bg-accent text-white"
+                            : "bg-[#2D2D2D] text-gray-300 hover:bg-[#3D3D3D]"
+                        } flex items-center justify-center transition-colors`}
+                        aria-label={`Page ${page}`}
+                        aria-current={page === currentPage ? "page" : undefined}
+                        disabled={totalPages === 0}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+                  <button
+                    onClick={() =>
+                      handlePageChange(Math.min(currentPage + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages || totalPages === 0}
                     className="w-8 h-8 rounded bg-[#2D2D2D] flex items-center justify-center text-gray-400 hover:bg-[#3D3D3D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            </div>
             )}
           </div>
         </div>

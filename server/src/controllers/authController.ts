@@ -13,7 +13,7 @@ const buildUserResponse = (user: any) => {
   // If missing, this indicates a data integrity issue
   if (!user.userType) {
     console.error(
-      `User ${user._id} has no userType. This is a data integrity issue.`
+      `User ${user._id} has no userType. This is a data integrity issue.`,
     );
   }
 
@@ -45,7 +45,7 @@ const signAuthToken = (user: any) => {
 
   if (!jwtSecret) {
     throw new Error(
-      "JWT_SECRET is not configured. Please set JWT_SECRET in your .env file."
+      "JWT_SECRET is not configured. Please set JWT_SECRET in your .env file.",
     );
   }
 
@@ -61,7 +61,7 @@ const signAuthToken = (user: any) => {
       expiresIn: (process.env.JWT_EXPIRES_IN ||
         config.jwt.expiresIn ||
         "7d") as any,
-    }
+    },
   );
 };
 
@@ -101,7 +101,7 @@ export const signup = async (req: Request, res: Response) => {
       const recaptchaResult = await verifyRecaptcha(
         recaptchaToken,
         "register",
-        0.5
+        0.5,
       );
       if (!recaptchaResult.success) {
         return res.status(400).json({
@@ -155,7 +155,7 @@ export const signup = async (req: Request, res: Response) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(
       password,
-      config.bcrypt.saltRounds
+      config.bcrypt.saltRounds,
     );
 
     // Create user with all business information
@@ -172,15 +172,18 @@ export const signup = async (req: Request, res: Response) => {
       website: website || "",
       description: description || "",
       // Store address in addresses array as "Address 1"
-      addresses: address && city && state && pincode ? [
-        {
-          name: "Address 1",
-          address: address.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          pincode: pincode.trim(),
-        }
-      ] : [],
+      addresses:
+        address && city && state && pincode
+          ? [
+              {
+                name: "Address 1",
+                address: address.trim(),
+                city: city.trim(),
+                state: state.trim(),
+                pincode: pincode.trim(),
+              },
+            ]
+          : [],
     });
 
     await user.save();
@@ -238,7 +241,7 @@ export const signin = async (req: Request, res: Response) => {
       const recaptchaResult = await verifyRecaptcha(
         recaptchaToken,
         "login",
-        0.5
+        0.5,
       );
       if (!recaptchaResult.success) {
         return res.status(400).json({
@@ -351,7 +354,7 @@ export const signupIndividual = async (req: Request, res: Response) => {
       const recaptchaResult = await verifyRecaptcha(
         recaptchaToken,
         "register_individual",
-        0.5
+        0.5,
       );
       if (!recaptchaResult.success) {
         return res.status(400).json({
@@ -404,7 +407,7 @@ export const signupIndividual = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(
       password,
-      config.bcrypt.saltRounds
+      config.bcrypt.saltRounds,
     );
 
     // Only include fields that are relevant for individual users
@@ -440,7 +443,7 @@ export const signupIndividual = async (req: Request, res: Response) => {
           state: 1,
           pincode: 1,
         },
-      }
+      },
     );
 
     // Refresh user document to get updated version
@@ -489,7 +492,7 @@ export const signupIndividual = async (req: Request, res: Response) => {
     // Return more specific error message
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
-        (e: any) => e.message
+        (e: any) => e.message,
       );
       return res.status(400).json({
         message: "Validation failed",
@@ -519,7 +522,7 @@ export const signinIndividual = async (req: Request, res: Response) => {
       const recaptchaResult = await verifyRecaptcha(
         recaptchaToken,
         "login_individual",
-        0.5
+        0.5,
       );
       if (!recaptchaResult.success) {
         return res.status(400).json({
@@ -895,7 +898,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
             state: 1,
             pincode: 1,
           },
-        }
+        },
       );
     } else {
       await User.updateOne({ _id: user._id }, { $set: updateData });
@@ -1006,24 +1009,31 @@ export const addAddress = async (req: Request, res: Response) => {
     const { name, address, city, state, pincode } = req.body;
 
     // Validate required fields
-    if (!address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
-      return res.status(400).json({ 
-        message: "All address fields are required (address, city, state, pincode)" 
+    if (
+      !address?.trim() ||
+      !city?.trim() ||
+      !state?.trim() ||
+      !pincode?.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          "All address fields are required (address, city, state, pincode)",
       });
     }
 
     // Check address limit based on user type
     const maxAddresses = user.userType === "business" ? 2 : 5;
     const currentAddresses = user.addresses || [];
-    
+
     if (currentAddresses.length >= maxAddresses) {
-      return res.status(400).json({ 
-        message: `Maximum ${maxAddresses} addresses allowed for ${user.userType} users` 
+      return res.status(400).json({
+        message: `Maximum ${maxAddresses} addresses allowed for ${user.userType} users`,
       });
     }
 
     // Generate default name if not provided
-    const addressName = name?.trim() || `Address ${currentAddresses.length + 1}`;
+    const addressName =
+      name?.trim() || `Address ${currentAddresses.length + 1}`;
 
     const newAddress = {
       name: addressName,
@@ -1034,10 +1044,7 @@ export const addAddress = async (req: Request, res: Response) => {
     };
 
     // Add the new address
-    await User.updateOne(
-      { _id: userId },
-      { $push: { addresses: newAddress } }
-    );
+    await User.updateOne({ _id: userId }, { $push: { addresses: newAddress } });
 
     // Reload user to get updated addresses
     const updatedUser = await User.findById(userId).select("-password");
@@ -1074,15 +1081,21 @@ export const updateAddress = async (req: Request, res: Response) => {
     const { name, address, city, state, pincode } = req.body;
 
     // Validate required fields
-    if (!address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
-      return res.status(400).json({ 
-        message: "All address fields are required (address, city, state, pincode)" 
+    if (
+      !address?.trim() ||
+      !city?.trim() ||
+      !state?.trim() ||
+      !pincode?.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          "All address fields are required (address, city, state, pincode)",
       });
     }
 
     // Find the address to update
     const addressIndex = (user.addresses || []).findIndex(
-      (addr: any) => addr._id.toString() === addressId
+      (addr: any) => addr._id.toString() === addressId,
     );
 
     if (addressIndex === -1) {
@@ -1095,13 +1108,14 @@ export const updateAddress = async (req: Request, res: Response) => {
       { _id: userId },
       {
         $set: {
-          [`${updatePath}.name`]: name?.trim() || user.addresses[addressIndex].name,
+          [`${updatePath}.name`]:
+            name?.trim() || user.addresses[addressIndex].name,
           [`${updatePath}.address`]: address.trim(),
           [`${updatePath}.city`]: city.trim(),
           [`${updatePath}.state`]: state.trim(),
           [`${updatePath}.pincode`]: pincode.trim(),
         },
-      }
+      },
     );
 
     // Reload user to get updated addresses
@@ -1138,7 +1152,7 @@ export const deleteAddress = async (req: Request, res: Response) => {
 
     // Find the address to delete
     const addressIndex = (user.addresses || []).findIndex(
-      (addr: any) => addr._id.toString() === addressId
+      (addr: any) => addr._id.toString() === addressId,
     );
 
     if (addressIndex === -1) {
@@ -1147,15 +1161,16 @@ export const deleteAddress = async (req: Request, res: Response) => {
 
     // Business users cannot delete Address 1 (first address)
     if (user.userType === "business" && addressIndex === 0) {
-      return res.status(400).json({ 
-        message: "Business users cannot delete their primary address (Address 1)" 
+      return res.status(400).json({
+        message:
+          "Business users cannot delete their primary address (Address 1)",
       });
     }
 
     // Remove the address
     await User.updateOne(
       { _id: userId },
-      { $pull: { addresses: { _id: addressId } } }
+      { $pull: { addresses: { _id: addressId } } },
     );
 
     // Reload user to get updated addresses

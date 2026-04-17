@@ -160,6 +160,22 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Zoho Invoice: override tax for this product (overrides category tax slab)
+    zohoTaxIdOverride: {
+      type: String,
+      default: null,
+    },
+    // Zoho Invoice: override IGST tax for this product (inter-state). If not set, falls back to category IGST/default.
+    zohoIgstTaxIdOverride: {
+      type: String,
+      default: null,
+    },
+    // Zoho Invoice: override HSN code for this product (Goods). Overrides category slab HSN.
+    zohoHsnOverride: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     // Soft delete fields
     isDeleted: {
       type: Boolean,

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext.tsx";
 import { useCart } from "@/lib/CartContext.tsx";
+import animeIndiaLogo from "@assets/animeindialogo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,11 +37,11 @@ const Header = () => {
     const handleScroll = () => {
       const header = document.getElementById("navbar");
       const nextSection = document.getElementById("about"); // AboutSection is the next section after hero
-      
+
       if (header && nextSection) {
         const headerHeight = header.offsetHeight;
         const nextSectionTop = nextSection.getBoundingClientRect().top;
-        
+
         // Check if the header's bottom has passed the top of the next section
         // Header bottom position in viewport = headerHeight (since header is fixed at top)
         setIsScrolledPastHero(headerHeight >= nextSectionTop);
@@ -107,7 +108,12 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold">
+            <img
+              src={animeIndiaLogo}
+              alt="Anime India logo"
+              className="h-10 w-10"
+            />
+            <span className="text-[1.7rem] sm:text-3xl font-bold">
               <span className="text-white">Anime</span>{" "}
               <span className="india text-accent">India</span>
             </span>

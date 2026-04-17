@@ -12,6 +12,7 @@ import Transaction from "../../../shared/models/Transaction.js";
 import { Order } from "../../../shared/models/Order.js";
 import { Cart } from "../../../shared/models/Cart.js";
 import { reduceStockForOrder } from "../services/stockService.js";
+import { createZohoInvoiceForOrderIfNeeded } from "../services/zohoInvoiceService.js";
 import { isContropayEnabled } from "../services/paymentSettingsService.js";
 
 // Contropay API client - use api_key as query param as alternative auth method
@@ -114,6 +115,10 @@ const updatePaymentStatus = async (
         } catch (err) {
           console.error(`Failed to reduce stock for order ${order._id}:`, err);
         }
+
+        createZohoInvoiceForOrderIfNeeded(order).catch((err) =>
+          console.error("[Zoho Invoice] Post-payment create failed:", err)
+        );
       } else if (status === "FAILED") {
         order.paymentStatus = "FAILED";
         order.status = "ORDER_FAILED"; // New unified status
