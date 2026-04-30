@@ -20,6 +20,8 @@ import FAQSection from "@/components/FAQSection.tsx";
 import CTASection from "@/components/CTASection.tsx";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
+import { useAuth } from "@/lib/AuthContext.tsx";
+import { useToast } from "@/hooks/use-toast.ts";
 
 // Static gallery imports for Nakutaro Cosplay Royale (bundled assets fallback)
 import cosplay1 from "@assets/Newfolder/cosplay-royale (1)1.JPG";
@@ -174,6 +176,8 @@ function apiToEvent(ev: ApiEvent): Event {
 
 const AllEventsPage = () => {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -189,6 +193,8 @@ const AllEventsPage = () => {
   const [galleryTitle, setGalleryTitle] = useState("");
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscribedEventIds, setSubscribedEventIds] = useState<string[]>([]);
+  const [subscribingEventIds, setSubscribingEventIds] = useState<string[]>([]);
 
   const handleGoBack = () => {
     setLocation("/events");
@@ -242,6 +248,54 @@ const AllEventsPage = () => {
       setGalleryTitle("Nakutaro Cosplay Royale Gallery");
     }
     setGalleryOpen(true);
+  };
+
+  const handleNotify = async (event: Event) => {
+    if (subscribedEventIds.includes(event.id)) return;
+    if (subscribingEventIds.includes(event.id)) return;
+
+    let email = "";
+    if (!isAuthenticated) {
+      const entered = window.prompt("Enter your email to get event notifications:");
+      if (!entered) return;
+      email = entered.trim();
+    }
+
+    setSubscribingEventIds((prev) =>
+      prev.includes(event.id) ? prev : [...prev, event.id],
+    );
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        buildApiUrl(`/api/event-timeline/${event.id}/notify`),
+        email ? { email } : {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+
+      toast({
+        title: "Subscribed",
+        description:
+          response.data?.message || "Notification details sent successfully.",
+      });
+      setSubscribedEventIds((prev) =>
+        prev.includes(event.id) ? prev : [...prev, event.id],
+      );
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          error?.response?.data?.message ||
+          "Failed to send notification email.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubscribingEventIds((prev) =>
+        prev.filter((eventId) => eventId !== event.id),
+      );
+    }
   };
 
   return (
@@ -370,7 +424,7 @@ const AllEventsPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-colors duration-200 shadow-lg"
+                  className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-colors duration-200 shadow-lg flex flex-col"
                 >
                   {/* Image */}
                   <div className="h-56 relative overflow-hidden">
@@ -426,7 +480,7 @@ const AllEventsPage = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-1">
                     <h3 className="text-xl font-bold mb-3 line-clamp-2">
                       {event.title}
                     </h3>
@@ -450,31 +504,51 @@ const AllEventsPage = () => {
                       {event.description}
                     </p>
 
-                    {event.attendees && (
-                      <div className="flex items-center text-gray-400 text-sm mb-4">
-                        <Users className="h-4 w-4 mr-1 text-accent/70" />
-                        {event.attendees} Attendees
-                      </div>
-                    )}
+                    <div className="mt-auto">
+                      {event.attendees && (
+                        <div className="flex items-center text-gray-400 text-sm mb-4">
+                          <Users className="h-4 w-4 mr-1 text-accent/70" />
+                          {event.attendees} Attendees
+                        </div>
+                      )}
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setSelectedEvent(event)}
-                        className="flex-1 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-sm font-medium transition-colors duration-200"
-                      >
-                        View Details
-                      </button>
-                      {(event.galleryImages && event.galleryImages.length > 0) ||
-                      (event.type === "organized" && event.title === "Nakutaro Cosplay Royale") ? (
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => openGallery(event)}
-                          className="px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#333] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                          onClick={() => setSelectedEvent(event)}
+                          className="flex-1 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-sm font-medium transition-colors duration-200"
                         >
-                          <Camera className="h-4 w-4 mr-1" />
-                          Gallery
+                          View Details
                         </button>
-                      ) : null}
+                        {(event.galleryImages && event.galleryImages.length > 0) ||
+                        (event.type === "organized" &&
+                          event.title === "Nakutaro Cosplay Royale") ? (
+                          <button
+                            onClick={() => openGallery(event)}
+                            className="px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#333] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Gallery
+                          </button>
+                        ) : null}
+                        {event.type === "upcoming" && (
+                          <button
+                            type="button"
+                            onClick={() => handleNotify(event)}
+                            disabled={
+                              subscribingEventIds.includes(event.id) ||
+                              subscribedEventIds.includes(event.id)
+                            }
+                            className="px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#333] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                          >
+                            {subscribingEventIds.includes(event.id)
+                              ? "Subscribing..."
+                              : subscribedEventIds.includes(event.id)
+                              ? "Subscribed"
+                              : "Subscribe"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>

@@ -12,6 +12,8 @@ import { GalleryPopup } from "./ui/gallery-popup.tsx";
 import { EventPopup } from "./ui/event-popup.tsx";
 import axios from "axios";
 import { buildApiUrl } from "@/lib/api.ts";
+import { useAuth } from "@/lib/AuthContext.tsx";
+import { useToast } from "@/hooks/use-toast.ts";
 
 interface ApiEvent {
   _id: string;
@@ -34,6 +36,7 @@ interface ApiEvent {
 }
 
 interface DisplayEvent {
+  id: string;
   title: string;
   date: string;
   location: string;
@@ -47,6 +50,17 @@ interface DisplayEvent {
   category?: string;
   galleryImages?: { src: string; alt: string }[];
 }
+
+interface EventsSettingsImage {
+  id?: string;
+  url?: string;
+  autoScrollDelay?: number;
+}
+
+const getSafeDelay = (delay?: number) => {
+  if (typeof delay !== "number" || Number.isNaN(delay)) return 5000;
+  return Math.max(1000, delay);
+};
 
 // Static gallery imports (bundled assets for the Nakutaro Cosplay Royale gallery)
 import cosplay1 from "@assets/Newfolder/cosplay-royale (1)1.JPG";
@@ -167,6 +181,7 @@ function formatEventDate(iso: string, endIso?: string): string {
 
 function apiToDisplay(ev: ApiEvent): DisplayEvent {
   return {
+    id: ev._id,
     title: ev.title,
     date: formatEventDate(ev.eventDate, ev.eventEndDate),
     location: ev.location,
@@ -187,23 +202,52 @@ interface EventsSectionProps {
 }
 
 const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<DisplayEvent | null>(null);
   const [galleryImages, setGalleryImages] = useState<any[] | null>(null);
   const [galleryTitle, setGalleryTitle] = useState("");
   const [events, setEvents] = useState<ApiEvent[]>([]);
-  const mobileCarouselRef = useRef<HTMLDivElement>(null);
-  const [activeMobileSlide, setActiveMobileSlide] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [autoPlayDelay, setAutoPlayDelay] = useState(5000);
+  const [subscribedEventIds, setSubscribedEventIds] = useState<string[]>([]);
+  const [subscribingEventIds, setSubscribingEventIds] = useState<string[]>([]);
+  const isAutoPlayingRef = useRef(false);
+  const isUserInteractingRef = useRef(false);
+  const interactionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      try {
-        const res = await axios.get(buildApiUrl("/api/event-timeline"));
-        if (res.data.success && res.data.events) {
-          setEvents(res.data.events);
-        }
-      } catch (err) {
-        console.error("Failed to fetch events:", err);
+      // Fetch independently so a settings failure never blocks events from loading
+      const [eventsResult, settingsResult] = await Promise.allSettled([
+        axios.get(buildApiUrl("/api/event-timeline")),
+        axios.get(buildApiUrl("/api/settings/events/images")),
+      ]);
+
+      if (
+        eventsResult.status === "fulfilled" &&
+        eventsResult.value.data.success &&
+        eventsResult.value.data.events
+      ) {
+        setEvents(eventsResult.value.data.events);
+      } else if (eventsResult.status === "rejected") {
+        console.error("Failed to fetch events:", eventsResult.reason);
+      }
+
+      if (
+        settingsResult.status === "fulfilled" &&
+        settingsResult.value.data.success
+      ) {
+        const data = settingsResult.value.data;
+        setAutoScrollEnabled(
+          data.autoScrollEnabled !== undefined ? data.autoScrollEnabled : true,
+        );
+        const settingsImages: EventsSettingsImage[] = data.images || [];
+        const primaryDelay = settingsImages[0]?.autoScrollDelay;
+        setAutoPlayDelay(getSafeDelay(primaryDelay));
       }
     };
     fetchEvents();
@@ -224,10 +268,18 @@ const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
     .map(apiToDisplay);
 
   useEffect(() => {
-    setActiveMobileSlide((prev) =>
+    setActiveSlide((prev) =>
       Math.min(prev, Math.max(otherEvents.length - 1, 0)),
     );
   }, [otherEvents.length]);
+
+  useEffect(() => {
+    return () => {
+      if (interactionTimeoutRef.current) {
+        window.clearTimeout(interactionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const openGallery = useCallback((ev?: DisplayEvent) => {
     if (ev?.galleryImages && ev.galleryImages.length > 0) {
@@ -247,17 +299,128 @@ const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
     setGalleryOpen(true);
   }, []);
 
-  const handleMobileCarouselScroll = useCallback(() => {
-    const container = mobileCarouselRef.current;
+  const handleNotify = useCallback(
+    async (ev: DisplayEvent) => {
+      if (subscribedEventIds.includes(ev.id)) return;
+      if (subscribingEventIds.includes(ev.id)) return;
+
+      let email = "";
+      if (!isAuthenticated) {
+        const entered = window.prompt("Enter your email to get event notifications:");
+        if (!entered) return;
+        email = entered.trim();
+      }
+
+      setSubscribingEventIds((prev) =>
+        prev.includes(ev.id) ? prev : [...prev, ev.id],
+      );
+
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.post(
+          buildApiUrl(`/api/event-timeline/${ev.id}/notify`),
+          email ? { email } : {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          },
+        );
+
+        toast({
+          title: "Subscribed",
+          description:
+            response.data?.message || "Notification details sent successfully.",
+        });
+        setSubscribedEventIds((prev) =>
+          prev.includes(ev.id) ? prev : [...prev, ev.id],
+        );
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description:
+            error?.response?.data?.message ||
+            "Failed to send notification email.",
+          variant: "destructive",
+        });
+      } finally {
+        setSubscribingEventIds((prev) =>
+          prev.filter((eventId) => eventId !== ev.id),
+        );
+      }
+    },
+    [isAuthenticated, subscribedEventIds, subscribingEventIds, toast],
+  );
+
+  const scrollToSlide = useCallback((index: number) => {
+    const container = carouselRef.current;
+    if (!container) return;
+    const slide = container.querySelector<HTMLElement>(
+      `[data-slide-index="${index}"]`,
+    );
+    if (!slide) return;
+    // Scroll the overflow container directly — never use scrollIntoView which
+    // scrolls the page viewport instead of the carousel track.
+    container.scrollTo({
+      left: slide.offsetLeft - container.offsetLeft,
+      behavior: "smooth",
+    });
+  }, []);
+
+  const handleCarouselScroll = useCallback(() => {
+    const container = carouselRef.current;
     if (!container) return;
 
-    const cardWidth = container.clientWidth * 0.86;
-    if (cardWidth <= 0) return;
+    // Ignore scroll events fired by our own autoplay
+    if (isAutoPlayingRef.current) return;
 
-    const slide = Math.round(container.scrollLeft / cardWidth);
-    const clamped = Math.max(0, Math.min(slide, otherEvents.length - 1));
-    setActiveMobileSlide(clamped);
+    isUserInteractingRef.current = true;
+    if (interactionTimeoutRef.current) {
+      window.clearTimeout(interactionTimeoutRef.current);
+    }
+    interactionTimeoutRef.current = window.setTimeout(() => {
+      isUserInteractingRef.current = false;
+    }, 1800);
+
+    const slideElements = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-slide-index]"),
+    );
+    if (slideElements.length === 0) return;
+
+    let closestIndex = 0;
+    let minDistance = Number.POSITIVE_INFINITY;
+    const center = container.scrollLeft + container.clientWidth / 2;
+
+    slideElements.forEach((slide, index) => {
+      const slideMid = slide.offsetLeft + slide.offsetWidth / 2;
+      const distance = Math.abs(slideMid - center);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    const clamped = Math.max(0, Math.min(closestIndex, otherEvents.length - 1));
+    setActiveSlide(clamped);
   }, [otherEvents.length]);
+
+  useEffect(() => {
+    if (!autoScrollEnabled || otherEvents.length <= 1) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (isUserInteractingRef.current) return;
+      const nextSlide = (activeSlide + 1) % otherEvents.length;
+      isAutoPlayingRef.current = true;
+      setActiveSlide(nextSlide);
+      scrollToSlide(nextSlide);
+      // Reset flag after smooth scroll animation finishes (~600 ms)
+      window.setTimeout(() => {
+        isAutoPlayingRef.current = false;
+      }, 650);
+    }, autoPlayDelay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeSlide, autoPlayDelay, autoScrollEnabled, otherEvents.length, scrollToSlide]);
 
   if (events.length === 0) {
     return null;
@@ -423,14 +586,17 @@ const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
               </div>
 
               <div
-                ref={mobileCarouselRef}
-                onScroll={handleMobileCarouselScroll}
-                className="md:hidden -mx-4 px-4 flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                ref={carouselRef}
+                onScroll={handleCarouselScroll}
+                onTouchStart={() => { isUserInteractingRef.current = true; }}
+                onMouseDown={() => { isUserInteractingRef.current = true; }}
+                className="-mx-4 px-4 flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {otherEvents.map((event, index) => (
                   <div
                     key={index}
-                    className="w-[86%] shrink-0 snap-center bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-colors duration-200 shadow-lg"
+                    data-slide-index={index}
+                    className="w-[86%] md:w-[48%] lg:w-[32%] shrink-0 snap-center bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-colors duration-200 shadow-lg flex flex-col"
                   >
                     <div className="h-56 relative overflow-hidden">
                       {event.image ? (
@@ -463,7 +629,7 @@ const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
                       )}
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-6 flex flex-col flex-1">
                       <h4 className="text-xl font-bold mb-3">{event.title}</h4>
                       <div className="grid grid-cols-2 gap-2 mb-4">
                         <div className="flex items-center text-gray-400 text-sm">
@@ -482,104 +648,66 @@ const EventsSection = memo(({ hideViewAllCta = false }: EventsSectionProps) => {
                       <p className="text-gray-300 mb-6 line-clamp-3 text-sm">
                         {event.description}
                       </p>
-                      {event.attendees && (
-                        <div className="text-sm text-gray-400 flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-accent/70" />
-                          {event.attendees} Attendees
+                      <div className="mt-auto">
+                        {event.attendees && (
+                          <div className="text-sm text-gray-400 flex items-center mb-4">
+                            <Users className="h-4 w-4 mr-1 text-accent/70" />
+                            {event.attendees} Attendees
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEvent(event)}
+                            className="flex-1 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-sm font-medium transition-colors duration-200"
+                          >
+                            View Details
+                          </button>
+                          {event.category === "upcoming" && (
+                            <button
+                              type="button"
+                              onClick={() => handleNotify(event)}
+                              disabled={
+                                subscribingEventIds.includes(event.id) ||
+                                subscribedEventIds.includes(event.id)
+                              }
+                              className="px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#333] rounded-lg text-sm font-medium transition-colors duration-200 flex items-center text-white disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                              {subscribingEventIds.includes(event.id)
+                                ? "Subscribing..."
+                                : subscribedEventIds.includes(event.id)
+                                ? "Subscribed"
+                                : "Subscribe"}
+                            </button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="md:hidden mt-4 flex items-center justify-center gap-2">
+              <div className="mt-4 flex items-center justify-center gap-2">
                 {otherEvents.map((_, index) => (
                   <button
                     key={index}
                     type="button"
                     aria-label={`Go to event slide ${index + 1}`}
                     onClick={() => {
-                      const container = mobileCarouselRef.current;
-                      if (!container) return;
-                      container.scrollTo({
-                        left: container.clientWidth * 0.86 * index,
-                        behavior: "smooth",
-                      });
+                      isUserInteractingRef.current = true;
+                      if (interactionTimeoutRef.current)
+                        window.clearTimeout(interactionTimeoutRef.current);
+                      interactionTimeoutRef.current = window.setTimeout(() => {
+                        isUserInteractingRef.current = false;
+                      }, 1800);
+                      scrollToSlide(index);
                     }}
                     className={`h-1.5 rounded-full transition-all ${
-                      activeMobileSlide === index
+                      activeSlide === index
                         ? "w-6 bg-accent"
                         : "w-2 bg-white/30"
                     }`}
                   />
-                ))}
-              </div>
-
-              <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8">
-                {otherEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className="bg-gradient-to-b from-[#1A1A1A] to-[#0D0D0D] rounded-xl overflow-hidden border border-[#333] group hover:border-accent/30 transition-colors duration-200 shadow-lg"
-                  >
-                    <div className="h-56 relative overflow-hidden">
-                      {event.image ? (
-                        <img
-                          src={event.image}
-                          alt={event.title}
-                          loading="lazy"
-                          decoding="async"
-                          className="absolute w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
-                          style={{ willChange: "transform" }}
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-[#222]" />
-                      )}
-                      <div className="absolute inset-0"></div>
-
-                      <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
-                        <div className="flex items-center">
-                          <Medal className="h-3 w-3 text-accent mr-1" />
-                          <span>
-                            {categoryLabel[event.category || "sponsored"]}
-                          </span>
-                        </div>
-                      </div>
-
-                      {event.prizePool && (
-                        <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-lg">
-                          {event.prizePool}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-6">
-                      <h4 className="text-xl font-bold mb-3">{event.title}</h4>
-                      <div className="grid grid-cols-2 gap-2 mb-4">
-                        <div className="flex items-center text-gray-400 text-sm">
-                          <Calendar className="h-4 w-4 mr-2 text-accent/70" />
-                          <span>{event.date}</span>
-                        </div>
-                        <div className="flex items-center text-gray-400 text-sm">
-                          <Clock className="h-4 w-4 mr-2 text-accent/70" />
-                          <span>{event.time}</span>
-                        </div>
-                        <div className="flex items-center text-gray-400 text-sm col-span-2">
-                          <MapPin className="h-4 w-4 mr-2 text-accent/70" />
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 mb-6 line-clamp-3 text-sm">
-                        {event.description}
-                      </p>
-                      {event.attendees && (
-                        <div className="text-sm text-gray-400 flex items-center">
-                          <Users className="h-4 w-4 mr-1 text-accent/70" />
-                          {event.attendees} Attendees
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 ))}
               </div>
             </div>
